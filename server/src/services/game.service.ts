@@ -98,7 +98,7 @@ export async function getGame(gameId: string, userId: string) {
       const argumentCount = await db.argument.count({
         where: {
           actionId: game.currentAction.id,
-          authorId: myPlayer.id,
+          playerId: myPlayer.id,
         },
       });
       remainingArguments = Math.max(0, argumentLimit - argumentCount);

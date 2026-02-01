@@ -8,6 +8,7 @@ import {
   VotingPanel,
   TokenDraw,
   NarrationForm,
+  RoundSummary,
 } from '../components/game';
 
 interface Game {
@@ -161,17 +162,14 @@ export default function GameView() {
         );
 
       case 'ROUND_SUMMARY':
-        return (
-          <div className="p-6 border rounded-lg">
-            <h2 className="text-lg font-semibold mb-4">Round Summary</h2>
-            <p className="text-muted-foreground">
-              All actions for this round have been completed. Time to write the round summary.
-            </p>
-            <p className="text-sm text-muted-foreground mt-4">
-              Round summary interface coming soon.
-            </p>
-          </div>
-        );
+        if (!game.currentRound) {
+          return (
+            <div className="p-6 border rounded-lg text-center text-muted-foreground">
+              Waiting for round data...
+            </div>
+          );
+        }
+        return <RoundSummary gameId={game.id} roundId={game.currentRound.id} />;
 
       default:
         return (

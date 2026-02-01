@@ -62,6 +62,12 @@ docker-compose up -d  # Start PostgreSQL
 - Describe the proposed change and its purpose
 - This helps with understanding, review, and catching potential issues early
 
+## Git Workflow
+
+- **Commit after every change** - Each meaningful change should be committed immediately
+- Write clear, descriptive commit messages explaining the "why"
+- Keep commits focused and atomic (one logical change per commit)
+
 ## Code Conventions
 
 - Use TypeScript strict mode

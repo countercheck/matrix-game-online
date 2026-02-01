@@ -1,0 +1,90 @@
+import { z } from 'zod';
+
+// Auth schemas
+export const registerSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  displayName: z.string().min(1).max(50, 'Display name must be 50 characters or less'),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+// User schemas
+export const updateProfileSchema = z.object({
+  displayName: z.string().min(1).max(50).optional(),
+  avatarUrl: z.string().url().max(500).optional().nullable(),
+});
+
+export const notificationPreferencesSchema = z.object({
+  emailEnabled: z.boolean().optional(),
+  gameStarted: z.boolean().optional(),
+  actionProposed: z.boolean().optional(),
+  votingStarted: z.boolean().optional(),
+  resolutionReady: z.boolean().optional(),
+  roundSummaryNeeded: z.boolean().optional(),
+  newRound: z.boolean().optional(),
+  timeoutWarnings: z.boolean().optional(),
+});
+
+// Game schemas
+export const createGameSchema = z.object({
+  name: z.string().min(1, 'Game name is required').max(100, 'Game name must be 100 characters or less'),
+  description: z.string().max(1000).optional(),
+  settings: z.object({
+    argumentLimit: z.number().int().min(1).max(10).default(3),
+    argumentationTimeoutHours: z.number().int().min(1).max(72).default(24),
+    votingTimeoutHours: z.number().int().min(1).max(72).default(24),
+    narrationMode: z.enum(['initiator_only', 'collaborative']).default('initiator_only'),
+  }).optional(),
+});
+
+// Action schemas
+export const actionProposalSchema = z.object({
+  actionDescription: z.string().min(1, 'Action description is required').max(500, 'Action description must be 500 characters or less'),
+  desiredOutcome: z.string().min(1, 'Desired outcome is required').max(300, 'Desired outcome must be 300 characters or less'),
+  initialArguments: z.array(
+    z.string().min(1).max(200, 'Each argument must be 200 characters or less')
+  ).min(1, 'At least one argument is required').max(3, 'Maximum 3 initial arguments'),
+});
+
+export const argumentSchema = z.object({
+  argumentType: z.enum(['FOR', 'AGAINST', 'CLARIFICATION']),
+  content: z.string().min(1, 'Argument content is required').max(200, 'Argument must be 200 characters or less'),
+});
+
+export const voteSchema = z.object({
+  voteType: z.enum(['LIKELY_SUCCESS', 'LIKELY_FAILURE', 'UNCERTAIN']),
+});
+
+export const narrationSchema = z.object({
+  content: z.string().min(1, 'Narration is required').max(1000, 'Narration must be 1000 characters or less'),
+});
+
+export const roundSummarySchema = z.object({
+  content: z.string().min(1, 'Summary is required').max(2000, 'Summary must be 2000 characters or less'),
+  outcomes: z.object({
+    totalTriumphs: z.number().int().min(0).optional(),
+    totalDisasters: z.number().int().min(0).optional(),
+    netMomentum: z.number().int().optional(),
+    keyEvents: z.array(z.string()).max(10).optional(),
+  }).optional(),
+});
+
+// Type exports
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type NotificationPreferencesInput = z.infer<typeof notificationPreferencesSchema>;
+export type CreateGameInput = z.infer<typeof createGameSchema>;
+export type ActionProposalInput = z.infer<typeof actionProposalSchema>;
+export type ArgumentInput = z.infer<typeof argumentSchema>;
+export type VoteInput = z.infer<typeof voteSchema>;
+export type NarrationInput = z.infer<typeof narrationSchema>;
+export type RoundSummaryInput = z.infer<typeof roundSummarySchema>;

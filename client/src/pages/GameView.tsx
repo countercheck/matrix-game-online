@@ -1,0 +1,339 @@
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
+import {
+  ActionProposal,
+  ArgumentationPhase,
+  VotingPanel,
+  TokenDraw,
+  NarrationForm,
+} from '../components/game';
+
+interface Game {
+  id: string;
+  name: string;
+  status: string;
+  currentPhase: string;
+  settings: {
+    argumentLimit: number;
+  };
+  currentRound?: {
+    id: string;
+    roundNumber: number;
+    actionsCompleted: number;
+    totalActionsRequired: number;
+  };
+  currentAction?: {
+    id: string;
+    actionDescription: string;
+    desiredOutcome: string;
+    status: string;
+    initiator: {
+      id: string;
+      playerName: string;
+      userId: string;
+      user: { displayName: string };
+    };
+  };
+  players: Array<{
+    id: string;
+    playerName: string;
+    isHost: boolean;
+    userId: string;
+    user: { id: string; displayName: string };
+  }>;
+  myPlayer?: {
+    id: string;
+    playerName: string;
+    isHost: boolean;
+    hasProposedThisRound: boolean;
+    remainingArguments: number;
+    hasCompletedArgumentation: boolean;
+  };
+}
+
+export default function GameView() {
+  const { gameId } = useParams<{ gameId: string }>();
+  const { user } = useAuth();
+
+  const { data, isLoading, error } = useQuery<{ data: Game }>({
+    queryKey: ['game', gameId],
+    queryFn: () => api.get(`/games/${gameId}`).then((res) => res.data),
+    refetchInterval: 5000, // Poll for updates
+  });
+
+  const game = data?.data;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading game...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !game) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive mb-4">Failed to load game</p>
+        <Link to="/" className="text-primary hover:underline">
+          Return to Dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  const currentUserId = user?.id || '';
+  const myPlayer = game.myPlayer;
+
+  // Render phase-specific content
+  const renderPhaseContent = () => {
+    switch (game.currentPhase) {
+      case 'PROPOSAL':
+        return (
+          <ActionProposal
+            gameId={game.id}
+            hasProposedThisRound={myPlayer?.hasProposedThisRound || false}
+          />
+        );
+
+      case 'ARGUMENTATION':
+        if (!game.currentAction) {
+          return (
+            <div className="p-6 border rounded-lg text-center text-muted-foreground">
+              Waiting for action...
+            </div>
+          );
+        }
+        return (
+          <ArgumentationPhase
+            gameId={game.id}
+            action={game.currentAction}
+            remainingArguments={myPlayer?.remainingArguments ?? game.settings.argumentLimit}
+            hasCompletedArgumentation={myPlayer?.hasCompletedArgumentation || false}
+          />
+        );
+
+      case 'VOTING':
+        if (!game.currentAction) {
+          return (
+            <div className="p-6 border rounded-lg text-center text-muted-foreground">
+              Waiting for action...
+            </div>
+          );
+        }
+        return <VotingPanel gameId={game.id} action={game.currentAction} />;
+
+      case 'RESOLUTION':
+        if (!game.currentAction) {
+          return (
+            <div className="p-6 border rounded-lg text-center text-muted-foreground">
+              Waiting for action...
+            </div>
+          );
+        }
+        return (
+          <TokenDraw
+            gameId={game.id}
+            action={game.currentAction}
+            currentUserId={currentUserId}
+          />
+        );
+
+      case 'NARRATION':
+        if (!game.currentAction) {
+          return (
+            <div className="p-6 border rounded-lg text-center text-muted-foreground">
+              Waiting for action...
+            </div>
+          );
+        }
+        return (
+          <NarrationForm
+            gameId={game.id}
+            action={game.currentAction}
+            currentUserId={currentUserId}
+          />
+        );
+
+      case 'ROUND_SUMMARY':
+        return (
+          <div className="p-6 border rounded-lg">
+            <h2 className="text-lg font-semibold mb-4">Round Summary</h2>
+            <p className="text-muted-foreground">
+              All actions for this round have been completed. Time to write the round summary.
+            </p>
+            <p className="text-sm text-muted-foreground mt-4">
+              Round summary interface coming soon.
+            </p>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="p-6 border rounded-lg text-center text-muted-foreground">
+            Unknown phase: {game.currentPhase}
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="text-muted-foreground hover:text-foreground"
+              title="Back to Dashboard"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+            </Link>
+            <h1 className="text-2xl font-bold">{game.name}</h1>
+          </div>
+          {game.currentRound && (
+            <p className="text-muted-foreground mt-1">
+              Round {game.currentRound.roundNumber} &bull;{' '}
+              {game.currentRound.actionsCompleted}/{game.currentRound.totalActionsRequired} actions
+              completed
+            </p>
+          )}
+        </div>
+        <div className="text-right">
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+              game.currentPhase === 'PROPOSAL'
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                : game.currentPhase === 'ARGUMENTATION'
+                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                : game.currentPhase === 'VOTING'
+                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                : game.currentPhase === 'RESOLUTION'
+                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                : game.currentPhase === 'NARRATION'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+            }`}
+          >
+            {game.currentPhase.replace('_', ' ')}
+          </span>
+          {myPlayer && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Playing as {myPlayer.playerName}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Main Game Area */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">{renderPhaseContent()}</div>
+
+        {/* Sidebar */}
+        <div className="space-y-4">
+          {/* Phase Guide */}
+          <div className="p-4 border rounded-lg bg-muted/30">
+            <h3 className="font-semibold mb-2">Phase Guide</h3>
+            <PhaseGuide phase={game.currentPhase} />
+          </div>
+
+          {/* Players */}
+          <div className="p-4 border rounded-lg">
+            <h3 className="font-semibold mb-3">Players ({game.players.length})</h3>
+            <ul className="space-y-2">
+              {game.players.map((player) => (
+                <li
+                  key={player.id}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className={player.userId === currentUserId ? 'font-medium' : ''}>
+                    {player.playerName}
+                    {player.userId === currentUserId && ' (you)'}
+                  </span>
+                  {player.isHost && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                      Host
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Current Action Summary (when not in proposal) */}
+          {game.currentAction && game.currentPhase !== 'PROPOSAL' && (
+            <div className="p-4 border rounded-lg">
+              <h3 className="font-semibold mb-2">Current Action</h3>
+              <p className="text-sm">{game.currentAction.actionDescription}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                By {game.currentAction.initiator.playerName}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhaseGuide({ phase }: { phase: string }) {
+  const guides: Record<string, { title: string; description: string }> = {
+    PROPOSAL: {
+      title: 'Propose Actions',
+      description:
+        'Each player proposes one action per round. Describe what you want to do and provide arguments for why it should succeed.',
+    },
+    ARGUMENTATION: {
+      title: 'Make Arguments',
+      description:
+        'Add arguments for or against the proposed action. You can also add clarifications. When done, click "I\'m Done" to proceed.',
+    },
+    VOTING: {
+      title: 'Cast Your Vote',
+      description:
+        'Vote on the likelihood of success. Your vote affects the token pool that will be drawn from.',
+    },
+    RESOLUTION: {
+      title: 'Draw Tokens',
+      description:
+        'The initiator draws 3 tokens from the pool to determine the outcome. More success tokens in the pool means better odds!',
+    },
+    NARRATION: {
+      title: 'Narrate the Result',
+      description:
+        'The initiator describes what happens based on the token draw. The result type guides the narrative.',
+    },
+    ROUND_SUMMARY: {
+      title: 'Round Complete',
+      description:
+        'All actions for this round are done. The host writes a summary of what happened before the next round begins.',
+    },
+  };
+
+  const guide = guides[phase] || { title: 'Unknown Phase', description: '' };
+
+  return (
+    <div>
+      <p className="text-sm font-medium">{guide.title}</p>
+      <p className="text-xs text-muted-foreground mt-1">{guide.description}</p>
+    </div>
+  );
+}

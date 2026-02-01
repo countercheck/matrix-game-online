@@ -1,0 +1,326 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String       @id @default(uuid())
+  email                   String       @unique
+  passwordHash            String       @map("password_hash")
+  displayName             String       @map("display_name") @db.VarChar(50)
+  avatarUrl               String?      @map("avatar_url") @db.VarChar(500)
+  notificationPreferences Json         @default("{}") @map("notification_preferences")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  lastLogin               DateTime?    @map("last_login")
+
+  // Relations
+  createdGames            Game[]       @relation("GameCreator")
+  gamePlayers             GamePlayer[]
+  gameEvents              GameEvent[]
+
+  @@map("users")
+}
+
+model Game {
+  id              String       @id @default(uuid())
+  name            String       @db.VarChar(100)
+  description     String?      @db.Text
+  creatorId       String       @map("creator_id")
+  status          GameStatus   @default(LOBBY)
+  currentPhase    GamePhase    @default(WAITING) @map("current_phase")
+  currentRoundId  String?      @unique @map("current_round_id")
+  currentActionId String?      @unique @map("current_action_id")
+  playerCount     Int          @default(0) @map("player_count")
+  settings        Json         @default("{}")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  startedAt       DateTime?    @map("started_at")
+  completedAt     DateTime?    @map("completed_at")
+
+  // Relations
+  creator        User          @relation("GameCreator", fields: [creatorId], references: [id], onDelete: Restrict)
+  currentRound   Round?        @relation("CurrentRound", fields: [currentRoundId], references: [id])
+  currentAction  Action?       @relation("CurrentAction", fields: [currentActionId], references: [id])
+  players        GamePlayer[]
+  rounds         Round[]       @relation("GameRounds")
+  actions        Action[]      @relation("GameActions")
+  events         GameEvent[]
+
+  @@index([creatorId])
+  @@index([status, currentPhase])
+  @@index([createdAt])
+  @@map("games")
+}
+
+model Round {
+  id                   String      @id @default(uuid())
+  gameId               String      @map("game_id")
+  roundNumber          Int         @map("round_number")
+  status               RoundStatus @default(IN_PROGRESS)
+  actionsCompleted     Int         @default(0) @map("actions_completed")
+  totalActionsRequired Int         @map("total_actions_required")
+  startedAt            DateTime    @default(now()) @map("started_at")
+  completedAt          DateTime?   @map("completed_at")
+
+  // Relations
+  game                 Game         @relation("GameRounds", fields: [gameId], references: [id], onDelete: Cascade)
+  currentForGame       Game?        @relation("CurrentRound")
+  actions              Action[]
+  summary              RoundSummary?
+
+  @@unique([gameId, roundNumber])
+  @@index([gameId, status])
+  @@map("rounds")
+}
+
+model RoundSummary {
+  id        String   @id @default(uuid())
+  roundId   String   @unique @map("round_id")
+  authorId  String   @map("author_id")
+  content   String   @db.Text
+  outcomes  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  round  Round      @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  author GamePlayer @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@map("round_summaries")
+}
+
+model GamePlayer {
+  id         String    @id @default(uuid())
+  gameId     String    @map("game_id")
+  userId     String    @map("user_id")
+  playerName String    @map("player_name") @db.VarChar(50)
+  joinOrder  Int       @map("join_order")
+  isHost     Boolean   @default(false) @map("is_host")
+  isActive   Boolean   @default(true) @map("is_active")
+  joinedAt   DateTime  @default(now()) @map("joined_at")
+  lastSeenAt DateTime? @map("last_seen_at")
+
+  // Relations
+  game                   Game                   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user                   User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  initiatedActions       Action[]               @relation("ActionInitiator")
+  arguments              Argument[]
+  votes                  Vote[]
+  narrations             Narration[]
+  roundSummaries         RoundSummary[]
+  argumentationCompletes ArgumentationComplete[]
+
+  @@unique([gameId, userId])
+  @@index([gameId, isActive])
+  @@index([userId])
+  @@map("game_players")
+}
+
+model Action {
+  id                     String       @id @default(uuid())
+  gameId                 String       @map("game_id")
+  roundId                String       @map("round_id")
+  initiatorId            String       @map("initiator_id")
+  sequenceNumber         Int          @map("sequence_number")
+  actionDescription      String       @map("action_description") @db.Text
+  desiredOutcome         String       @map("desired_outcome") @db.Text
+  status                 ActionStatus @default(PROPOSED)
+  proposedAt             DateTime     @default(now()) @map("proposed_at")
+  argumentationStartedAt DateTime?    @map("argumentation_started_at")
+  votingStartedAt        DateTime?    @map("voting_started_at")
+  resolvedAt             DateTime?    @map("resolved_at")
+  completedAt            DateTime?    @map("completed_at")
+
+  // Relations
+  game                   Game                   @relation("GameActions", fields: [gameId], references: [id], onDelete: Cascade)
+  round                  Round                  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  initiator              GamePlayer             @relation("ActionInitiator", fields: [initiatorId], references: [id])
+  currentForGame         Game?                  @relation("CurrentAction")
+  arguments              Argument[]
+  votes                  Vote[]
+  tokenDraw              TokenDraw?
+  narration              Narration?
+  argumentationCompletes ArgumentationComplete[]
+
+  @@unique([gameId, sequenceNumber])
+  @@index([gameId, status])
+  @@index([roundId, status])
+  @@index([initiatorId])
+  @@map("actions")
+}
+
+model Argument {
+  id           String       @id @default(uuid())
+  actionId     String       @map("action_id")
+  playerId     String       @map("player_id")
+  argumentType ArgumentType @map("argument_type")
+  content      String       @db.Text
+  sequence     Int
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  // Relations
+  action Action     @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  player GamePlayer @relation(fields: [playerId], references: [id])
+
+  @@index([actionId, sequence])
+  @@index([playerId])
+  @@map("arguments")
+}
+
+model Vote {
+  id            String   @id @default(uuid())
+  actionId      String   @map("action_id")
+  playerId      String   @map("player_id")
+  voteType      VoteType @map("vote_type")
+  successTokens Int      @map("success_tokens")
+  failureTokens Int      @map("failure_tokens")
+  castAt        DateTime @default(now()) @map("cast_at")
+
+  // Relations
+  action Action     @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  player GamePlayer @relation(fields: [playerId], references: [id])
+
+  @@unique([actionId, playerId])
+  @@index([actionId])
+  @@map("votes")
+}
+
+model TokenDraw {
+  id                 String     @id @default(uuid())
+  actionId           String     @unique @map("action_id")
+  totalSuccessTokens Int        @map("total_success_tokens")
+  totalFailureTokens Int        @map("total_failure_tokens")
+  randomSeed         String     @map("random_seed") @db.VarChar(255)
+  drawnSuccess       Int        @map("drawn_success")
+  drawnFailure       Int        @map("drawn_failure")
+  resultValue        Int        @map("result_value")
+  resultType         ResultType @map("result_type")
+  drawnAt            DateTime   @default(now()) @map("drawn_at")
+
+  // Relations
+  action      Action       @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  drawnTokens DrawnToken[]
+
+  @@map("token_draws")
+}
+
+model DrawnToken {
+  id           String    @id @default(uuid())
+  tokenDrawId  String    @map("token_draw_id")
+  drawSequence Int       @map("draw_sequence")
+  tokenType    TokenType @map("token_type")
+
+  // Relations
+  tokenDraw TokenDraw @relation(fields: [tokenDrawId], references: [id], onDelete: Cascade)
+
+  @@index([tokenDrawId, drawSequence])
+  @@map("drawn_tokens")
+}
+
+model Narration {
+  id        String   @id @default(uuid())
+  actionId  String   @unique @map("action_id")
+  authorId  String   @map("author_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  action Action     @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  author GamePlayer @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@map("narrations")
+}
+
+model ArgumentationComplete {
+  id          String   @id @default(uuid())
+  actionId    String   @map("action_id")
+  playerId    String   @map("player_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  // Relations
+  action Action     @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  player GamePlayer @relation(fields: [playerId], references: [id])
+
+  @@unique([actionId, playerId])
+  @@index([actionId])
+  @@map("argumentation_complete")
+}
+
+model GameEvent {
+  id        String   @id @default(uuid())
+  gameId    String   @map("game_id")
+  userId    String?  @map("user_id")
+  eventType String   @map("event_type") @db.VarChar(50)
+  eventData Json     @default("{}") @map("event_data")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  game Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([gameId, createdAt])
+  @@index([eventType])
+  @@map("game_events")
+}
+
+// Enums
+enum GameStatus {
+  LOBBY
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum GamePhase {
+  WAITING
+  PROPOSAL
+  ARGUMENTATION
+  VOTING
+  RESOLUTION
+  NARRATION
+  ROUND_SUMMARY
+}
+
+enum RoundStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ActionStatus {
+  PROPOSED
+  ARGUING
+  VOTING
+  RESOLVED
+  NARRATED
+}
+
+enum ArgumentType {
+  INITIATOR_FOR
+  FOR
+  AGAINST
+  CLARIFICATION
+}
+
+enum VoteType {
+  LIKELY_SUCCESS
+  LIKELY_FAILURE
+  UNCERTAIN
+}
+
+enum ResultType {
+  TRIUMPH
+  SUCCESS_BUT
+  FAILURE_BUT
+  DISASTER
+}
+
+enum TokenType {
+  SUCCESS
+  FAILURE
+}

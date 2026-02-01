@@ -1,0 +1,716 @@
+import { randomBytes } from 'crypto';
+import { db } from '../config/database.js';
+import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
+import { requireMember, logGameEvent, transitionPhase } from './game.service.js';
+import type { ActionProposalInput, ArgumentInput, VoteInput, NarrationInput } from '../utils/validators.js';
+import {
+  notifyActionProposed,
+  notifyVotingStarted,
+  notifyResolutionReady,
+  notifyNarrationNeeded,
+  notifyRoundSummaryNeeded,
+} from './notification.service.js';
+
+export async function proposeAction(gameId: string, userId: string, data: ActionProposalInput) {
+  const player = await db.gamePlayer.findFirst({
+    where: { gameId, userId, isActive: true },
+  });
+
+  if (!player) {
+    throw new ForbiddenError('Not a member of this game');
+  }
+
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: { currentRound: true },
+  });
+
+  if (!game || !game.currentRound) {
+    throw new NotFoundError('Game or round not found');
+  }
+
+  if (game.currentPhase !== 'PROPOSAL') {
+    throw new BadRequestError('Game is not in proposal phase');
+  }
+
+  // Check if player already proposed this round
+  const existingAction = await db.action.findFirst({
+    where: {
+      roundId: game.currentRound.id,
+      initiatorId: player.id,
+    },
+  });
+
+  if (existingAction) {
+    throw new ConflictError('You have already proposed an action this round');
+  }
+
+  // Get next sequence number
+  const lastAction = await db.action.findFirst({
+    where: { gameId },
+    orderBy: { sequenceNumber: 'desc' },
+  });
+  const sequenceNumber = (lastAction?.sequenceNumber || 0) + 1;
+
+  // Create action with initial arguments
+  const action = await db.action.create({
+    data: {
+      gameId,
+      roundId: game.currentRound.id,
+      initiatorId: player.id,
+      sequenceNumber,
+      actionDescription: data.actionDescription,
+      desiredOutcome: data.desiredOutcome,
+      status: 'ARGUING',
+      argumentationStartedAt: new Date(),
+      arguments: {
+        create: data.initialArguments.map((content, index) => ({
+          playerId: player.id,
+          argumentType: 'INITIATOR_FOR',
+          content,
+          sequence: index + 1,
+        })),
+      },
+    },
+    include: {
+      initiator: {
+        include: {
+          user: { select: { displayName: true } },
+        },
+      },
+      arguments: true,
+    },
+  });
+
+  // Update game state
+  await db.game.update({
+    where: { id: gameId },
+    data: {
+      currentPhase: 'ARGUMENTATION',
+      currentActionId: action.id,
+    },
+  });
+
+  await logGameEvent(gameId, userId, 'ACTION_PROPOSED', {
+    actionId: action.id,
+    description: data.actionDescription,
+  });
+
+  // Send notifications (async, don't wait)
+  notifyActionProposed(
+    gameId,
+    game.name,
+    userId,
+    action.initiator.user.displayName,
+    data.actionDescription
+  ).catch(() => {});
+
+  return action;
+}
+
+export async function getAction(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: {
+      game: true,
+      initiator: {
+        include: {
+          user: { select: { id: true, displayName: true } },
+        },
+      },
+      arguments: {
+        include: {
+          player: {
+            include: {
+              user: { select: { displayName: true } },
+            },
+          },
+        },
+        orderBy: { sequence: 'asc' },
+      },
+      votes: true,
+      tokenDraw: {
+        include: { drawnTokens: true },
+      },
+      narration: {
+        include: {
+          author: {
+            include: {
+              user: { select: { displayName: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  await requireMember(action.gameId, userId);
+
+  return action;
+}
+
+export async function addArgument(actionId: string, userId: string, data: ArgumentInput) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: { game: true },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (action.status !== 'ARGUING') {
+    throw new BadRequestError('Action is not in argumentation phase');
+  }
+
+  const player = await db.gamePlayer.findFirst({
+    where: { gameId: action.gameId, userId, isActive: true },
+  });
+
+  if (!player) {
+    throw new ForbiddenError('Not a member of this game');
+  }
+
+  // Check if initiator is trying to add clarification
+  const isInitiator = action.initiatorId === player.id;
+  if (isInitiator && data.argumentType !== 'CLARIFICATION') {
+    throw new BadRequestError('Initiator can only add clarification arguments');
+  }
+  if (!isInitiator && data.argumentType === 'CLARIFICATION') {
+    throw new BadRequestError('Only initiator can add clarification');
+  }
+
+  // Check argument limits
+  const existingArgs = await db.argument.findMany({
+    where: { actionId, playerId: player.id },
+  });
+
+  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const argumentLimit = (settings.argumentLimit as number) || 3;
+
+  if (existingArgs.length >= argumentLimit) {
+    throw new BadRequestError(`Maximum ${argumentLimit} arguments per player`);
+  }
+
+  // Get next sequence
+  const lastArg = await db.argument.findFirst({
+    where: { actionId },
+    orderBy: { sequence: 'desc' },
+  });
+
+  const argument = await db.argument.create({
+    data: {
+      actionId,
+      playerId: player.id,
+      argumentType: data.argumentType,
+      content: data.content,
+      sequence: (lastArg?.sequence || 0) + 1,
+    },
+    include: {
+      player: {
+        include: {
+          user: { select: { displayName: true } },
+        },
+      },
+    },
+  });
+
+  await logGameEvent(action.gameId, userId, 'ARGUMENT_ADDED', {
+    actionId,
+    argumentType: data.argumentType,
+  });
+
+  return argument;
+}
+
+export async function getArguments(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  await requireMember(action.gameId, userId);
+
+  const args = await db.argument.findMany({
+    where: { actionId },
+    include: {
+      player: {
+        include: {
+          user: { select: { displayName: true } },
+        },
+      },
+    },
+    orderBy: { sequence: 'asc' },
+  });
+
+  return args;
+}
+
+export async function completeArgumentation(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: {
+      game: {
+        include: {
+          players: { where: { isActive: true } },
+        },
+      },
+    },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (action.status !== 'ARGUING') {
+    throw new BadRequestError('Action is not in argumentation phase');
+  }
+
+  await requireMember(action.gameId, userId);
+
+  // For now, any player completing moves to voting
+  // In a more complex system, you'd track who completed
+  await db.action.update({
+    where: { id: actionId },
+    data: {
+      status: 'VOTING',
+      votingStartedAt: new Date(),
+    },
+  });
+
+  await transitionPhase(action.gameId, 'VOTING');
+
+  // Send notifications (async, don't wait)
+  notifyVotingStarted(
+    action.gameId,
+    action.game.name,
+    action.actionDescription
+  ).catch(() => {});
+
+  return { message: 'Moved to voting phase' };
+}
+
+export async function submitVote(actionId: string, userId: string, data: VoteInput) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (action.status !== 'VOTING') {
+    throw new BadRequestError('Action is not in voting phase');
+  }
+
+  const player = await db.gamePlayer.findFirst({
+    where: { gameId: action.gameId, userId, isActive: true },
+  });
+
+  if (!player) {
+    throw new ForbiddenError('Not a member of this game');
+  }
+
+  // Check for existing vote
+  const existingVote = await db.vote.findUnique({
+    where: {
+      actionId_playerId: {
+        actionId,
+        playerId: player.id,
+      },
+    },
+  });
+
+  if (existingVote) {
+    throw new ConflictError('You have already voted');
+  }
+
+  // Map vote type to tokens
+  const tokenMap = {
+    LIKELY_SUCCESS: { successTokens: 2, failureTokens: 0 },
+    LIKELY_FAILURE: { successTokens: 0, failureTokens: 2 },
+    UNCERTAIN: { successTokens: 1, failureTokens: 1 },
+  };
+
+  const tokens = tokenMap[data.voteType];
+
+  const vote = await db.vote.create({
+    data: {
+      actionId,
+      playerId: player.id,
+      voteType: data.voteType,
+      ...tokens,
+    },
+  });
+
+  await logGameEvent(action.gameId, userId, 'VOTE_CAST', { actionId });
+
+  // Check if all players have voted
+  const game = await db.game.findUnique({
+    where: { id: action.gameId },
+    include: {
+      players: { where: { isActive: true } },
+    },
+  });
+
+  const voteCount = await db.vote.count({ where: { actionId } });
+
+  if (game && voteCount >= game.players.length) {
+    // Get full action details for notification
+    const fullAction = await db.action.findUnique({
+      where: { id: actionId },
+      include: {
+        initiator: {
+          include: { user: { select: { id: true } } },
+        },
+      },
+    });
+
+    await db.action.update({
+      where: { id: actionId },
+      data: { status: 'RESOLVED' },
+    });
+    await transitionPhase(action.gameId, 'RESOLUTION');
+
+    // Notify initiator that resolution is ready
+    if (fullAction) {
+      notifyResolutionReady(
+        action.gameId,
+        game.name,
+        fullAction.initiator.userId,
+        fullAction.actionDescription
+      ).catch(() => {});
+    }
+  }
+
+  return vote;
+}
+
+export async function getVotes(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  await requireMember(action.gameId, userId);
+
+  // Only show votes after voting is complete
+  if (action.status === 'VOTING') {
+    const voteCount = await db.vote.count({ where: { actionId } });
+    return { votesSubmitted: voteCount, votes: [] };
+  }
+
+  const votes = await db.vote.findMany({
+    where: { actionId },
+    include: {
+      player: {
+        include: {
+          user: { select: { displayName: true } },
+        },
+      },
+    },
+  });
+
+  return { votes };
+}
+
+export async function drawTokens(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: {
+      game: { select: { name: true } },
+      initiator: true,
+      votes: true,
+    },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (action.status !== 'RESOLVED') {
+    throw new BadRequestError('Action is not ready for token draw');
+  }
+
+  if (action.initiator.userId !== userId) {
+    throw new ForbiddenError('Only the initiator can draw tokens');
+  }
+
+  // Check if already drawn
+  const existingDraw = await db.tokenDraw.findUnique({
+    where: { actionId },
+  });
+
+  if (existingDraw) {
+    throw new ConflictError('Tokens have already been drawn');
+  }
+
+  // Calculate token pool
+  // Base: 1 success + 1 failure
+  // Plus votes
+  const totalSuccess = 1 + action.votes.reduce((sum, v) => sum + v.successTokens, 0);
+  const totalFailure = 1 + action.votes.reduce((sum, v) => sum + v.failureTokens, 0);
+
+  // Draw tokens
+  const drawResult = performTokenDraw(totalSuccess, totalFailure);
+
+  // Store result
+  const tokenDraw = await db.tokenDraw.create({
+    data: {
+      actionId,
+      totalSuccessTokens: totalSuccess,
+      totalFailureTokens: totalFailure,
+      randomSeed: drawResult.seed,
+      drawnSuccess: drawResult.drawnSuccess,
+      drawnFailure: drawResult.drawnFailure,
+      resultValue: drawResult.resultValue,
+      resultType: drawResult.resultType,
+      drawnTokens: {
+        create: drawResult.tokens.map((type, index) => ({
+          drawSequence: index + 1,
+          tokenType: type,
+        })),
+      },
+    },
+    include: {
+      drawnTokens: true,
+    },
+  });
+
+  await db.action.update({
+    where: { id: actionId },
+    data: { resolvedAt: new Date() },
+  });
+
+  await transitionPhase(action.gameId, 'NARRATION');
+
+  await logGameEvent(action.gameId, userId, 'TOKENS_DRAWN', {
+    actionId,
+    result: drawResult.resultType,
+    value: drawResult.resultValue,
+  });
+
+  // Notify initiator that narration is needed
+  notifyNarrationNeeded(
+    action.gameId,
+    action.game.name,
+    userId,
+    drawResult.resultType,
+    drawResult.resultValue
+  ).catch(() => {});
+
+  return tokenDraw;
+}
+
+function performTokenDraw(successCount: number, failureCount: number) {
+  const seed = randomBytes(32).toString('hex');
+
+  // Create token pool
+  const tokens: ('SUCCESS' | 'FAILURE')[] = [
+    ...Array(successCount).fill('SUCCESS'),
+    ...Array(failureCount).fill('FAILURE'),
+  ];
+
+  // Fisher-Yates shuffle with crypto randomness
+  for (let i = tokens.length - 1; i > 0; i--) {
+    const j = getSecureRandomInt(0, i);
+    [tokens[i], tokens[j]] = [tokens[j]!, tokens[i]!];
+  }
+
+  // Draw first 3 tokens
+  const drawn = tokens.slice(0, 3) as ('SUCCESS' | 'FAILURE')[];
+  const drawnSuccess = drawn.filter((t) => t === 'SUCCESS').length;
+  const drawnFailure = 3 - drawnSuccess;
+
+  // Calculate result: -3, -1, +1, +3
+  const resultValue = (drawnSuccess * 2) - 3;
+
+  const resultType = getResultType(drawnSuccess);
+
+  return {
+    seed,
+    tokens: drawn,
+    drawnSuccess,
+    drawnFailure,
+    resultValue,
+    resultType,
+  };
+}
+
+function getSecureRandomInt(min: number, max: number): number {
+  const range = max - min + 1;
+  const bytesNeeded = Math.ceil(Math.log2(range) / 8) || 1;
+  const maxValid = Math.floor(256 ** bytesNeeded / range) * range - 1;
+
+  let randomInt;
+  do {
+    const bytes = randomBytes(bytesNeeded);
+    randomInt = bytes.readUIntBE(0, bytesNeeded);
+  } while (randomInt > maxValid);
+
+  return min + (randomInt % range);
+}
+
+function getResultType(successCount: number): string {
+  switch (successCount) {
+    case 3: return 'TRIUMPH';
+    case 2: return 'SUCCESS_BUT';
+    case 1: return 'FAILURE_BUT';
+    default: return 'DISASTER';
+  }
+}
+
+export async function getDrawResult(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  await requireMember(action.gameId, userId);
+
+  const tokenDraw = await db.tokenDraw.findUnique({
+    where: { actionId },
+    include: { drawnTokens: true },
+  });
+
+  return tokenDraw;
+}
+
+export async function submitNarration(actionId: string, userId: string, data: NarrationInput) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: {
+      game: {
+        include: { currentRound: true },
+      },
+      initiator: true,
+      tokenDraw: true,
+    },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (!action.tokenDraw) {
+    throw new BadRequestError('Tokens must be drawn before narrating');
+  }
+
+  const player = await db.gamePlayer.findFirst({
+    where: { gameId: action.gameId, userId, isActive: true },
+  });
+
+  if (!player) {
+    throw new ForbiddenError('Not a member of this game');
+  }
+
+  // Check narration permissions based on game settings
+  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const narrationMode = settings.narrationMode || 'initiator_only';
+
+  if (narrationMode === 'initiator_only' && action.initiator.userId !== userId) {
+    throw new ForbiddenError('Only the initiator can narrate this action');
+  }
+
+  // Check for existing narration
+  const existingNarration = await db.narration.findUnique({
+    where: { actionId },
+  });
+
+  if (existingNarration) {
+    throw new ConflictError('Narration already submitted');
+  }
+
+  const narration = await db.narration.create({
+    data: {
+      actionId,
+      authorId: player.id,
+      content: data.content,
+    },
+  });
+
+  // Mark action complete
+  await db.action.update({
+    where: { id: actionId },
+    data: {
+      status: 'NARRATED',
+      completedAt: new Date(),
+    },
+  });
+
+  // Increment round actions completed
+  if (action.game.currentRound) {
+    await db.round.update({
+      where: { id: action.game.currentRound.id },
+      data: { actionsCompleted: { increment: 1 } },
+    });
+
+    // Check if round is complete
+    const updatedRound = await db.round.findUnique({
+      where: { id: action.game.currentRound.id },
+    });
+
+    if (updatedRound && updatedRound.actionsCompleted >= updatedRound.totalActionsRequired) {
+      await transitionPhase(action.gameId, 'ROUND_SUMMARY');
+
+      // Notify players that round summary is needed
+      notifyRoundSummaryNeeded(
+        action.gameId,
+        action.game.name,
+        updatedRound.roundNumber,
+        updatedRound.actionsCompleted
+      ).catch(() => {});
+    } else {
+      // More actions needed, go back to proposal
+      await db.game.update({
+        where: { id: action.gameId },
+        data: {
+          currentPhase: 'PROPOSAL',
+          currentActionId: null,
+        },
+      });
+    }
+  }
+
+  await logGameEvent(action.gameId, userId, 'NARRATION_ADDED', { actionId });
+
+  return narration;
+}
+
+export async function getNarration(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  await requireMember(action.gameId, userId);
+
+  const narration = await db.narration.findUnique({
+    where: { actionId },
+    include: {
+      author: {
+        include: {
+          user: { select: { displayName: true } },
+        },
+      },
+    },
+  });
+
+  return narration;
+}

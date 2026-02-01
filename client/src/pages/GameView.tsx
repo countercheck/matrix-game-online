@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
@@ -10,6 +11,7 @@ import {
   NarrationForm,
   RoundSummary,
   GameHistory,
+  RoundHistory,
 } from '../components/game';
 
 interface Game {
@@ -58,6 +60,7 @@ interface Game {
 export default function GameView() {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
+  const [showRoundHistory, setShowRoundHistory] = useState(false);
 
   const { data, isLoading, error } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
@@ -209,11 +212,21 @@ export default function GameView() {
             <h1 className="text-2xl font-bold">{game.name}</h1>
           </div>
           {game.currentRound && (
-            <p className="text-muted-foreground mt-1">
-              Round {game.currentRound.roundNumber} &bull;{' '}
-              {game.currentRound.actionsCompleted}/{game.currentRound.totalActionsRequired} actions
-              completed
-            </p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-muted-foreground">
+                Round {game.currentRound.roundNumber} &bull;{' '}
+                {game.currentRound.actionsCompleted}/{game.currentRound.totalActionsRequired} actions
+                completed
+              </p>
+              {game.currentRound.roundNumber > 1 && (
+                <button
+                  onClick={() => setShowRoundHistory(true)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  View past rounds
+                </button>
+              )}
+            </div>
           )}
         </div>
         <div className="text-right">
@@ -292,6 +305,49 @@ export default function GameView() {
           <GameHistory gameId={game.id} compact />
         </div>
       </div>
+
+      {/* Round History Modal */}
+      {showRoundHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowRoundHistory(false)}
+          />
+          {/* Modal */}
+          <div className="relative bg-background border rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Round History</h2>
+              <button
+                onClick={() => setShowRoundHistory(false)}
+                className="p-1 hover:bg-muted rounded"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <RoundHistory
+                gameId={game.id}
+                currentRoundNumber={game.currentRound?.roundNumber}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

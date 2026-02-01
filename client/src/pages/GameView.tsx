@@ -9,6 +9,7 @@ import {
   TokenDraw,
   NarrationForm,
   RoundSummary,
+  GameHistory,
 } from '../components/game';
 
 interface Game {
@@ -286,6 +287,9 @@ export default function GameView() {
               </p>
             </div>
           )}
+
+          {/* Game History */}
+          <GameHistory gameId={game.id} compact />
         </div>
       </div>
     </div>

@@ -262,6 +262,9 @@ export async function completeArgumentation(actionId: string, userId: string) {
           players: { where: { isActive: true } },
         },
       },
+      arguments: {
+        select: { playerId: true },
+      },
     },
   });
 
@@ -273,10 +276,56 @@ export async function completeArgumentation(actionId: string, userId: string) {
     throw new BadRequestError('Action is not in argumentation phase');
   }
 
-  await requireMember(action.gameId, userId);
+  const player = await db.gamePlayer.findFirst({
+    where: { gameId: action.gameId, userId, isActive: true },
+  });
 
-  // For now, any player completing moves to voting
-  // In a more complex system, you'd track who completed
+  if (!player) {
+    throw new ForbiddenError('Not a member of this game');
+  }
+
+  // Record that this player has completed argumentation
+  await db.argumentationComplete.upsert({
+    where: {
+      actionId_playerId: {
+        actionId,
+        playerId: player.id,
+      },
+    },
+    create: {
+      actionId,
+      playerId: player.id,
+    },
+    update: {},
+  });
+
+  // Check if all players have submitted at least one argument
+  const playerIdsWithArguments = new Set(action.arguments.map((a) => a.playerId));
+  const allPlayers = action.game.players;
+  const playersWithoutArguments = allPlayers.filter((p) => !playerIdsWithArguments.has(p.id));
+
+  if (playersWithoutArguments.length > 0) {
+    // Not all players have argued yet - don't transition
+    return {
+      message: 'Marked as done. Waiting for all players to submit arguments.',
+      waitingFor: playersWithoutArguments.map((p) => p.playerName),
+    };
+  }
+
+  // Check if all players have completed argumentation
+  const completedCount = await db.argumentationComplete.count({
+    where: { actionId },
+  });
+
+  if (completedCount < allPlayers.length) {
+    // Not all players have marked themselves as done
+    return {
+      message: 'Marked as done. Waiting for other players to finish.',
+      playersRemaining: allPlayers.length - completedCount,
+    };
+  }
+
+  // All players have argued and marked as done - transition to voting
   await db.action.update({
     where: { id: actionId },
     data: {

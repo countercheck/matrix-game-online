@@ -92,6 +92,7 @@ docker-compose up -d  # Start PostgreSQL
 - Update `PRD_Mosaic_Matrix_Game.md` for requirement changes
 - Update `Technical_Spec_Mosaic_Matrix_Game.md` for architecture changes
 - Update `CLAUDE.md` when adding new commands, conventions, or project structure changes
+- Update `DEVELOPMENT_PLAN.md` when adding or completing work
 
 ## Game Domain
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { ArgumentList } from './ArgumentList';
@@ -19,6 +20,14 @@ interface ArgumentationPhaseProps {
   hasCompletedArgumentation: boolean;
 }
 
+interface CompleteResponse {
+  data: {
+    message: string;
+    waitingFor?: string[];
+    playersRemaining?: number;
+  };
+}
+
 export function ArgumentationPhase({
   gameId,
   action,
@@ -26,11 +35,21 @@ export function ArgumentationPhase({
   hasCompletedArgumentation,
 }: ArgumentationPhaseProps) {
   const queryClient = useQueryClient();
+  const [waitingStatus, setWaitingStatus] = useState<{
+    waitingFor?: string[];
+    playersRemaining?: number;
+  } | null>(null);
 
   const completeMutation = useMutation({
     mutationFn: () => api.post(`/actions/${action.id}/complete-argumentation`),
-    onSuccess: () => {
+    onSuccess: (response: CompleteResponse) => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+      if (response.data.waitingFor || response.data.playersRemaining) {
+        setWaitingStatus({
+          waitingFor: response.data.waitingFor,
+          playersRemaining: response.data.playersRemaining,
+        });
+      }
     },
   });
 
@@ -67,10 +86,20 @@ export function ArgumentationPhase({
       {/* Complete argumentation */}
       <div className="p-4 border rounded-lg bg-muted/50">
         {hasCompletedArgumentation ? (
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">
               You have finished arguing. Waiting for other players...
             </p>
+            {waitingStatus?.waitingFor && waitingStatus.waitingFor.length > 0 && (
+              <p className="text-xs text-orange-600 dark:text-orange-400">
+                Waiting for arguments from: {waitingStatus.waitingFor.join(', ')}
+              </p>
+            )}
+            {waitingStatus?.playersRemaining && (
+              <p className="text-xs text-muted-foreground">
+                {waitingStatus.playersRemaining} player{waitingStatus.playersRemaining !== 1 ? 's' : ''} still arguing
+              </p>
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-between">

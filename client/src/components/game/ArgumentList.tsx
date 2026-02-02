@@ -3,13 +3,14 @@ import { api } from '../../services/api';
 
 interface Argument {
   id: string;
-  argumentType: 'FOR' | 'AGAINST' | 'CLARIFICATION';
+  argumentType: 'FOR' | 'AGAINST' | 'CLARIFICATION' | 'INITIATOR_FOR';
   content: string;
-  sequenceNumber: number;
+  sequence: number;
   createdAt: string;
-  author: {
+  player: {
     id: string;
     playerName: string;
+    user: { displayName: string };
   };
 }
 
@@ -44,7 +45,7 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
 
   // Group arguments by player
   const groupedByPlayer = args.reduce<Record<string, Argument[]>>((acc, arg) => {
-    const playerId = arg.author.id;
+    const playerId = arg.player.id;
     if (!acc[playerId]) {
       acc[playerId] = [];
     }
@@ -61,7 +62,7 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
           <div
             key={arg.id}
             className={`p-3 rounded-md border-l-4 ${
-              arg.argumentType === 'FOR'
+              arg.argumentType === 'FOR' || arg.argumentType === 'INITIATOR_FOR'
                 ? 'bg-green-50 border-green-500 dark:bg-green-950'
                 : arg.argumentType === 'AGAINST'
                 ? 'bg-red-50 border-red-500 dark:bg-red-950'
@@ -69,17 +70,17 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
             }`}
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium">{arg.author.playerName}</span>
+              <span className="text-sm font-medium">{arg.player.playerName}</span>
               <span
                 className={`text-xs px-2 py-0.5 rounded-full ${
-                  arg.argumentType === 'FOR'
+                  arg.argumentType === 'FOR' || arg.argumentType === 'INITIATOR_FOR'
                     ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                     : arg.argumentType === 'AGAINST'
                     ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                     : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                 }`}
               >
-                {arg.argumentType === 'FOR'
+                {arg.argumentType === 'FOR' || arg.argumentType === 'INITIATOR_FOR'
                   ? 'For'
                   : arg.argumentType === 'AGAINST'
                   ? 'Against'

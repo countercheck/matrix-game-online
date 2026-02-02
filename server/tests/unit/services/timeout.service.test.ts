@@ -14,6 +14,10 @@ vi.mock('../../../src/config/database.js', () => ({
     vote: {
       createMany: vi.fn(),
     },
+    argument: {
+      findFirst: vi.fn(),
+      createMany: vi.fn(),
+    },
     gameEvent: {
       create: vi.fn(),
     },
@@ -135,6 +139,64 @@ describe('Timeout Service', () => {
 
       expect(expectedEventType).toBe('ARGUMENTATION_TIMEOUT');
       expect(expectedEventData.actionId).toBe('action-1');
+    });
+
+    it('should identify players who have not submitted arguments', () => {
+      const activePlayers = [
+        { id: 'player-1', userId: 'user-1', playerName: 'Player 1' },
+        { id: 'player-2', userId: 'user-2', playerName: 'Player 2' },
+        { id: 'player-3', userId: 'user-3', playerName: 'Player 3' },
+      ];
+
+      const existingArguments = [{ playerId: 'player-1' }];
+
+      const playerIdsWithArguments = new Set(existingArguments.map((a) => a.playerId));
+      const playersWithoutArguments = activePlayers.filter(
+        (p) => !playerIdsWithArguments.has(p.id)
+      );
+
+      expect(playersWithoutArguments).toHaveLength(2);
+      expect(playersWithoutArguments.map((p) => p.id)).toContain('player-2');
+      expect(playersWithoutArguments.map((p) => p.id)).toContain('player-3');
+    });
+
+    it('should create placeholder arguments for missing players', () => {
+      const missingPlayerIds = ['player-2', 'player-3'];
+      const actionId = 'action-1';
+      let nextSequence = 2; // Assuming one argument already exists
+
+      const expectedArguments = missingPlayerIds.map((playerId) => ({
+        actionId,
+        playerId,
+        argumentType: 'FOR',
+        content: '[No argument submitted - timed out]',
+        sequence: nextSequence++,
+      }));
+
+      expect(expectedArguments).toHaveLength(2);
+      expectedArguments.forEach((arg) => {
+        expect(arg.argumentType).toBe('FOR');
+        expect(arg.content).toBe('[No argument submitted - timed out]');
+      });
+    });
+
+    it('should handle case where all players have already submitted arguments', () => {
+      const activePlayers = [
+        { id: 'player-1' },
+        { id: 'player-2' },
+      ];
+
+      const existingArguments = [
+        { playerId: 'player-1' },
+        { playerId: 'player-2' },
+      ];
+
+      const playerIdsWithArguments = new Set(existingArguments.map((a) => a.playerId));
+      const playersWithoutArguments = activePlayers.filter(
+        (p) => !playerIdsWithArguments.has(p.id)
+      );
+
+      expect(playersWithoutArguments).toHaveLength(0);
     });
   });
 

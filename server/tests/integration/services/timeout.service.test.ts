@@ -5,6 +5,7 @@ let actions: Map<string, any>;
 let games: Map<string, any>;
 let players: Map<string, any[]>;
 let votes: Map<string, any[]>;
+let args: Map<string, any[]>;
 let gameEvents: any[];
 
 // Initialize stores
@@ -13,6 +14,7 @@ function resetStores() {
   games = new Map();
   players = new Map();
   votes = new Map();
+  args = new Map();
   gameEvents = [];
 }
 
@@ -67,6 +69,9 @@ vi.mock('../../../src/config/database.js', () => ({
         if (include?.votes) {
           result.votes = votes.get(action.id) || [];
         }
+        if (include?.arguments) {
+          result.arguments = args.get(action.id) || [];
+        }
         return result;
       }),
       update: vi.fn(async ({ where, data }: any) => {
@@ -92,6 +97,26 @@ vi.mock('../../../src/config/database.js', () => ({
           const actionVotes = votes.get(vote.actionId) || [];
           actionVotes.push({ id: `vote-${Date.now()}-${Math.random()}`, ...vote });
           votes.set(vote.actionId, actionVotes);
+        });
+        return { count: data.length };
+      }),
+    },
+    argument: {
+      findFirst: vi.fn(async ({ where, orderBy }: any) => {
+        const actionArgs = args.get(where.actionId) || [];
+        if (actionArgs.length === 0) return null;
+        if (orderBy?.sequence === 'desc') {
+          return actionArgs.reduce((max: any, arg: any) =>
+            arg.sequence > (max?.sequence || 0) ? arg : max
+          , null);
+        }
+        return actionArgs[0];
+      }),
+      createMany: vi.fn(async ({ data }: any) => {
+        data.forEach((arg: any) => {
+          const actionArgs = args.get(arg.actionId) || [];
+          actionArgs.push({ id: `arg-${Date.now()}-${Math.random()}`, ...arg });
+          args.set(arg.actionId, actionArgs);
         });
         return { count: data.length };
       }),
@@ -265,12 +290,45 @@ describe('Timeout Service Integration', () => {
         argumentationStartedAt: twentyFiveHoursAgo,
       });
 
+      // All players have arguments
+      args.set('action-1', [
+        { id: 'arg-1', actionId: 'action-1', playerId: 'player-1', sequence: 1 },
+        { id: 'arg-2', actionId: 'action-1', playerId: 'player-2', sequence: 2 },
+        { id: 'arg-3', actionId: 'action-1', playerId: 'player-3', sequence: 3 },
+      ]);
+
       const result = await processArgumentationTimeout('action-1');
 
       expect(result.phase).toBe('ARGUMENTATION');
       expect(result.newPhase).toBe('VOTING');
       expect(actions.get('action-1').status).toBe('VOTING');
       expect(actions.get('action-1').votingStartedAt).toBeInstanceOf(Date);
+    });
+
+    it('should create placeholder arguments for players who have not argued', async () => {
+      const twentyFiveHoursAgo = new Date(Date.now() - 25 * 60 * 60 * 1000);
+
+      actions.set('action-1', {
+        id: 'action-1',
+        gameId: 'game-1',
+        status: 'ARGUING',
+        argumentationStartedAt: twentyFiveHoursAgo,
+      });
+
+      // Only player-1 has an argument
+      args.set('action-1', [
+        { id: 'arg-1', actionId: 'action-1', playerId: 'player-1', sequence: 1 },
+      ]);
+
+      const result = await processArgumentationTimeout('action-1');
+
+      expect(result.playersAffected).toBe(2); // player-2 and player-3
+      const actionArgs = args.get('action-1');
+      expect(actionArgs.length).toBe(3); // Original + 2 placeholders
+      const placeholders = actionArgs.filter((a: any) =>
+        a.content === '[No argument submitted - timed out]'
+      );
+      expect(placeholders.length).toBe(2);
     });
 
     it('should create timeout event', async () => {
@@ -282,6 +340,13 @@ describe('Timeout Service Integration', () => {
         status: 'ARGUING',
         argumentationStartedAt: twentyFiveHoursAgo,
       });
+
+      // All players have arguments
+      args.set('action-1', [
+        { id: 'arg-1', actionId: 'action-1', playerId: 'player-1', sequence: 1 },
+        { id: 'arg-2', actionId: 'action-1', playerId: 'player-2', sequence: 2 },
+        { id: 'arg-3', actionId: 'action-1', playerId: 'player-3', sequence: 3 },
+      ]);
 
       await processArgumentationTimeout('action-1');
 
@@ -414,6 +479,13 @@ describe('Timeout Service Integration', () => {
         status: 'ARGUING',
         argumentationStartedAt: twentyFiveHoursAgo,
       });
+
+      // Add arguments for action-1 (all players have argued)
+      args.set('action-1', [
+        { id: 'arg-1', actionId: 'action-1', playerId: 'player-1', sequence: 1 },
+        { id: 'arg-2', actionId: 'action-1', playerId: 'player-2', sequence: 2 },
+        { id: 'arg-3', actionId: 'action-1', playerId: 'player-3', sequence: 3 },
+      ]);
 
       actions.set('action-2', {
         id: 'action-2',

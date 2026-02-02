@@ -81,7 +81,8 @@ export async function getTimedOutVotingActions(
 
 /**
  * Process a timed-out argumentation phase.
- * Simply advances the action to voting phase.
+ * Creates placeholder arguments for players who haven't argued,
+ * then advances the action to voting phase.
  */
 export async function processArgumentationTimeout(
   actionId: string
@@ -89,7 +90,14 @@ export async function processArgumentationTimeout(
   const action = await db.action.findUnique({
     where: { id: actionId },
     include: {
-      game: true,
+      game: {
+        include: {
+          players: { where: { isActive: true } },
+        },
+      },
+      arguments: {
+        select: { playerId: true },
+      },
     },
   });
 
@@ -102,6 +110,36 @@ export async function processArgumentationTimeout(
   }
 
   logger.info(`Processing argumentation timeout for action ${actionId}`);
+
+  // Find players who haven't submitted any arguments
+  const playerIdsWithArguments = new Set(action.arguments.map((a) => a.playerId));
+  const playersWithoutArguments = action.game.players.filter(
+    (p) => !playerIdsWithArguments.has(p.id)
+  );
+
+  // Create placeholder arguments for players who haven't argued
+  if (playersWithoutArguments.length > 0) {
+    // Get next sequence number
+    const lastArg = await db.argument.findFirst({
+      where: { actionId },
+      orderBy: { sequence: 'desc' },
+    });
+    let nextSequence = (lastArg?.sequence || 0) + 1;
+
+    await db.argument.createMany({
+      data: playersWithoutArguments.map((player) => ({
+        actionId,
+        playerId: player.id,
+        argumentType: 'FOR', // Default to neutral-ish type
+        content: '[No argument submitted - timed out]',
+        sequence: nextSequence++,
+      })),
+    });
+
+    logger.info(
+      `Created ${playersWithoutArguments.length} placeholder arguments for action ${actionId}`
+    );
+  }
 
   // Update action to voting phase
   await db.action.update({
@@ -120,23 +158,26 @@ export async function processArgumentationTimeout(
     data: {
       gameId: action.gameId,
       eventType: 'ARGUMENTATION_TIMEOUT',
-      eventData: { actionId },
+      eventData: {
+        actionId,
+        autoArgumentedPlayerIds: playersWithoutArguments.map((p) => p.id),
+      },
     },
   });
 
-  // Notify players about timeout
+  // Notify players about timeout (include who had placeholders created)
   notifyTimeoutOccurred(
     action.gameId,
     action.game.name,
     'ARGUMENTATION',
-    []
+    playersWithoutArguments.map((p) => p.userId)
   ).catch(() => {});
 
   return {
     actionId,
     gameId: action.gameId,
     phase: 'ARGUMENTATION',
-    playersAffected: 0, // No specific players affected, just phase advance
+    playersAffected: playersWithoutArguments.length,
     newPhase: 'VOTING',
   };
 }

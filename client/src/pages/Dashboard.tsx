@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
+import { SkeletonGameCard } from '../components/ui/Skeleton';
 
 interface Game {
   id: string;
@@ -16,7 +17,7 @@ interface Game {
 }
 
 export default function Dashboard() {
-  const { data, isLoading, error } = useQuery<{ data: Game[] }>({
+  const { data, isLoading, error, refetch } = useQuery<{ data: Game[] }>({
     queryKey: ['userGames'],
     queryFn: () => api.get('/users/me/games').then((res) => res.data),
   });
@@ -36,12 +37,22 @@ export default function Dashboard() {
       </div>
 
       {isLoading && (
-        <div className="text-center py-12 text-muted-foreground">Loading games...</div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <SkeletonGameCard />
+          <SkeletonGameCard />
+          <SkeletonGameCard />
+        </div>
       )}
 
       {error && (
-        <div className="text-center py-12 text-destructive">
-          Failed to load games. Please try again.
+        <div className="text-center py-12 border rounded-lg bg-destructive/5">
+          <p className="text-destructive">Failed to load games.</p>
+          <button
+            onClick={() => refetch()}
+            className="mt-3 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Try Again
+          </button>
         </div>
       )}
 

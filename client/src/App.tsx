@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import Layout from './components/layout/Layout';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -69,7 +70,9 @@ function App() {
         path="/"
         element={
           <ProtectedRoute>
-            <Layout />
+            <ErrorBoundary>
+              <Layout />
+            </ErrorBoundary>
           </ProtectedRoute>
         }
       >

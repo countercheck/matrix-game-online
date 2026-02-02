@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
+import { Skeleton } from '../components/ui/Skeleton';
 
 interface Persona {
   id: string;
@@ -38,7 +39,7 @@ export default function GameLobby() {
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
 
-  const { data, isLoading, error } = useQuery<{ data: Game }>({
+  const { data, isLoading, error, refetch } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
     queryFn: () => api.get(`/games/${gameId}`).then((res) => res.data),
     refetchInterval: 3000, // Poll for new players
@@ -89,11 +90,42 @@ export default function GameLobby() {
   }
 
   if (isLoading) {
-    return <div className="text-center py-12">Loading game...</div>;
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+        <div className="p-4 border rounded-lg space-y-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="p-4 border rounded-lg space-y-3">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </div>
+    );
   }
 
   if (error || !game) {
-    return <div className="text-center py-12 text-destructive">Failed to load game</div>;
+    return (
+      <div className="max-w-2xl mx-auto text-center py-12 border rounded-lg bg-destructive/5">
+        <p className="text-destructive mb-4">Failed to load game</p>
+        <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Try Again
+          </button>
+          <Link to="/" className="text-sm text-muted-foreground hover:underline">
+            Return to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -13,6 +13,7 @@ import {
   GameHistory,
   RoundHistory,
 } from '../components/game';
+import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 
 interface Game {
   id: string;
@@ -62,7 +63,7 @@ export default function GameView() {
   const { user } = useAuth();
   const [showRoundHistory, setShowRoundHistory] = useState(false);
 
-  const { data, isLoading, error } = useQuery<{ data: Game }>({
+  const { data, isLoading, error, refetch } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
     queryFn: () => api.get(`/games/${gameId}`).then((res) => res.data),
     refetchInterval: 5000, // Poll for updates
@@ -72,10 +73,26 @@ export default function GameView() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading game...</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-6 w-24 rounded-full" />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="p-6 border rounded-lg space-y-4">
+              <Skeleton className="h-6 w-32" />
+              <SkeletonText lines={3} />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 border rounded-lg space-y-3">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -83,11 +100,19 @@ export default function GameView() {
 
   if (error || !game) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 border rounded-lg bg-destructive/5">
         <p className="text-destructive mb-4">Failed to load game</p>
-        <Link to="/" className="text-primary hover:underline">
-          Return to Dashboard
-        </Link>
+        <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Try Again
+          </button>
+          <Link to="/" className="text-sm text-muted-foreground hover:underline">
+            Return to Dashboard
+          </Link>
+        </div>
       </div>
     );
   }

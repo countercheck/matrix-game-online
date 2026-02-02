@@ -8,6 +8,7 @@ router.post('/', authenticateToken, gameController.createGame);
 router.get('/:gameId', authenticateToken, gameController.getGame);
 router.put('/:gameId', authenticateToken, gameController.updateGame);
 router.post('/:gameId/join', authenticateToken, gameController.joinGame);
+router.post('/:gameId/select-persona', authenticateToken, gameController.selectPersona);
 router.post('/:gameId/leave', authenticateToken, gameController.leaveGame);
 router.post('/:gameId/start', authenticateToken, gameController.startGame);
 router.get('/:gameId/players', authenticateToken, gameController.getPlayers);

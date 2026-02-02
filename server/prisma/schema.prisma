@@ -47,6 +47,7 @@ model Game {
   currentRound   Round?        @relation("CurrentRound", fields: [currentRoundId], references: [id])
   currentAction  Action?       @relation("CurrentAction", fields: [currentActionId], references: [id])
   players        GamePlayer[]
+  personas       Persona[]
   rounds         Round[]       @relation("GameRounds")
   actions        Action[]      @relation("GameActions")
   events         GameEvent[]
@@ -98,6 +99,7 @@ model GamePlayer {
   id         String    @id @default(uuid())
   gameId     String    @map("game_id")
   userId     String    @map("user_id")
+  personaId  String?   @unique @map("persona_id")
   playerName String    @map("player_name") @db.VarChar(50)
   joinOrder  Int       @map("join_order")
   isHost     Boolean   @default(false) @map("is_host")
@@ -108,6 +110,7 @@ model GamePlayer {
   // Relations
   game                   Game                   @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user                   User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  persona                Persona?               @relation(fields: [personaId], references: [id])
   initiatedActions       Action[]               @relation("ActionInitiator")
   arguments              Argument[]
   votes                  Vote[]
@@ -119,6 +122,23 @@ model GamePlayer {
   @@index([gameId, isActive])
   @@index([userId])
   @@map("game_players")
+}
+
+model Persona {
+  id          String      @id @default(uuid())
+  gameId      String      @map("game_id")
+  name        String      @db.VarChar(50)
+  description String?     @db.Text
+  sortOrder   Int         @default(0) @map("sort_order")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  game        Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  claimedBy   GamePlayer?
+
+  @@unique([gameId, name])
+  @@index([gameId])
+  @@map("personas")
 }
 
 model Action {

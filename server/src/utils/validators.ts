@@ -33,6 +33,16 @@ export const notificationPreferencesSchema = z.object({
   timeoutWarnings: z.boolean().optional(),
 });
 
+// Persona schema
+export const personaSchema = z.object({
+  name: z.string()
+    .min(1, 'Persona name is required')
+    .max(50, 'Persona name must be 50 characters or less'),
+  description: z.string()
+    .max(500, 'Persona description must be 500 characters or less')
+    .optional(),
+});
+
 // Game schemas
 export const createGameSchema = z.object({
   name: z.string().min(1, 'Game name is required').max(100, 'Game name must be 100 characters or less'),
@@ -42,7 +52,18 @@ export const createGameSchema = z.object({
     argumentationTimeoutHours: z.number().int().min(1).max(72).default(24),
     votingTimeoutHours: z.number().int().min(1).max(72).default(24),
     narrationMode: z.enum(['initiator_only', 'collaborative']).default('initiator_only'),
+    personasRequired: z.boolean().default(false),
   }).optional(),
+  personas: z.array(personaSchema).max(20, 'Maximum 20 personas allowed').optional(),
+});
+
+export const joinGameSchema = z.object({
+  playerName: z.string().min(1).max(50).optional(),
+  personaId: z.string().uuid('Invalid persona ID').optional(),
+});
+
+export const selectPersonaSchema = z.object({
+  personaId: z.string().uuid('Invalid persona ID').nullable(),
 });
 
 // Action schemas
@@ -82,7 +103,10 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type NotificationPreferencesInput = z.infer<typeof notificationPreferencesSchema>;
+export type PersonaInput = z.infer<typeof personaSchema>;
 export type CreateGameInput = z.infer<typeof createGameSchema>;
+export type JoinGameInput = z.infer<typeof joinGameSchema>;
+export type SelectPersonaInput = z.infer<typeof selectPersonaSchema>;
 export type ActionProposalInput = z.infer<typeof actionProposalSchema>;
 export type ArgumentInput = z.infer<typeof argumentSchema>;
 export type VoteInput = z.infer<typeof voteSchema>;

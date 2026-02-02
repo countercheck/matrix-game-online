@@ -1,9 +1,16 @@
 import { db } from '../config/database.js';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
-import type { CreateGameInput } from '../utils/validators.js';
+import type { CreateGameInput, JoinGameInput } from '../utils/validators.js';
 import { notifyGameStarted, notifyNewRound } from './notification.service.js';
 
+interface GameSettings {
+  argumentLimit?: number;
+  personasRequired?: boolean;
+}
+
 export async function createGame(userId: string, data: CreateGameInput) {
+  const user = await db.user.findUnique({ where: { id: userId } });
+
   const game = await db.game.create({
     data: {
       name: data.name,
@@ -16,11 +23,21 @@ export async function createGame(userId: string, data: CreateGameInput) {
       players: {
         create: {
           userId,
-          playerName: (await db.user.findUnique({ where: { id: userId } }))!.displayName,
+          playerName: user!.displayName,
           joinOrder: 1,
           isHost: true,
         },
       },
+      // Create personas if provided
+      personas: data.personas?.length
+        ? {
+            create: data.personas.map((persona, index) => ({
+              name: persona.name,
+              description: persona.description,
+              sortOrder: index,
+            })),
+          }
+        : undefined,
     },
     include: {
       players: {
@@ -28,7 +45,11 @@ export async function createGame(userId: string, data: CreateGameInput) {
           user: {
             select: { id: true, displayName: true },
           },
+          persona: true,
         },
+      },
+      personas: {
+        orderBy: { sortOrder: 'asc' },
       },
     },
   });
@@ -47,6 +68,15 @@ export async function getGame(gameId: string, userId: string) {
         include: {
           user: {
             select: { id: true, displayName: true },
+          },
+          persona: true,
+        },
+      },
+      personas: {
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          claimedBy: {
+            select: { id: true, playerName: true },
           },
         },
       },
@@ -146,11 +176,19 @@ export async function updateGame(gameId: string, userId: string, data: Partial<C
   return game;
 }
 
-export async function joinGame(gameId: string, userId: string, playerName: string) {
+export async function joinGame(
+  gameId: string,
+  userId: string,
+  playerName: string,
+  personaId?: string
+) {
   const game = await db.game.findUnique({
     where: { id: gameId },
     include: {
       players: true,
+      personas: {
+        include: { claimedBy: true },
+      },
     },
   });
 
@@ -160,6 +198,25 @@ export async function joinGame(gameId: string, userId: string, playerName: strin
 
   if (game.status !== 'LOBBY') {
     throw new BadRequestError('Game has already started');
+  }
+
+  const settings = (game.settings as GameSettings) || {};
+  const hasPersonas = game.personas.length > 0;
+
+  // Validate persona requirement
+  if (hasPersonas && settings.personasRequired && !personaId) {
+    throw new BadRequestError('A persona selection is required to join this game');
+  }
+
+  // Validate persona if provided
+  if (personaId) {
+    const persona = game.personas.find((p) => p.id === personaId);
+    if (!persona) {
+      throw new BadRequestError('Invalid persona selected');
+    }
+    if (persona.claimedBy) {
+      throw new ConflictError('This persona has already been claimed');
+    }
   }
 
   const existingPlayer = game.players.find((p) => p.userId === userId);
@@ -173,7 +230,9 @@ export async function joinGame(gameId: string, userId: string, playerName: strin
       data: {
         isActive: true,
         playerName,
+        personaId: personaId || null,
       },
+      include: { persona: true },
     });
     await db.game.update({
       where: { id: gameId },
@@ -187,9 +246,11 @@ export async function joinGame(gameId: string, userId: string, playerName: strin
       gameId,
       userId,
       playerName,
+      personaId: personaId || null,
       joinOrder: game.players.length + 1,
       isHost: false,
     },
+    include: { persona: true },
   });
 
   await db.game.update({
@@ -197,7 +258,10 @@ export async function joinGame(gameId: string, userId: string, playerName: strin
     data: { playerCount: { increment: 1 } },
   });
 
-  await logGameEvent(gameId, userId, 'PLAYER_JOINED', { playerName });
+  await logGameEvent(gameId, userId, 'PLAYER_JOINED', {
+    playerName,
+    personaName: player.persona?.name,
+  });
 
   return player;
 }
@@ -224,6 +288,60 @@ export async function leaveGame(gameId: string, userId: string) {
   await logGameEvent(gameId, userId, 'PLAYER_LEFT', { playerName: player.playerName });
 }
 
+export async function selectPersona(
+  gameId: string,
+  userId: string,
+  personaId: string | null
+) {
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: {
+      players: { where: { isActive: true } },
+      personas: {
+        include: { claimedBy: true },
+      },
+    },
+  });
+
+  if (!game) {
+    throw new NotFoundError('Game not found');
+  }
+
+  if (game.status !== 'LOBBY') {
+    throw new BadRequestError('Cannot change persona after game has started');
+  }
+
+  const player = game.players.find((p) => p.userId === userId);
+  if (!player) {
+    throw new ForbiddenError('Not a member of this game');
+  }
+
+  // If selecting a persona (not clearing)
+  if (personaId) {
+    const persona = game.personas.find((p) => p.id === personaId);
+    if (!persona) {
+      throw new BadRequestError('Invalid persona');
+    }
+    // Allow if unclaimed or claimed by this player
+    if (persona.claimedBy && persona.claimedBy.id !== player.id) {
+      throw new ConflictError('This persona has already been claimed');
+    }
+  }
+
+  const updatedPlayer = await db.gamePlayer.update({
+    where: { id: player.id },
+    data: { personaId },
+    include: { persona: true },
+  });
+
+  await logGameEvent(gameId, userId, 'PERSONA_SELECTED', {
+    playerName: player.playerName,
+    personaName: updatedPlayer.persona?.name || null,
+  });
+
+  return updatedPlayer;
+}
+
 export async function startGame(gameId: string, userId: string) {
   await requireHost(gameId, userId);
 
@@ -232,7 +350,9 @@ export async function startGame(gameId: string, userId: string) {
     include: {
       players: {
         where: { isActive: true },
+        include: { persona: true },
       },
+      personas: true,
     },
   });
 
@@ -246,6 +366,18 @@ export async function startGame(gameId: string, userId: string) {
 
   if (game.players.length < 2) {
     throw new BadRequestError('Need at least 2 players to start');
+  }
+
+  // Validate personas if required
+  const settings = (game.settings as GameSettings) || {};
+  if (settings.personasRequired && game.personas.length > 0) {
+    const playersWithoutPersona = game.players.filter((p) => !p.personaId);
+    if (playersWithoutPersona.length > 0) {
+      const names = playersWithoutPersona.map((p) => p.playerName).join(', ');
+      throw new BadRequestError(
+        `All players must select a persona before starting. Missing: ${names}`
+      );
+    }
   }
 
   // Create first round

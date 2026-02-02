@@ -1,7 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import * as gameService from '../services/game.service.js';
 import * as actionService from '../services/action.service.js';
-import { createGameSchema, actionProposalSchema } from '../utils/validators.js';
+import {
+  createGameSchema,
+  actionProposalSchema,
+  joinGameSchema,
+  selectPersonaSchema,
+} from '../utils/validators.js';
 
 export async function createGame(
   req: Request,
@@ -56,9 +61,26 @@ export async function joinGame(
   try {
     const { gameId } = req.params;
     const userId = req.user!.id;
+    const data = joinGameSchema.parse(req.body);
     // Use provided playerName or fall back to user's displayName
-    const playerName = req.body.playerName || req.user!.displayName;
-    const player = await gameService.joinGame(gameId, userId, playerName);
+    const playerName = data.playerName || req.user!.displayName;
+    const player = await gameService.joinGame(gameId, userId, playerName, data.personaId);
+    res.json({ success: true, data: player });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function selectPersona(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { gameId } = req.params;
+    const userId = req.user!.id;
+    const { personaId } = selectPersonaSchema.parse(req.body);
+    const player = await gameService.selectPersona(gameId, userId, personaId);
     res.json({ success: true, data: player });
   } catch (error) {
     next(error);

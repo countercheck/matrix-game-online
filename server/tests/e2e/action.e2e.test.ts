@@ -247,10 +247,30 @@ describe('Action Resolution E2E Tests', () => {
 
       actionId = actionResponse.body.data.id;
 
-      // Complete argumentation
+      // All players must submit an argument and complete
+      // Host already has initial arguments, other players submit theirs
+      await request(app)
+        .post(`/api/actions/${actionId}/arguments`)
+        .set('Authorization', `Bearer ${player1Token}`)
+        .send({ argumentType: 'FOR', content: 'I support this' });
+
+      await request(app)
+        .post(`/api/actions/${actionId}/arguments`)
+        .set('Authorization', `Bearer ${player2Token}`)
+        .send({ argumentType: 'AGAINST', content: 'I oppose this' });
+
+      // All players must mark as complete (including initiator)
+      await request(app)
+        .post(`/api/actions/${actionId}/complete-argumentation`)
+        .set('Authorization', `Bearer ${hostToken}`);
+
       await request(app)
         .post(`/api/actions/${actionId}/complete-argumentation`)
         .set('Authorization', `Bearer ${player1Token}`);
+
+      await request(app)
+        .post(`/api/actions/${actionId}/complete-argumentation`)
+        .set('Authorization', `Bearer ${player2Token}`);
     });
 
     it('should allow player to vote LIKELY_SUCCESS', async () => {
@@ -371,10 +391,29 @@ describe('Action Resolution E2E Tests', () => {
 
       actionId = actionResponse.body.data.id;
 
-      // Complete argumentation
+      // All players must submit an argument and complete
+      await request(app)
+        .post(`/api/actions/${actionId}/arguments`)
+        .set('Authorization', `Bearer ${player1Token}`)
+        .send({ argumentType: 'FOR', content: 'I support this' });
+
+      await request(app)
+        .post(`/api/actions/${actionId}/arguments`)
+        .set('Authorization', `Bearer ${player2Token}`)
+        .send({ argumentType: 'FOR', content: 'I also support this' });
+
+      // All players must mark as complete (including initiator)
+      await request(app)
+        .post(`/api/actions/${actionId}/complete-argumentation`)
+        .set('Authorization', `Bearer ${hostToken}`);
+
       await request(app)
         .post(`/api/actions/${actionId}/complete-argumentation`)
         .set('Authorization', `Bearer ${player1Token}`);
+
+      await request(app)
+        .post(`/api/actions/${actionId}/complete-argumentation`)
+        .set('Authorization', `Bearer ${player2Token}`);
 
       // All vote (favoring success for predictable pool)
       await request(app)
@@ -454,9 +493,29 @@ describe('Action Resolution E2E Tests', () => {
 
       const actionId = actionResponse.body.data.id;
 
+      // All players must submit an argument and complete
+      await request(app)
+        .post(`/api/actions/${actionId}/arguments`)
+        .set('Authorization', `Bearer ${player1Token}`)
+        .send({ argumentType: 'FOR', content: 'I support this' });
+
+      await request(app)
+        .post(`/api/actions/${actionId}/arguments`)
+        .set('Authorization', `Bearer ${player2Token}`)
+        .send({ argumentType: 'FOR', content: 'I also support this' });
+
+      // All players must mark as complete (including initiator)
+      await request(app)
+        .post(`/api/actions/${actionId}/complete-argumentation`)
+        .set('Authorization', `Bearer ${hostToken}`);
+
       await request(app)
         .post(`/api/actions/${actionId}/complete-argumentation`)
         .set('Authorization', `Bearer ${player1Token}`);
+
+      await request(app)
+        .post(`/api/actions/${actionId}/complete-argumentation`)
+        .set('Authorization', `Bearer ${player2Token}`);
 
       await request(app)
         .post(`/api/actions/${actionId}/votes`)

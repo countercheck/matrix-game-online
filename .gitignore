@@ -48,3 +48,7 @@ prisma/*.db-journal
 .cache/
 tmp/
 temp/
+
+# Vite build artifacts
+client/vite.config.js
+client/vite.config.d.ts

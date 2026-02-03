@@ -1,0 +1,8 @@
+# Nixpacks configuration for server
+# https://nixpacks.com/docs/configuration/file
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "pnpm"]
+
+[variables]
+NODE_VERSION = "20"

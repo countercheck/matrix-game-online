@@ -38,9 +38,7 @@ export default function CreateGame() {
         try {
           const formData = new FormData();
           formData.append('image', imageFile);
-          await api.post(`/games/${gameId}/image`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
+          await api.post(`/games/${gameId}/image`, formData);
         } catch (err) {
           console.error('Failed to upload image:', err);
           // Continue anyway - game was created successfully

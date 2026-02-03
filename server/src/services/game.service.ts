@@ -2,7 +2,7 @@ import { db } from '../config/database.js';
 import { GamePhase, Prisma } from '@prisma/client';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
 import type { CreateGameInput } from '../utils/validators.js';
-import { notifyGameStarted, notifyNewRound } from './notification.service.js';
+import { notifyGameStarted } from './notification.service.js';
 
 interface GameSettings {
   argumentLimit?: number;

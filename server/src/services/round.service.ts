@@ -1,5 +1,5 @@
 import { db } from '../config/database.js';
-import { BadRequestError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
+import { BadRequestError, NotFoundError } from '../middleware/errorHandler.js';
 import { requireMember, logGameEvent } from './game.service.js';
 import type { RoundSummaryInput } from '../utils/validators.js';
 import { notifyNewRound } from './notification.service.js';

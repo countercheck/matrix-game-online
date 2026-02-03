@@ -412,4 +412,47 @@ describe('Game Routes', () => {
       expect(response.status).toBe(404);
     });
   });
+
+  describe('POST /games/:gameId/image', () => {
+    it('should upload an image for a game', async () => {
+      // Create a simple 1x1 PNG image buffer
+      const imageBuffer = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'base64'
+      );
+
+      const response = await request(app)
+        .post(`/api/games/${game.id}/image`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .attach('image', imageBuffer, 'test.png');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.imageUrl).toBeDefined();
+      expect(response.body.data.game.imageUrl).toBeDefined();
+    });
+
+    it('should reject upload if user is not the game creator', async () => {
+      const otherUserToken = generateToken({ id: 'other-user-id', email: 'other@test.com' });
+      const imageBuffer = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'base64'
+      );
+
+      const response = await request(app)
+        .post(`/api/games/${game.id}/image`)
+        .set('Authorization', `Bearer ${otherUserToken}`)
+        .attach('image', imageBuffer, 'test.png');
+
+      expect(response.status).toBe(403);
+    });
+
+    it('should reject upload without a file', async () => {
+      const response = await request(app)
+        .post(`/api/games/${game.id}/image`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(400);
+    });
+  });
 });

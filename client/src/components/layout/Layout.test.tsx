@@ -38,7 +38,9 @@ describe('Layout Component', () => {
   it('should render navigation links', () => {
     render(<Layout />);
 
-    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
+    // Dashboard link in nav (not the logo which also links to dashboard)
+    const dashboardLinks = screen.getAllByRole('link', { name: /dashboard/i });
+    expect(dashboardLinks.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('link', { name: /profile/i })).toBeInTheDocument();
   });
 
@@ -51,7 +53,9 @@ describe('Layout Component', () => {
   it('should render logout button', () => {
     render(<Layout />);
 
-    expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
+    // Look for desktop logout button (there may be mobile one too when menu is open)
+    const logoutButtons = screen.getAllByRole('button', { name: /log.*out/i });
+    expect(logoutButtons.length).toBeGreaterThanOrEqual(1);
   });
 
   it('should render outlet for child routes', () => {
@@ -63,7 +67,9 @@ describe('Layout Component', () => {
   it('should call logout and navigate on logout click', () => {
     render(<Layout />);
 
-    fireEvent.click(screen.getByRole('button', { name: /logout/i }));
+    // Click the first logout button found
+    const logoutButtons = screen.getAllByRole('button', { name: /log.*out/i });
+    fireEvent.click(logoutButtons[0]);
 
     expect(mockLogout).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('/login');
@@ -72,8 +78,10 @@ describe('Layout Component', () => {
   it('should have correct link to dashboard', () => {
     render(<Layout />);
 
-    const dashboardLink = screen.getByRole('link', { name: /dashboard/i });
-    expect(dashboardLink).toHaveAttribute('href', '/');
+    // Multiple links go to dashboard (logo + nav link), check at least one has correct href
+    const dashboardLinks = screen.getAllByRole('link', { name: /dashboard/i });
+    const linkWithCorrectHref = dashboardLinks.find(link => link.getAttribute('href') === '/');
+    expect(linkWithCorrectHref).toBeTruthy();
   });
 
   it('should have correct link to profile', () => {

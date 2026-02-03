@@ -57,25 +57,35 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg" aria-label="Add argument form">
       <div className="flex items-center justify-between">
-        <h4 className="font-medium">Add Argument</h4>
-        <span className="text-sm text-muted-foreground">
+        <h4 className="font-medium" id="argument-form-title">Add Argument</h4>
+        <span className="text-sm text-muted-foreground" aria-live="polite">
           {remainingArguments} remaining
         </span>
       </div>
 
       {error && (
-        <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="p-3 text-sm text-destructive bg-destructive/10 rounded-md"
+        >
           {error}
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div
+        className="flex gap-2"
+        role="radiogroup"
+        aria-label="Argument type"
+      >
         <button
           type="button"
+          role="radio"
+          aria-checked={argumentType === 'FOR'}
           onClick={() => setArgumentType('FOR')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
             argumentType === 'FOR'
               ? 'bg-green-600 text-white'
               : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300'
@@ -85,8 +95,10 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
         </button>
         <button
           type="button"
+          role="radio"
+          aria-checked={argumentType === 'AGAINST'}
           onClick={() => setArgumentType('AGAINST')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
             argumentType === 'AGAINST'
               ? 'bg-red-600 text-white'
               : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300'
@@ -96,8 +108,10 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
         </button>
         <button
           type="button"
+          role="radio"
+          aria-checked={argumentType === 'CLARIFICATION'}
           onClick={() => setArgumentType('CLARIFICATION')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
             argumentType === 'CLARIFICATION'
               ? 'bg-blue-600 text-white'
               : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300'
@@ -108,12 +122,17 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
       </div>
 
       <div className="space-y-2">
+        <label htmlFor="argument-content" className="sr-only">
+          Argument content
+        </label>
         <textarea
+          id="argument-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           maxLength={200}
           rows={3}
-          className="w-full px-3 py-2 border rounded-md bg-background resize-none"
+          aria-describedby="argument-char-count"
+          className="w-full px-3 py-2 border rounded-md bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder={
             argumentType === 'FOR'
               ? 'Why this action should succeed...'
@@ -122,7 +141,11 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
               : 'Additional context or clarification...'
           }
         />
-        <p className="text-xs text-muted-foreground text-right">
+        <p
+          id="argument-char-count"
+          className="text-xs text-muted-foreground text-right"
+          aria-live="polite"
+        >
           {content.length}/200 characters
         </p>
       </div>
@@ -130,7 +153,8 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
       <button
         type="submit"
         disabled={addMutation.isPending}
-        className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+        aria-disabled={addMutation.isPending}
+        className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
       >
         {addMutation.isPending ? 'Adding...' : 'Add Argument'}
       </button>

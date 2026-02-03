@@ -121,6 +121,7 @@ model GamePlayer {
   @@unique([gameId, userId])
   @@index([gameId, isActive])
   @@index([userId])
+  @@index([userId, isActive])
   @@map("game_players")
 }
 
@@ -170,6 +171,7 @@ model Action {
   @@unique([gameId, sequenceNumber])
   @@index([gameId, status])
   @@index([roundId, status])
+  @@index([roundId, initiatorId])
   @@index([initiatorId])
   @@map("actions")
 }
@@ -188,6 +190,7 @@ model Argument {
   player GamePlayer @relation(fields: [playerId], references: [id])
 
   @@index([actionId, sequence])
+  @@index([actionId, playerId])
   @@index([playerId])
   @@map("arguments")
 }

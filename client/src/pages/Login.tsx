@@ -34,9 +34,14 @@ export default function Login() {
           <p className="text-muted-foreground mt-2">Sign in to your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-label="Sign in form">
           {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+            <div
+              id="login-error"
+              role="alert"
+              aria-live="polite"
+              className="p-3 text-sm text-destructive bg-destructive/10 rounded-md"
+            >
               {error}
             </div>
           )}
@@ -51,8 +56,11 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              aria-describedby={error ? 'login-error' : undefined}
+              aria-invalid={!!error}
+              className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="you@example.com"
+              autoComplete="email"
             />
           </div>
 
@@ -66,15 +74,19 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              aria-describedby={error ? 'login-error' : undefined}
+              aria-invalid={!!error}
+              className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="********"
+              autoComplete="current-password"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            aria-disabled={isLoading}
+            className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>

@@ -154,45 +154,61 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
           </p>
 
           {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+            <div
+              role="alert"
+              aria-live="polite"
+              className="p-3 text-sm text-destructive bg-destructive/10 rounded-md"
+            >
               {error}
             </div>
           )}
 
-          <div className="space-y-3">
+          <div
+            className="space-y-3"
+            role="radiogroup"
+            aria-label="Vote options"
+            aria-describedby="vote-description"
+          >
+            <p id="vote-description" className="sr-only">
+              Select one option to cast your vote. Your vote affects the token pool for the resolution draw.
+            </p>
             {voteOptions.map((option) => (
               <button
                 key={option.type}
+                type="button"
+                role="radio"
+                aria-checked={selectedVote === option.type}
                 onClick={() => setSelectedVote(option.type)}
-                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                   selectedVote === option.type
                     ? option.color === 'green'
-                      ? 'border-green-500 bg-green-50 dark:bg-green-950'
+                      ? 'border-green-500 bg-green-50 dark:bg-green-950 dark:text-green-100'
                       : option.color === 'red'
-                      ? 'border-red-500 bg-red-50 dark:bg-red-950'
-                      : 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950'
+                      ? 'border-red-500 bg-red-50 dark:bg-red-950 dark:text-red-100'
+                      : 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950 dark:text-yellow-100'
                     : 'border-muted hover:border-primary/50'
                 }`}
+                aria-label={`${option.label}: ${option.description}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{option.label}</span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1" aria-hidden="true">
                     {option.type === 'LIKELY_SUCCESS' && (
                       <>
-                        <span className="w-4 h-4 rounded-full bg-green-500" />
-                        <span className="w-4 h-4 rounded-full bg-green-500" />
+                        <span className="w-4 h-4 rounded-full bg-green-500" title="Success token" />
+                        <span className="w-4 h-4 rounded-full bg-green-500" title="Success token" />
                       </>
                     )}
                     {option.type === 'UNCERTAIN' && (
                       <>
-                        <span className="w-4 h-4 rounded-full bg-green-500" />
-                        <span className="w-4 h-4 rounded-full bg-red-500" />
+                        <span className="w-4 h-4 rounded-full bg-green-500" title="Success token" />
+                        <span className="w-4 h-4 rounded-full bg-red-500" title="Failure token" />
                       </>
                     )}
                     {option.type === 'LIKELY_FAILURE' && (
                       <>
-                        <span className="w-4 h-4 rounded-full bg-red-500" />
-                        <span className="w-4 h-4 rounded-full bg-red-500" />
+                        <span className="w-4 h-4 rounded-full bg-red-500" title="Failure token" />
+                        <span className="w-4 h-4 rounded-full bg-red-500" title="Failure token" />
                       </>
                     )}
                   </div>
@@ -205,7 +221,8 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
           <button
             onClick={handleVote}
             disabled={!selectedVote || voteMutation.isPending}
-            className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 font-medium"
+            aria-disabled={!selectedVote || voteMutation.isPending}
+            className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             {voteMutation.isPending ? 'Submitting...' : 'Submit Vote'}
           </button>

@@ -64,7 +64,7 @@ export default function CreateGame() {
       }
 
       // Check file type
-      if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
+      if (!file.type.match(/^image\/(jpeg|png|gif|webp)$/)) {
         setError('Only JPEG, PNG, GIF, and WebP images are allowed');
         return;
       }

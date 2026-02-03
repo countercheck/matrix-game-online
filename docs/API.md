@@ -197,7 +197,6 @@ Upload an image for a game. Only the game creator can upload images.
 **Constraints:**
 - Maximum file size: 5MB
 - Allowed formats: JPEG, JPG, PNG, GIF, WebP
-- Maximum dimensions: 2048x2048 pixels
 
 **Response:** `200 OK`
 ```json

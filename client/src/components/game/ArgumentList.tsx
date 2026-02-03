@@ -43,16 +43,6 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
     );
   }
 
-  // Group arguments by player
-  const groupedByPlayer = args.reduce<Record<string, Argument[]>>((acc, arg) => {
-    const playerId = arg.player.id;
-    if (!acc[playerId]) {
-      acc[playerId] = [];
-    }
-    acc[playerId].push(arg);
-    return acc;
-  }, {});
-
   return (
     <div className="space-y-4">
       <h3 className="font-semibold">Arguments ({args.length})</h3>

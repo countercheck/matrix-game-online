@@ -13,12 +13,6 @@ interface Action {
   };
 }
 
-interface TokenPoolInfo {
-  successTokens: number;
-  failureTokens: number;
-  totalTokens: number;
-}
-
 interface DrawResult {
   drawnTokens: { type: 'SUCCESS' | 'FAILURE' }[];
   successCount: number;

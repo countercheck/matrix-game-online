@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 
@@ -22,10 +22,14 @@ export default function Profile() {
   const { data, isLoading } = useQuery<{ data: Profile }>({
     queryKey: ['profile'],
     queryFn: () => api.get('/users/me').then((res) => res.data),
-    onSuccess: (data) => {
-      setDisplayName(data.data.displayName);
-    },
   });
+
+  // Set displayName when profile data loads
+  useEffect(() => {
+    if (data?.data?.displayName) {
+      setDisplayName(data.data.displayName);
+    }
+  }, [data?.data?.displayName]);
 
   const updateMutation = useMutation({
     mutationFn: (data: { displayName: string }) => api.put('/users/me', data),

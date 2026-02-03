@@ -106,11 +106,30 @@ function generateToken(userId: string, email: string): string {
     throw new Error('JWT_SECRET is not configured');
   }
 
-  const expiry = process.env.JWT_EXPIRY || '7d';
+  // Default to 7 days expiry
+  const expirySeconds = parseExpiry(process.env.JWT_EXPIRY || '7d');
 
   return jwt.sign(
     { userId, email },
     secret,
-    { expiresIn: expiry as string | number }
+    { expiresIn: expirySeconds }
   );
+}
+
+// Parse expiry string like '7d', '24h', '60m' to seconds
+function parseExpiry(expiry: string): number {
+  const match = expiry.match(/^(\d+)([smhd])$/);
+  if (!match) {
+    // Default to 7 days if invalid format
+    return 7 * 24 * 60 * 60;
+  }
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  switch (unit) {
+    case 's': return value;
+    case 'm': return value * 60;
+    case 'h': return value * 60 * 60;
+    case 'd': return value * 24 * 60 * 60;
+    default: return 7 * 24 * 60 * 60;
+  }
 }

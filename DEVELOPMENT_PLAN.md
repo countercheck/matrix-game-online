@@ -24,7 +24,7 @@
 - [✓] Initialize monorepo structure (or separate repos for frontend/backend)
 - [✓] Set up `.gitignore` for Node.js, environment files
 - [✓] Create `README.md` with project overview
-- [✓] Set up branch protection rules (main/develop)
+- [*] Set up branch protection rules (skipped - single contributor)
 - [✓] Configure GitHub Projects or issue tracker
 
 ### 0.2 Backend Project Setup

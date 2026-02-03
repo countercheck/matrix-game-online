@@ -899,6 +899,16 @@
 
 ---
 
+## Known Issues & Improvements
+
+### UI/UX Issues
+- [ ] Argument background colors need better contrast with text (dark mode readability)
+
+### Game Logic Issues
+- [ ] Allow continuing to voting even if all players skip adding arguments (currently requires at least one argument per player)
+
+---
+
 ## Phase 26: Post-Launch
 **Estimated Time:** Ongoing
 

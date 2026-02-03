@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db } from '../config/database.js';
 import { BadRequestError, UnauthorizedError, ConflictError } from '../middleware/errorHandler.js';

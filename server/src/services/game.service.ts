@@ -1,4 +1,5 @@
 import { db } from '../config/database.js';
+import { GamePhase, Prisma } from '@prisma/client';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
 import type { CreateGameInput, JoinGameInput } from '../utils/validators.js';
 import { notifyGameStarted, notifyNewRound } from './notification.service.js';
@@ -480,20 +481,20 @@ export async function getRounds(gameId: string, userId: string) {
   return rounds;
 }
 
-export async function transitionPhase(gameId: string, newPhase: string) {
+export async function transitionPhase(gameId: string, newPhase: GamePhase) {
   const game = await db.game.findUnique({ where: { id: gameId } });
   if (!game) {
     throw new NotFoundError('Game not found');
   }
 
-  const validTransitions: Record<string, string[]> = {
-    WAITING: ['PROPOSAL'],
-    PROPOSAL: ['ARGUMENTATION'],
-    ARGUMENTATION: ['VOTING'],
-    VOTING: ['RESOLUTION'],
-    RESOLUTION: ['NARRATION'],
-    NARRATION: ['PROPOSAL', 'ROUND_SUMMARY'],
-    ROUND_SUMMARY: ['PROPOSAL'],
+  const validTransitions: Record<GamePhase, GamePhase[]> = {
+    WAITING: [GamePhase.PROPOSAL],
+    PROPOSAL: [GamePhase.ARGUMENTATION],
+    ARGUMENTATION: [GamePhase.VOTING],
+    VOTING: [GamePhase.RESOLUTION],
+    RESOLUTION: [GamePhase.NARRATION],
+    NARRATION: [GamePhase.PROPOSAL, GamePhase.ROUND_SUMMARY],
+    ROUND_SUMMARY: [GamePhase.PROPOSAL],
   };
 
   const valid = validTransitions[game.currentPhase];
@@ -537,7 +538,7 @@ async function logGameEvent(
   gameId: string,
   userId: string | null,
   eventType: string,
-  eventData: Record<string, unknown>
+  eventData: Prisma.InputJsonValue
 ) {
   await db.gameEvent.create({
     data: {

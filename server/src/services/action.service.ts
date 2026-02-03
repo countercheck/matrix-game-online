@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 import { db } from '../config/database.js';
+import { ResultType, GamePhase } from '@prisma/client';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
 import { requireMember, logGameEvent, transitionPhase } from './game.service.js';
 import type { ActionProposalInput, ArgumentInput, VoteInput, NarrationInput } from '../utils/validators.js';
@@ -323,7 +324,7 @@ export async function completeArgumentation(actionId: string, userId: string) {
     },
   });
 
-  await transitionPhase(action.gameId, 'VOTING');
+  await transitionPhase(action.gameId, GamePhase.VOTING);
 
   // Send notifications (async, don't wait)
   notifyVotingStarted(
@@ -415,7 +416,7 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
       where: { id: actionId },
       data: { status: 'RESOLVED' },
     });
-    await transitionPhase(action.gameId, 'RESOLUTION');
+    await transitionPhase(action.gameId, GamePhase.RESOLUTION);
 
     // Notify initiator that resolution is ready
     if (fullAction) {
@@ -530,7 +531,7 @@ export async function drawTokens(actionId: string, userId: string) {
     data: { resolvedAt: new Date() },
   });
 
-  await transitionPhase(action.gameId, 'NARRATION');
+  await transitionPhase(action.gameId, GamePhase.NARRATION);
 
   await logGameEvent(action.gameId, userId, 'TOKENS_DRAWN', {
     actionId,
@@ -599,12 +600,12 @@ function getSecureRandomInt(min: number, max: number): number {
   return min + (randomInt % range);
 }
 
-function getResultType(successCount: number): string {
+function getResultType(successCount: number): ResultType {
   switch (successCount) {
-    case 3: return 'TRIUMPH';
-    case 2: return 'SUCCESS_BUT';
-    case 1: return 'FAILURE_BUT';
-    default: return 'DISASTER';
+    case 3: return ResultType.TRIUMPH;
+    case 2: return ResultType.SUCCESS_BUT;
+    case 1: return ResultType.FAILURE_BUT;
+    default: return ResultType.DISASTER;
   }
 }
 
@@ -702,7 +703,7 @@ export async function submitNarration(actionId: string, userId: string, data: Na
     });
 
     if (updatedRound && updatedRound.actionsCompleted >= updatedRound.totalActionsRequired) {
-      await transitionPhase(action.gameId, 'ROUND_SUMMARY');
+      await transitionPhase(action.gameId, GamePhase.ROUND_SUMMARY);
 
       // Notify players that round summary is needed
       notifyRoundSummaryNeeded(

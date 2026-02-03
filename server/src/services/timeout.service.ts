@@ -1,4 +1,5 @@
 import { db } from '../config/database.js';
+import { GamePhase } from '@prisma/client';
 import { logger } from '../utils/logger.js';
 import { transitionPhase } from './game.service.js';
 import { notifyTimeoutOccurred } from './notification.service.js';
@@ -151,7 +152,7 @@ export async function processArgumentationTimeout(
   });
 
   // Update game phase
-  await transitionPhase(action.gameId, 'VOTING');
+  await transitionPhase(action.gameId, GamePhase.VOTING);
 
   // Log the timeout event
   await db.gameEvent.create({
@@ -242,7 +243,7 @@ export async function processVotingTimeout(
   });
 
   // Update game phase
-  await transitionPhase(action.gameId, 'RESOLUTION');
+  await transitionPhase(action.gameId, GamePhase.RESOLUTION);
 
   // Log the timeout event
   await db.gameEvent.create({

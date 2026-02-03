@@ -29,7 +29,7 @@ export async function getGame(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const game = await gameService.getGame(gameId, userId);
     res.json({ success: true, data: game });
@@ -44,7 +44,7 @@ export async function updateGame(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const game = await gameService.updateGame(gameId, userId, req.body);
     res.json({ success: true, data: game });
@@ -59,7 +59,7 @@ export async function joinGame(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const data = joinGameSchema.parse(req.body);
     // Use provided playerName or fall back to user's displayName
@@ -77,7 +77,7 @@ export async function selectPersona(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const { personaId } = selectPersonaSchema.parse(req.body);
     const player = await gameService.selectPersona(gameId, userId, personaId);
@@ -93,7 +93,7 @@ export async function leaveGame(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     await gameService.leaveGame(gameId, userId);
     res.json({ success: true, data: { message: 'Left game successfully' } });
@@ -108,7 +108,7 @@ export async function startGame(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const game = await gameService.startGame(gameId, userId);
     res.json({ success: true, data: game });
@@ -123,7 +123,7 @@ export async function getPlayers(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const players = await gameService.getPlayers(gameId, userId);
     res.json({ success: true, data: players });
@@ -138,7 +138,7 @@ export async function getGameHistory(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const history = await gameService.getGameHistory(gameId, userId);
     res.json({ success: true, data: history });
@@ -153,7 +153,7 @@ export async function getRounds(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const rounds = await gameService.getRounds(gameId, userId);
     res.json({ success: true, data: rounds });
@@ -168,7 +168,7 @@ export async function proposeAction(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { gameId } = req.params;
+    const gameId = req.params.gameId as string;
     const userId = req.user!.id;
     const data = actionProposalSchema.parse(req.body);
     const action = await actionService.proposeAction(gameId, userId, data);

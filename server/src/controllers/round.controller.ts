@@ -8,7 +8,7 @@ export async function getRound(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { roundId } = req.params;
+    const roundId = req.params.roundId as string;
     const userId = req.user!.id;
     const round = await roundService.getRound(roundId, userId);
     res.json({ success: true, data: round });
@@ -23,7 +23,7 @@ export async function submitRoundSummary(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { roundId } = req.params;
+    const roundId = req.params.roundId as string;
     const userId = req.user!.id;
     const data = roundSummarySchema.parse(req.body);
     const result = await roundService.submitRoundSummary(roundId, userId, data);
@@ -39,7 +39,7 @@ export async function getRoundSummary(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { roundId } = req.params;
+    const roundId = req.params.roundId as string;
     const userId = req.user!.id;
     const summary = await roundService.getRoundSummary(roundId, userId);
     res.json({ success: true, data: summary });

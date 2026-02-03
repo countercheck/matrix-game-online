@@ -111,6 +111,6 @@ function generateToken(userId: string, email: string): string {
   return jwt.sign(
     { userId, email },
     secret,
-    { expiresIn: expiry }
+    { expiresIn: expiry as string | number }
   );
 }

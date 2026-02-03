@@ -8,7 +8,7 @@ export async function getAction(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const action = await actionService.getAction(actionId, userId);
     res.json({ success: true, data: action });
@@ -23,7 +23,7 @@ export async function addArgument(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const data = argumentSchema.parse(req.body);
     const argument = await actionService.addArgument(actionId, userId, data);
@@ -39,7 +39,7 @@ export async function getArguments(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const args = await actionService.getArguments(actionId, userId);
     res.json({ success: true, data: args });
@@ -54,7 +54,7 @@ export async function completeArgumentation(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const result = await actionService.completeArgumentation(actionId, userId);
     res.json({ success: true, data: result });
@@ -69,7 +69,7 @@ export async function submitVote(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const data = voteSchema.parse(req.body);
     const vote = await actionService.submitVote(actionId, userId, data);
@@ -85,7 +85,7 @@ export async function getVotes(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const votes = await actionService.getVotes(actionId, userId);
     res.json({ success: true, data: votes });
@@ -100,7 +100,7 @@ export async function drawTokens(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const result = await actionService.drawTokens(actionId, userId);
     res.json({ success: true, data: result });
@@ -115,7 +115,7 @@ export async function getDrawResult(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const result = await actionService.getDrawResult(actionId, userId);
     res.json({ success: true, data: result });
@@ -130,7 +130,7 @@ export async function submitNarration(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const data = narrationSchema.parse(req.body);
     const narration = await actionService.submitNarration(actionId, userId, data);
@@ -146,7 +146,7 @@ export async function getNarration(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { actionId } = req.params;
+    const actionId = req.params.actionId as string;
     const userId = req.user!.id;
     const narration = await actionService.getNarration(actionId, userId);
     res.json({ success: true, data: narration });

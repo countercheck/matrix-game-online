@@ -53,10 +53,10 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
             key={arg.id}
             className={`p-3 rounded-md border-l-4 ${
               arg.argumentType === 'FOR' || arg.argumentType === 'INITIATOR_FOR'
-                ? 'bg-green-50 border-green-500 dark:bg-green-950'
+                ? 'bg-green-50 border-green-500 text-green-900 dark:bg-green-950 dark:text-green-100'
                 : arg.argumentType === 'AGAINST'
-                ? 'bg-red-50 border-red-500 dark:bg-red-950'
-                : 'bg-blue-50 border-blue-500 dark:bg-blue-950'
+                ? 'bg-red-50 border-red-500 text-red-900 dark:bg-red-950 dark:text-red-100'
+                : 'bg-blue-50 border-blue-500 text-blue-900 dark:bg-blue-950 dark:text-blue-100'
             }`}
           >
             <div className="flex items-center justify-between mb-1">

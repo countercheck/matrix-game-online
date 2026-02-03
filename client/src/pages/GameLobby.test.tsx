@@ -39,9 +39,10 @@ describe('GameLobby Page', () => {
 
   it('should show loading state initially', () => {
     mockGet.mockImplementation(() => new Promise(() => {}));
-    render(<GameLobby />);
+    const { container } = render(<GameLobby />);
 
-    expect(screen.getByText(/loading game/i)).toBeInTheDocument();
+    // Skeleton loading components are shown instead of text
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('should display game name', async () => {

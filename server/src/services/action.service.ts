@@ -299,18 +299,7 @@ export async function completeArgumentation(actionId: string, userId: string) {
     update: {},
   });
 
-  // Check if all players have submitted at least one argument
-  const playerIdsWithArguments = new Set(action.arguments.map((a) => a.playerId));
   const allPlayers = action.game.players;
-  const playersWithoutArguments = allPlayers.filter((p) => !playerIdsWithArguments.has(p.id));
-
-  if (playersWithoutArguments.length > 0) {
-    // Not all players have argued yet - don't transition
-    return {
-      message: 'Marked as done. Waiting for all players to submit arguments.',
-      waitingFor: playersWithoutArguments.map((p) => p.playerName),
-    };
-  }
 
   // Check if all players have completed argumentation
   const completedCount = await db.argumentationComplete.count({

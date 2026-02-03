@@ -194,7 +194,20 @@ export default function CreateGame() {
                 onChange={handleImageChange}
                 className="hidden"
               />
-              <label htmlFor="image" className="cursor-pointer">
+              <label
+                htmlFor="image"
+                className="cursor-pointer inline-flex flex-col items-center justify-center"
+                role="button"
+                tabIndex={0}
+                aria-label="Upload game image"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const input = document.getElementById('image') as HTMLInputElement | null;
+                    input?.click();
+                  }
+                }}
+              >
                 <div className="space-y-2">
                   <div className="text-4xl">📷</div>
                   <p className="text-sm text-muted-foreground">

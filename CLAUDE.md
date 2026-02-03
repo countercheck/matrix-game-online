@@ -64,10 +64,10 @@ docker-compose up -d  # Start PostgreSQL
 
 ## Git Workflow
 
-Use feature branches for development, then merge to `main`.
+**IMPORTANT: Never commit directly to `main`.** Always use feature branches for development, then merge to `main`.
 
 ```bash
-# 1. Create feature branch
+# 1. Create feature branch (REQUIRED - never work directly on main)
 git checkout main
 git pull origin main
 git checkout -b feature/your-feature-name
@@ -81,6 +81,12 @@ git push -u origin feature/your-feature-name
 gh pr create --fill && gh pr merge --merge
 # Or merge locally: git checkout main && git merge feature/your-feature-name
 ```
+
+### Branch Rules
+
+- **Never commit directly to `main`** - Always create a feature branch first
+- Branch naming: `feature/`, `fix/`, `refactor/`, `docs/` prefixes
+- Keep branches short-lived and focused on a single change
 
 ### Commit Guidelines
 

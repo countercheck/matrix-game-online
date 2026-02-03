@@ -372,10 +372,9 @@
 - [✓] Test rate limits
 
 ### 8.3 CSRF Protection
-- [ ] Install csurf
-- [ ] Configure CSRF middleware
-- [ ] Add CSRF tokens to responses
-- [ ] Test CSRF protection
+- [✓] Configure CSRF middleware (custom X-Requested-With header validation - csurf is deprecated)
+- [✓] Add CSRF header to frontend API client
+- [✓] Test CSRF protection
 
 ### 8.4 Authorization
 - [✓] Create game membership middleware

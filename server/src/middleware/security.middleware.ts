@@ -178,3 +178,55 @@ export function requestLogger(
   logger.debug(`Request: ${JSON.stringify(logData)}`);
   next();
 }
+
+/**
+ * CSRF Protection Middleware
+ *
+ * This application uses JWT tokens sent via Authorization headers (not cookies),
+ * which provides inherent CSRF protection since:
+ * 1. Cross-origin requests cannot include custom headers without CORS preflight
+ * 2. localStorage (where tokens are stored) is origin-bound
+ * 3. The Authorization header must be explicitly set by JavaScript
+ *
+ * For additional defense-in-depth, this middleware verifies that state-changing
+ * requests (POST, PUT, DELETE, PATCH) include a custom X-Requested-With header,
+ * which cannot be sent cross-origin without CORS approval.
+ *
+ * Note: The deprecated 'csurf' package is not used. This custom header approach
+ * is the recommended pattern for modern SPAs with token-based authentication.
+ */
+export function csrfProtection(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  // Only check state-changing methods
+  const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+
+  if (!stateChangingMethods.includes(req.method)) {
+    return next();
+  }
+
+  // Skip CSRF check for auth endpoints (login/register don't have tokens yet)
+  if (req.path.startsWith('/api/auth/')) {
+    return next();
+  }
+
+  // Verify the custom header is present
+  // This header cannot be sent cross-origin without CORS preflight approval
+  const requestedWith = req.get('X-Requested-With');
+
+  if (requestedWith !== 'XMLHttpRequest') {
+    logger.warn(`CSRF protection: Missing or invalid X-Requested-With header from ${req.ip}`);
+    res.status(403).json({
+      success: false,
+      error: {
+        code: 'CSRF_VALIDATION_FAILED',
+        message: 'Invalid request origin',
+      },
+    });
+    return;
+  }
+
+  next();
+}

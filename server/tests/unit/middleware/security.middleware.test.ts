@@ -15,6 +15,7 @@ import {
   sanitizeString,
   sanitizeInput,
   securityHeaders,
+  csrfProtection,
 } from '../../../src/middleware/security.middleware.js';
 
 describe('Security Middleware', () => {
@@ -251,6 +252,157 @@ describe('Security Middleware', () => {
       securityHeaders(req, res, next);
 
       expect(next).toHaveBeenCalled();
+    });
+  });
+
+  describe('csrfProtection middleware', () => {
+    function createMockReq(method: string, path: string, headers: Record<string, string> = {}): Request {
+      return {
+        method,
+        path,
+        get: (name: string) => headers[name],
+        ip: '127.0.0.1',
+      } as unknown as Request;
+    }
+
+    function createMockRes(): Response & { statusCode?: number; jsonData?: unknown } {
+      const res = {
+        statusCode: 200,
+        jsonData: null as unknown,
+        status: vi.fn().mockImplementation(function(this: typeof res, code: number) {
+          this.statusCode = code;
+          return this;
+        }),
+        json: vi.fn().mockImplementation(function(this: typeof res, data: unknown) {
+          this.jsonData = data;
+          return this;
+        }),
+      };
+      return res as unknown as Response & { statusCode?: number; jsonData?: unknown };
+    }
+
+    it('should allow GET requests without X-Requested-With header', () => {
+      const req = createMockReq('GET', '/api/games');
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('should allow POST requests with valid X-Requested-With header', () => {
+      const req = createMockReq('POST', '/api/games', { 'X-Requested-With': 'XMLHttpRequest' });
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('should allow PUT requests with valid X-Requested-With header', () => {
+      const req = createMockReq('PUT', '/api/users/me', { 'X-Requested-With': 'XMLHttpRequest' });
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should allow DELETE requests with valid X-Requested-With header', () => {
+      const req = createMockReq('DELETE', '/api/games/123', { 'X-Requested-With': 'XMLHttpRequest' });
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should reject POST requests without X-Requested-With header', () => {
+      const req = createMockReq('POST', '/api/games');
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: {
+          code: 'CSRF_VALIDATION_FAILED',
+          message: 'Invalid request origin',
+        },
+      });
+    });
+
+    it('should reject PUT requests without X-Requested-With header', () => {
+      const req = createMockReq('PUT', '/api/users/me');
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should reject requests with invalid X-Requested-With value', () => {
+      const req = createMockReq('POST', '/api/games', { 'X-Requested-With': 'InvalidValue' });
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should skip CSRF check for auth login endpoint', () => {
+      const req = createMockReq('POST', '/api/auth/login');
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('should skip CSRF check for auth register endpoint', () => {
+      const req = createMockReq('POST', '/api/auth/register');
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should allow PATCH requests with valid header', () => {
+      const req = createMockReq('PATCH', '/api/users/me', { 'X-Requested-With': 'XMLHttpRequest' });
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should reject PATCH requests without valid header', () => {
+      const req = createMockReq('PATCH', '/api/users/me');
+      const res = createMockRes();
+      const next = vi.fn() as NextFunction;
+
+      csrfProtection(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
     });
   });
 });

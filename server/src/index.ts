@@ -6,6 +6,7 @@ import {
   sanitizeInput,
   generalRateLimiter,
   securityHeaders,
+  csrfProtection,
 } from './middleware/security.middleware.js';
 import { logger } from './utils/logger.js';
 import authRoutes from './routes/auth.routes.js';
@@ -39,6 +40,11 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Input sanitization
 app.use(sanitizeInput);
+
+// CSRF protection (skip in test environment)
+if (process.env.NODE_ENV !== 'test') {
+  app.use(csrfProtection);
+}
 
 // Health check
 app.get('/health', (req, res) => {

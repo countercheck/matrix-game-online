@@ -5,29 +5,29 @@ on:
     tags:
       - 'v*'
 
+env:
+  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
 jobs:
-  deploy-server:
-    name: Deploy Server to Railway
+  # Run tests first to ensure the tag is deployable
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
+    services:
+      postgres:
+        image: postgres:15
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          cd server
-          railway up --service mosaic-api
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mosaic_game_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
-  deploy-client:
-    name: Deploy Client to Railway
-    runs-on: ubuntu-latest
-    environment: production
-    needs: deploy-server
     steps:
       - uses: actions/checkout@v4
 
@@ -44,26 +44,48 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build client
-        working-directory: client
+      - name: Generate Prisma client
+        working-directory: server
+        run: npx prisma generate
+
+      - name: Run migrations
+        working-directory: server
         env:
-          VITE_API_URL: ${{ vars.API_URL }}
-        run: npm run build
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mosaic_game_test?schema=public
+        run: npx prisma migrate deploy
+
+      - name: Run server tests
+        working-directory: server
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mosaic_game_test?schema=public
+          JWT_SECRET: test-secret-key-for-ci-testing-only
+        run: npm test
+
+      - name: Run client tests
+        working-directory: client
+        run: npm test
+
+  deploy-server:
+    name: Deploy Server to Railway
+    runs-on: ubuntu-latest
+    needs: test
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Deploy to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Deploy Server to Railway
         run: |
-          cd client
-          railway up --service mosaic-client
+          cd server
+          railway up --detach
 
-  run-migrations:
-    name: Run Database Migrations
+  deploy-client:
+    name: Deploy Client to Railway
     runs-on: ubuntu-latest
-    needs: deploy-server
+    needs: test
     environment: production
     steps:
       - uses: actions/checkout@v4
@@ -73,26 +95,51 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        working-directory: server
-        run: npm install
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
-      - name: Run migrations
-        working-directory: server
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build client with production API URL
+        working-directory: client
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx prisma migrate deploy
+          VITE_API_URL: ${{ vars.API_URL }}
+        run: npm run build
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy Client to Railway
+        run: |
+          cd client
+          railway up --detach
 
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [deploy-server, deploy-client, run-migrations]
+    needs: [deploy-server, deploy-client]
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           generate_release_notes: true
+          body: |
+            ## Deployment
+
+            This release has been automatically deployed to Railway.
+
+            - **API**: Check Railway dashboard for server status
+            - **Client**: Check Railway dashboard for client status
+
+            ## What's Changed
+
+            See the automatically generated release notes below.

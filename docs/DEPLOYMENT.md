@@ -216,48 +216,152 @@ postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public&sslmode=require
 
 ### Railway
 
-Railway provides easy deployment with built-in PostgreSQL.
+Railway provides easy deployment with built-in PostgreSQL. This project includes Railway configuration files (`railway.toml`) for both server and client.
+
+#### Prerequisites
+
+1. A [Railway](https://railway.app) account
+2. A GitHub repository with your code
+3. Railway CLI installed (optional, for local deployment):
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   ```
+
+#### Project Structure
+
+The project is configured with Railway config files:
+- `server/railway.toml` - Backend configuration (Nixpacks build, auto-migrations)
+- `client/railway.toml` - Frontend configuration (static file serving)
 
 #### Setup Steps
 
 1. **Create a new project** on [railway.app](https://railway.app)
+   - Click "New Project" → "Empty Project"
+   - Note your project ID from the URL or settings (needed for CI/CD)
 
 2. **Add PostgreSQL database**
    - Click "New" → "Database" → "PostgreSQL"
-   - Railway automatically sets `DATABASE_URL`
+   - Railway automatically sets `DATABASE_URL` for linked services
+   - Make note of the connection string for GitHub secrets
 
-3. **Deploy the backend**
+3. **Deploy the backend (API service)**
    - Click "New" → "GitHub Repo"
    - Select your repository
-   - Set root directory to `server`
-   - Add environment variables (Railway dashboard → Variables)
+   - **Important:** Set root directory to `server`
+   - Railway will auto-detect `railway.toml` configuration
+   - The service will automatically:
+     - Build with Nixpacks
+     - Generate Prisma client
+     - Run migrations on startup
+     - Expose health check at `/health`
 
-4. **Deploy the frontend**
-   - Add another service from the same repo
-   - Set root directory to `client`
-   - Set build command: `npm run build`
-   - Set start command: `npm run preview` (or use static hosting)
-
-5. **Run migrations**
-   ```bash
-   railway run npx prisma migrate deploy
+4. **Configure backend environment variables**
+   - Go to the server service → Variables tab
+   - Add the following (Railway auto-injects `DATABASE_URL` and `PORT`):
+   ```
+   NODE_ENV=production
+   JWT_SECRET=<generate with: openssl rand -base64 32>
+   APP_URL=https://your-client-domain.railway.app
+   EMAIL_HOST=smtp.sendgrid.net
+   EMAIL_USER=apikey
+   EMAIL_PASS=your-sendgrid-api-key
+   EMAIL_FROM=noreply@yourdomain.com
    ```
 
-6. **Set up custom domain** (optional)
-   - Go to service settings → Domains
-   - Add your custom domain
+5. **Deploy the frontend (Client service)**
+   - Click "New" → "GitHub Repo" (same repo)
+   - **Important:** Set root directory to `client`
+   - Railway will auto-detect `railway.toml` configuration
+   - The client uses `serve` to host static files
 
-#### Railway Environment Variables
+6. **Configure frontend environment variables**
+   - Add the following build-time variable:
+   ```
+   VITE_API_URL=https://your-api-domain.railway.app
+   ```
 
+7. **Link the database to services**
+   - Click the PostgreSQL service
+   - Go to "Connect" → connect to your server service
+   - This injects `DATABASE_URL` automatically
+
+8. **Set up custom domains** (recommended)
+   - Server: Settings → Networking → Generate Domain (or add custom)
+   - Client: Settings → Networking → Generate Domain (or add custom)
+   - Update `APP_URL` and `VITE_API_URL` to match
+
+#### GitHub Actions CI/CD Setup
+
+The project includes automated deployment via GitHub Actions. Set up:
+
+1. **Get Railway Token**
+   - Railway Dashboard → Account Settings → Tokens
+   - Create a new token with project access
+
+2. **Configure GitHub Secrets** (Settings → Secrets → Actions)
+   | Secret | Description |
+   |--------|-------------|
+   | `RAILWAY_TOKEN` | Your Railway API token |
+   | `DATABASE_URL` | Production database URL (for migration verification) |
+
+3. **Configure GitHub Variables** (Settings → Secrets → Variables)
+   | Variable | Description |
+   |----------|-------------|
+   | `API_URL` | Production API URL (e.g., `https://api.mosaicgame.com`) |
+
+4. **Deploy with tags**
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+#### Railway Configuration Files
+
+**Server (`server/railway.toml`):**
+```toml
+[build]
+builder = "nixpacks"
+buildCommand = "npm install && npx prisma generate && npm run build"
+
+[deploy]
+startCommand = "npx prisma migrate deploy && node dist/index.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
 ```
-NODE_ENV=production
-JWT_SECRET=your-generated-secret
-APP_URL=https://your-app.railway.app
-EMAIL_HOST=smtp.sendgrid.net
-EMAIL_USER=apikey
-EMAIL_PASS=your-sendgrid-key
-EMAIL_FROM=noreply@yourdomain.com
+
+**Client (`client/railway.toml`):**
+```toml
+[build]
+builder = "nixpacks"
+buildCommand = "npm install && npm run build"
+
+[deploy]
+startCommand = "npx serve -s dist -l $PORT"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
 ```
+
+#### Troubleshooting Railway
+
+**Build failures:**
+- Check Railway build logs for specific errors
+- Ensure `railway.toml` is in the correct directory (server/ or client/)
+- Verify the root directory is set correctly in Railway service settings
+
+**Database connection issues:**
+- Verify PostgreSQL service is linked to your server
+- Check that `DATABASE_URL` is in the Variables tab
+- Ensure SSL is enabled: `?sslmode=require` in connection string
+
+**Migrations not running:**
+- Migrations run on every deploy via `startCommand`
+- Check deploy logs for Prisma migration output
+- Manually run: `railway run --service=mosaic-api npx prisma migrate deploy`
 
 ---
 

@@ -858,17 +858,17 @@
 - [✓] Set up CI/CD pipeline (.github/workflows/ci.yml)
 
 ### 24.3 Hosting Setup
-- [ ] Choose hosting platform (Railway, Render, AWS, etc.)
-- [ ] Set up production database instance
-- [ ] Set up Redis instance (if using)
-- [ ] Configure DNS and domain
+- [✓] Choose hosting platform (Railway, Render, AWS, etc.) - Railway selected
+- [✓] Set up production database instance - Railway PostgreSQL configured
+- [*] Set up Redis instance (if using) - Not needed for current scale
+- [ ] Configure DNS and domain - User to configure during actual deployment
 
 ### 24.4 Deployment
-- [ ] Deploy backend to production
-- [ ] Deploy frontend to production
-- [ ] Run production migrations
-- [ ] Test production deployment
-- [ ] Set up monitoring (Sentry, LogTail)
+- [✓] Deploy backend to production - Railway configuration ready (server/railway.toml)
+- [✓] Deploy frontend to production - Railway configuration ready (client/railway.toml)
+- [✓] Run production migrations - Auto-runs on deploy via railway.toml
+- [ ] Test production deployment - Pending actual Railway deployment
+- [ ] Set up monitoring (Sentry, LogTail) - Optional, recommended post-launch
 
 ---
 

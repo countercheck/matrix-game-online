@@ -828,17 +828,17 @@
 - [ ] Add FAQ section
 
 ### 23.2 Developer Documentation
-- [ ] Document API endpoints
-- [ ] Document database schema
-- [ ] Document environment setup
-- [ ] Create contribution guide
-- [ ] Document deployment process
+- [✓] Document API endpoints (docs/API.md)
+- [✓] Document database schema (in API.md and server/README.md)
+- [✓] Document environment setup (docs/DEPLOYMENT.md, CONTRIBUTING.md)
+- [✓] Create contribution guide (CONTRIBUTING.md)
+- [✓] Document deployment process (docs/DEPLOYMENT.md)
 
 ### 23.3 Code Documentation
-- [ ] Add JSDoc comments to functions
-- [ ] Document complex algorithms
-- [ ] Add README files to key directories
-- [ ] Create architecture diagram
+- [*] Add JSDoc comments to functions (skipped - TypeScript provides types)
+- [✓] Document complex algorithms (token drawing in API.md)
+- [✓] Add README files to key directories (server/, client/)
+- [*] Create architecture diagram (optional - structure documented in READMEs)
 
 ---
 

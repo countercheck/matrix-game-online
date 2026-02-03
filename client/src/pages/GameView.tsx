@@ -217,7 +217,7 @@ export default function GameView() {
         <div className="relative w-full h-32 sm:h-40 rounded-lg overflow-hidden">
           <img
             src={game.imageUrl}
-            alt={game.name}
+            alt=""
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end justify-between p-4">

@@ -773,10 +773,10 @@
 - [✓] Test validation schemas
 
 ### 21.5 Unit Tests (Frontend)
-- [ ] Test form validations
-- [ ] Test utility functions
-- [ ] Test custom hooks
-- [ ] Test critical components
+- [✓] Test form validations (tested in Register.test.tsx, Login.test.tsx)
+- [✓] Test utility functions (cn.test.ts - 10 tests)
+- [✓] Test custom hooks (useConfirmDialog in ConfirmDialog.test.tsx)
+- [✓] Test critical components (ErrorBoundary, ConfirmDialog, Skeleton, ArgumentList - 42 tests)
 
 ### 21.6 Integration Tests
 - [✓] Test API endpoints

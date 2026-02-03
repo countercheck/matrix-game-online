@@ -196,7 +196,8 @@ export async function uploadGameImage(
 
     // Build the public URL for the image
     const storageUrl = process.env.STORAGE_URL || `http://localhost:${process.env.PORT || 3000}/uploads`;
-    const imageUrl = `${storageUrl}/${req.file.filename}`;
+    const normalizedStorageUrl = storageUrl.replace(/\/+$/, '');
+    const imageUrl = `${normalizedStorageUrl}/${req.file.filename}`;
 
     // Update the game with the image URL
     const game = await gameService.updateGameImage(gameId, userId, imageUrl);

@@ -18,6 +18,7 @@ import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 interface Game {
   id: string;
   name: string;
+  imageUrl?: string;
   status: string;
   currentPhase: string;
   settings: {
@@ -211,8 +212,65 @@ export default function GameView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header with optional image */}
+      {game.imageUrl ? (
+        <div className="relative w-full h-32 sm:h-40 rounded-lg overflow-hidden">
+          <img
+            src={game.imageUrl}
+            alt={game.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end justify-between p-4">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="text-white/90 hover:text-white"
+                title="Back to Dashboard"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-white">{game.name}</h1>
+                {game.currentRound && (
+                  <p className="text-sm text-white/90">
+                    Round {game.currentRound.roundNumber} • {game.currentRound.actionsCompleted}/{game.currentRound.totalActionsRequired} actions
+                  </p>
+                )}
+              </div>
+            </div>
+            <span
+              className={`text-xs px-3 py-1 rounded-full font-medium ${
+                game.currentPhase === 'PROPOSAL'
+                  ? 'bg-blue-500 text-white'
+                  : game.currentPhase === 'ARGUMENTATION'
+                  ? 'bg-purple-500 text-white'
+                  : game.currentPhase === 'VOTING'
+                  ? 'bg-orange-500 text-white'
+                  : game.currentPhase === 'RESOLUTION'
+                  ? 'bg-green-500 text-white'
+                  : game.currentPhase === 'NARRATION'
+                  ? 'bg-indigo-500 text-white'
+                  : 'bg-gray-500 text-white'
+              }`}
+            >
+              {game.currentPhase}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
             <Link
@@ -279,6 +337,7 @@ export default function GameView() {
           )}
         </div>
       </div>
+      )}
 
       {/* Main Game Area */}
       <div className="grid gap-6 lg:grid-cols-3">

@@ -7,6 +7,7 @@ interface Game {
   id: string;
   name: string;
   description?: string;
+  imageUrl?: string;
   status: string;
   currentPhase: string;
   playerCount: number;
@@ -88,6 +89,17 @@ export default function Dashboard() {
                 aria-label={`${game.name} - ${game.status} - ${game.playerCount} players${game.isHost ? ' - You are the host' : ''}`}
               >
                 <article>
+                  {/* Game Image */}
+                  {game.imageUrl && (
+                    <div className="mb-3 -mx-4 -mt-4">
+                      <img
+                        src={game.imageUrl}
+                        alt={game.name}
+                        className="w-full h-32 object-cover rounded-t-lg"
+                      />
+                    </div>
+                  )}
+
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold truncate">{game.name}</h3>
                     <span

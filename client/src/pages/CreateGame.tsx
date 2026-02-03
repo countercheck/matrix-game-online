@@ -25,17 +25,65 @@ export default function CreateGame() {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [personasRequired, setPersonasRequired] = useState(false);
   const [showPersonas, setShowPersonas] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: (data: CreateGameData) => api.post('/games', data),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       const gameId = response.data.data.id;
+      
+      // Upload image if one was selected
+      if (imageFile) {
+        try {
+          const formData = new FormData();
+          formData.append('image', imageFile);
+          await api.post(`/games/${gameId}/image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        } catch (err) {
+          console.error('Failed to upload image:', err);
+          // Continue anyway - game was created successfully
+        }
+      }
+      
       navigate(`/game/${gameId}/lobby`);
     },
     onError: (err: { response?: { data?: { error?: { message?: string } } } }) => {
       setError(err.response?.data?.error?.message || 'Failed to create game');
     },
   });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file size (5MB limit)
+      if (file.size > 5242880) {
+        setError('Image file size must be less than 5MB');
+        return;
+      }
+
+      // Check file type
+      if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
+        setError('Only JPEG, PNG, GIF, and WebP images are allowed');
+        return;
+      }
+
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
 
   const addPersona = () => {
     if (personas.length < 20) {
@@ -114,6 +162,51 @@ export default function CreateGame() {
             placeholder="Describe the scenario or setting for your game..."
           />
           <p className="text-xs text-muted-foreground">{description.length}/1000 characters</p>
+        </div>
+
+        {/* Image Upload Section */}
+        <div className="space-y-2">
+          <label htmlFor="image" className="text-sm font-medium">
+            Game Image (Optional)
+          </label>
+          
+          {imagePreview ? (
+            <div className="relative">
+              <img
+                src={imagePreview}
+                alt="Game preview"
+                className="w-full h-48 object-cover rounded-md border"
+              />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute top-2 right-2 px-2 py-1 bg-destructive text-destructive-foreground rounded-md text-sm hover:bg-destructive/90"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="border-2 border-dashed rounded-md p-6 text-center">
+              <input
+                id="image"
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+              <label htmlFor="image" className="cursor-pointer">
+                <div className="space-y-2">
+                  <div className="text-4xl">📷</div>
+                  <p className="text-sm text-muted-foreground">
+                    Click to upload an image
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    JPEG, PNG, GIF, or WebP (max 5MB)
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
         </div>
 
         {/* Personas Section */}

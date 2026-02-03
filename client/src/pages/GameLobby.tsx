@@ -24,6 +24,7 @@ interface Game {
   id: string;
   name: string;
   description?: string;
+  imageUrl?: string;
   status: string;
   players: Player[];
   personas: Persona[];
@@ -130,8 +131,22 @@ export default function GameLobby() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {/* Game Image Header */}
+      {game.imageUrl && (
+        <div className="relative w-full h-48 sm:h-64 rounded-lg overflow-hidden -mx-4 sm:mx-0">
+          <img
+            src={game.imageUrl}
+            alt={game.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+            <h1 className="text-3xl font-bold text-white p-6">{game.name}</h1>
+          </div>
+        </div>
+      )}
+
       <div>
-        <h1 className="text-2xl font-bold">{game.name}</h1>
+        {!game.imageUrl && <h1 className="text-2xl font-bold">{game.name}</h1>}
         {game.description && <p className="mt-2 text-muted-foreground">{game.description}</p>}
       </div>
 

@@ -8,16 +8,6 @@ export interface JWTPayload {
   email: string;
 }
 
-declare module 'express-serve-static-core' {
-  interface Request {
-    user?: {
-      id: string;
-      email: string;
-      displayName: string;
-    };
-  }
-}
-
 export async function authenticateToken(
   req: Request,
   _res: Response,
@@ -95,7 +85,7 @@ export function requireGameMember(gameIdParam = 'gameId') {
       }
 
       // Attach player info to request for downstream use
-      (req as any).gamePlayer = player;
+      req.gamePlayer = player;
       next();
     } catch (error) {
       next(error);
@@ -137,7 +127,7 @@ export function requireGameHost(gameIdParam = 'gameId') {
         throw new ForbiddenError('Only the host can perform this action');
       }
 
-      (req as any).gamePlayer = player;
+      req.gamePlayer = player;
       next();
     } catch (error) {
       next(error);
@@ -182,7 +172,7 @@ export function requireActionInitiator(actionIdParam = 'actionId') {
         throw new ForbiddenError('Only the initiator can perform this action');
       }
 
-      (req as any).action = action;
+      req.action = action;
       next();
     } catch (error) {
       next(error);

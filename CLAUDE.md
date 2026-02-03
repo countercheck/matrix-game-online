@@ -64,9 +64,42 @@ docker-compose up -d  # Start PostgreSQL
 
 ## Git Workflow
 
+The `main` branch is protected. All changes require a pull request with review.
+
+### Feature Development Steps
+
+```bash
+# 1. Create feature branch
+git checkout main
+git pull origin main
+git checkout -b feature/your-feature-name
+
+# 2. Make changes and commit
+git add <files>
+git commit -m "Description of change"
+
+# 3. Push branch to remote
+git push -u origin feature/your-feature-name
+
+# 4. Create pull request
+gh pr create --title "Your PR title" --body "Description"
+
+# 5. After approval, merge via GitHub UI or CLI
+gh pr merge
+```
+
+### Commit Guidelines
+
 - **Commit after every change** - Each meaningful change should be committed immediately
 - Write clear, descriptive commit messages explaining the "why"
 - Keep commits focused and atomic (one logical change per commit)
+
+### Branch Protection Rules
+
+- PRs require 1 approving review before merge
+- Stale reviews are dismissed when new commits are pushed
+- All review conversations must be resolved
+- Force pushes and branch deletion are disabled on `main`
 
 ## Code Conventions
 

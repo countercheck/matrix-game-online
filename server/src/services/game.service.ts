@@ -481,6 +481,41 @@ export async function getRounds(gameId: string, userId: string) {
   return rounds;
 }
 
+export async function updateGameImage(gameId: string, userId: string, imageUrl: string) {
+  // Verify the game exists and user is the creator
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+  });
+
+  if (!game) {
+    throw new NotFoundError('Game not found');
+  }
+
+  if (game.creatorId !== userId) {
+    throw new ForbiddenError('Only the game creator can update the game image');
+  }
+
+  // Update the game with the new image URL
+  const updatedGame = await db.game.update({
+    where: { id: gameId },
+    data: { imageUrl },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      imageUrl: true,
+      status: true,
+      currentPhase: true,
+      playerCount: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return updatedGame;
+}
+
+
 export async function transitionPhase(gameId: string, newPhase: GamePhase) {
   const game = await db.game.findUnique({ where: { id: gameId } });
   if (!game) {

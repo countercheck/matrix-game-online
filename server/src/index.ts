@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler.js';
 import {
@@ -32,6 +33,9 @@ app.use(cors({
 
 // Body parsing with size limit
 app.use(express.json({ limit: '10kb' }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Rate limiting (skip in test environment)
 if (process.env.NODE_ENV !== 'test') {

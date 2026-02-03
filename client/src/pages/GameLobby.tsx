@@ -133,10 +133,10 @@ export default function GameLobby() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Game Image Header */}
       {game.imageUrl && (
-        <div className="relative w-full h-48 sm:h-64 rounded-lg overflow-hidden -mx-4 sm:mx-0">
+        <div className="relative w-full h-48 sm:h-64 rounded-lg overflow-hidden">
           <img
             src={game.imageUrl}
-            alt={game.name}
+            alt=""
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">

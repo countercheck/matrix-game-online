@@ -3,6 +3,8 @@ import { GamePhase, Prisma } from '@prisma/client';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
 import type { CreateGameInput } from '../utils/validators.js';
 import { notifyGameStarted } from './notification.service.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 interface GameSettings {
   argumentLimit?: number;
@@ -485,6 +487,7 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
   // Verify the game exists and user is the creator
   const game = await db.game.findUnique({
     where: { id: gameId },
+    select: { id: true, creatorId: true, imageUrl: true },
   });
 
   if (!game) {
@@ -493,6 +496,20 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
 
   if (game.creatorId !== userId) {
     throw new ForbiddenError('Only the game creator can update the game image');
+  }
+
+  // Delete old image file if it exists
+  if (game.imageUrl) {
+    try {
+      // Extract filename from URL
+      const oldFilename = game.imageUrl.split('/').pop();
+      if (oldFilename) {
+        const oldFilePath = path.join(process.cwd(), 'uploads', oldFilename);
+        await fs.unlink(oldFilePath);
+      }
+    } catch {
+      // Ignore errors if old file doesn't exist or can't be deleted
+    }
   }
 
   // Update the game with the new image URL

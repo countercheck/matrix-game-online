@@ -15,7 +15,8 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const ext = getExtensionFromMime(file.mimetype);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
   },
 });
 
@@ -34,8 +35,21 @@ const fileFilter = (
   }
 };
 
+// Map MIME type to file extension
+const getExtensionFromMime = (mimetype: string): string => {
+  const mimeMap: Record<string, string> = {
+    'image/jpeg': '.jpg',
+    'image/jpg': '.jpg',
+    'image/png': '.png',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
+  };
+  return mimeMap[mimetype] || '.jpg';
+};
+
 // Configure multer
-const maxFileSize = parseInt(process.env.MAX_FILE_SIZE || '5242880', 10); // 5MB default
+const parsedMaxFileSize = parseInt(process.env.MAX_FILE_SIZE || '5242880', 10);
+const maxFileSize = Number.isFinite(parsedMaxFileSize) && parsedMaxFileSize > 0 ? parsedMaxFileSize : 5242880; // 5MB default
 
 export const upload = multer({
   storage: storage,

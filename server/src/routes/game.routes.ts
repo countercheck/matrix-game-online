@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware.js';
+import { uploadRateLimiter } from '../middleware/security.middleware.js';
 import * as gameController from '../controllers/game.controller.js';
 import { upload } from '../config/multer.js';
 
@@ -8,7 +9,7 @@ const router = Router();
 router.post('/', authenticateToken, gameController.createGame);
 router.get('/:gameId', authenticateToken, gameController.getGame);
 router.put('/:gameId', authenticateToken, gameController.updateGame);
-router.post('/:gameId/image', authenticateToken, upload.single('image'), gameController.uploadGameImage);
+router.post('/:gameId/image', authenticateToken, uploadRateLimiter, upload.single('image'), gameController.uploadGameImage);
 router.post('/:gameId/join', authenticateToken, gameController.joinGame);
 router.post('/:gameId/select-persona', authenticateToken, gameController.selectPersona);
 router.post('/:gameId/leave', authenticateToken, gameController.leaveGame);

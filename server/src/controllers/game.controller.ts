@@ -7,8 +7,9 @@ import {
   joinGameSchema,
   selectPersonaSchema,
 } from '../utils/validators.js';
+import { BadRequestError } from '../middleware/errorHandler.js';
+import fs from 'fs/promises';
 import path from 'path';
-import fs from 'fs';
 
 export async function createGame(
   req: Request,
@@ -190,8 +191,7 @@ export async function uploadGameImage(
     const userId = req.user!.id;
 
     if (!req.file) {
-      res.status(400).json({ success: false, error: { message: 'No file uploaded' } });
-      return;
+      throw new BadRequestError('No file uploaded');
     }
 
     // Build the public URL for the image
@@ -207,8 +207,10 @@ export async function uploadGameImage(
     // Clean up uploaded file if there's an error
     if (req.file) {
       const filePath = path.join(process.cwd(), 'uploads', req.file.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      try {
+        await fs.unlink(filePath);
+      } catch {
+        // Ignore errors during cleanup
       }
     }
     next(error);

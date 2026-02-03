@@ -57,28 +57,35 @@ export default function CreateGame() {
     if (file) {
       // Check file size (5MB limit)
       if (file.size > 5242880) {
+        setImageFile(null);
+        setImagePreview(null);
+        e.target.value = '';
         setError('Image file size must be less than 5MB');
         return;
       }
 
       // Check file type
       if (!file.type.match(/^image\/(jpe?g|png|gif|webp)$/)) {
+        setImageFile(null);
+        setImagePreview(null);
+        e.target.value = '';
         setError('Only JPEG, PNG, GIF, and WebP images are allowed');
         return;
       }
 
       setImageFile(file);
       
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Create preview using URL.createObjectURL for better memory efficiency
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
     }
   };
 
   const removeImage = () => {
+    // Revoke object URL to prevent memory leaks
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
     setImageFile(null);
     setImagePreview(null);
   };
@@ -207,7 +214,7 @@ export default function CreateGame() {
                 }}
               >
                 <div className="space-y-2">
-                  <div className="text-4xl">📷</div>
+                  <div className="text-4xl" aria-hidden="true">📷</div>
                   <p className="text-sm text-muted-foreground">
                     Click to upload an image
                   </p>

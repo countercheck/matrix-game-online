@@ -119,7 +119,7 @@ function generateToken(userId: string, email: string): string {
 // Parse expiry string like '7d', '24h', '60m' to seconds
 function parseExpiry(expiry: string): number {
   const match = expiry.match(/^(\d+)([smhd])$/);
-  if (!match) {
+  if (!match || !match[1] || !match[2]) {
     // Default to 7 days if invalid format
     return 7 * 24 * 60 * 60;
   }

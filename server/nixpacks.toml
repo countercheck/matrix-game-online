@@ -4,5 +4,9 @@
 [phases.setup]
 nixPkgs = ["nodejs_20", "pnpm"]
 
+# Skip the auto-detected install phase - buildCommand handles it
+[phases.install]
+cmds = []
+
 [variables]
 NODE_VERSION = "20"

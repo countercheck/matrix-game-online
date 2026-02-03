@@ -21,24 +21,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
 
+// Initialize auth state from localStorage
+function getInitialAuthState(): { user: User | null; token: string | null } {
+  const storedToken = localStorage.getItem(TOKEN_KEY);
+  const storedUser = localStorage.getItem(USER_KEY);
+
+  if (storedToken && storedUser) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+    return { user: JSON.parse(storedUser), token: storedToken };
+  }
+
+  return { user: null, token: null };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Load stored auth on mount
-    const storedToken = localStorage.getItem(TOKEN_KEY);
-    const storedUser = localStorage.getItem(USER_KEY);
-
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-    }
-
-    setIsLoading(false);
-  }, []);
+  const [user, setUser] = useState<User | null>(() => getInitialAuthState().user);
+  const [token, setToken] = useState<string | null>(() => getInitialAuthState().token);
+  const [isLoading, setIsLoading] = useState(false);
 
   const login = async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });

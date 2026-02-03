@@ -74,7 +74,7 @@ describe('ErrorBoundary', () => {
   it('should reset error state when Try Again is clicked', () => {
     let shouldThrow = true;
 
-    const { rerender } = render(
+    render(
       <BrowserRouter>
         <ErrorBoundary>
           <ThrowError shouldThrow={shouldThrow} />

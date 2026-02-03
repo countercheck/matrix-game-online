@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 
@@ -16,7 +16,7 @@ interface Profile {
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const [displayName, setDisplayName] = useState('');
+  const [editDisplayName, setEditDisplayName] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const { data, isLoading } = useQuery<{ data: Profile }>({
@@ -24,12 +24,8 @@ export default function Profile() {
     queryFn: () => api.get('/users/me').then((res) => res.data),
   });
 
-  // Set displayName when profile data loads
-  useEffect(() => {
-    if (data?.data?.displayName) {
-      setDisplayName(data.data.displayName);
-    }
-  }, [data?.data?.displayName]);
+  // Use edited value when editing, otherwise use profile value
+  const displayName = editDisplayName ?? data?.data?.displayName ?? '';
 
   const updateMutation = useMutation({
     mutationFn: (data: { displayName: string }) => api.put('/users/me', data),
@@ -66,7 +62,7 @@ export default function Profile() {
               <input
                 type="text"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => setEditDisplayName(e.target.value)}
                 className="flex-1 px-3 py-2 border rounded-md bg-background"
                 maxLength={50}
               />
@@ -79,7 +75,7 @@ export default function Profile() {
               </button>
               <button
                 onClick={() => {
-                  setDisplayName(profile.displayName);
+                  setEditDisplayName(null);
                   setIsEditing(false);
                 }}
                 className="px-4 py-2 border rounded-md hover:bg-muted"

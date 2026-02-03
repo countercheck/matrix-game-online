@@ -107,12 +107,27 @@ gh pr create --fill && gh pr merge --merge
 
 ## Documentation Requirements
 
-- **Update documentation** when adding features or changing behavior
-- Keep `README.md` current with setup instructions and project info
-- Update `PRD_Mosaic_Matrix_Game.md` for requirement changes
-- Update `Technical_Spec_Mosaic_Matrix_Game.md` for architecture changes
-- Update `CLAUDE.md` when adding new commands, conventions, or project structure changes
-- Update `DEVELOPMENT_PLAN.md` when adding or completing work
+**Update documentation after every code change.** This is mandatory, not optional.
+
+| Change Type | Update These Docs |
+|-------------|-------------------|
+| New API endpoint | `docs/API.md` |
+| Database schema change | `docs/API.md`, run migration |
+| New environment variable | `.env.example`, `docs/DEPLOYMENT.md` |
+| New feature | `README.md`, relevant component README |
+| Bug fix | `DEVELOPMENT_PLAN.md` (if tracked) |
+| Completed task | `DEVELOPMENT_PLAN.md` |
+
+### Documentation Files
+
+- `README.md` - Project overview and setup
+- `CLAUDE.md` - Development conventions (this file)
+- `CONTRIBUTING.md` - Contribution guidelines
+- `DEVELOPMENT_PLAN.md` - Task tracking
+- `docs/API.md` - API reference
+- `docs/DEPLOYMENT.md` - Deployment guide
+- `server/README.md` - Backend documentation
+- `client/README.md` - Frontend documentation
 
 ## Game Domain
 
@@ -133,10 +148,4 @@ WAITING -> PROPOSAL -> ARGUMENTATION -> VOTING -> RESOLUTION -> NARRATION -> COM
 ## Environment
 
 Server env vars are in `server/.env` (see `server/.env.example` for reference).
-
-## Documentation
-
-- PRD: `PRD_Mosaic_Matrix_Game.md`
-- Technical Spec: `Technical_Spec_Mosaic_Matrix_Game.md`
-- ERD: `ERD_Mosaic_Matrix_Game.md`
-- Development Plan: `DEVELOPMENT_PLAN.md`
+For production setup, see `docs/DEPLOYMENT.md`.

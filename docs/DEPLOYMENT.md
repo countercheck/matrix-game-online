@@ -5,6 +5,7 @@ This guide covers deploying Mosaic Matrix Game to production environments.
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
+- [CI/CD Pipeline](#cicd-pipeline)
 - [Environment Configuration](#environment-configuration)
 - [Database Setup](#database-setup)
 - [Email Service Setup](#email-service-setup)
@@ -26,6 +27,74 @@ Before deploying, ensure you have:
 2. An email service account (SendGrid recommended)
 3. A domain name (optional but recommended)
 4. Git repository with the latest code
+
+---
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment.
+
+### Continuous Integration (`.github/workflows/ci.yml`)
+
+Runs on every pull request and push to `main`:
+
+| Job | Description |
+|-----|-------------|
+| **Lint** | Runs ESLint on all code |
+| **Test Server** | Runs backend tests with PostgreSQL |
+| **Test Client** | Runs frontend tests |
+| **Build** | Builds both server and client for production |
+
+### Continuous Deployment (`.github/workflows/deploy.yml`)
+
+Deploys automatically when you create a version tag:
+
+```bash
+# Create and push a release tag
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+This triggers:
+1. Deploy server to Railway
+2. Deploy client to Railway
+3. Run database migrations
+4. Create GitHub release with notes
+
+### Required GitHub Secrets
+
+Set these in your repository settings (Settings → Secrets → Actions):
+
+| Secret | Description |
+|--------|-------------|
+| `RAILWAY_TOKEN` | Railway API token (get from Railway dashboard → Account → Tokens) |
+| `DATABASE_URL` | Production database URL (for migrations) |
+
+### Required GitHub Variables
+
+Set these in Settings → Secrets → Variables:
+
+| Variable | Description |
+|----------|-------------|
+| `API_URL` | Production API URL (e.g., `https://api.mosaicgame.com`) |
+
+### Creating a Release
+
+```bash
+# 1. Ensure all tests pass locally
+pnpm test
+
+# 2. Update version in package.json (optional)
+
+# 3. Commit any changes
+git add . && git commit -m "Prepare release v1.0.0"
+
+# 4. Create annotated tag
+git tag -a v1.0.0 -m "Release v1.0.0"
+
+# 5. Push tag to trigger deployment
+git push origin v1.0.0
+```
 
 ---
 

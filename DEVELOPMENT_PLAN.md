@@ -852,10 +852,10 @@
 - [✓] Configure security settings (config/env.ts validation)
 
 ### 24.2 Build & Deploy Scripts
-- [ ] Create production build scripts
-- [ ] Test production builds locally
-- [ ] Create deployment workflow
-- [ ] Set up CI/CD pipeline (GitHub Actions)
+- [✓] Create production build scripts (pnpm build)
+- [✓] Test production builds locally (CI workflow tests this)
+- [✓] Create deployment workflow (.github/workflows/deploy.yml)
+- [✓] Set up CI/CD pipeline (.github/workflows/ci.yml)
 
 ### 24.3 Hosting Setup
 - [ ] Choose hosting platform (Railway, Render, AWS, etc.)

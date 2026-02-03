@@ -902,10 +902,10 @@
 ## Known Issues & Improvements
 
 ### UI/UX Issues
-- [ ] Argument background colors need better contrast with text (dark mode readability)
+- [✓] Argument background colors need better contrast with text (dark mode readability) - Fixed: added explicit text-green-100/red-100/blue-100 for dark mode
 
 ### Game Logic Issues
-- [ ] Allow continuing to voting even if all players skip adding arguments (currently requires at least one argument per player)
+- [✓] Allow continuing to voting even if all players skip adding arguments - Fixed: removed argument submission requirement, only requires all players to mark complete
 
 ---
 

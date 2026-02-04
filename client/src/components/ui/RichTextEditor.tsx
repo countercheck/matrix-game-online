@@ -322,7 +322,11 @@ export function RichTextEditor({
         <EditorContent editor={editor} />
       </div>
       {maxLength && (
-        <div className="px-3 py-1.5 text-xs text-muted-foreground text-right border-t bg-muted/30">
+        <div
+          className="px-3 py-1.5 text-xs text-muted-foreground text-right border-t bg-muted/30"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {characterCount}/{maxLength} characters
         </div>
       )}

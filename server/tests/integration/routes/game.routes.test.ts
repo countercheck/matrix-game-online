@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import multer from 'multer';
 
 // Mock data store
 let games: Map<string, any>;
@@ -16,6 +17,9 @@ function createTestApp() {
     req.user = currentUser;
     next();
   });
+
+  // Configure multer for tests (using memory storage)
+  const upload = multer({ storage: multer.memoryStorage() });
 
   // Create game
   app.post('/api/games', (req: any, res) => {
@@ -191,7 +195,7 @@ function createTestApp() {
   });
 
   // Upload game image
-  app.post('/api/games/:gameId/image', (req: any, res) => {
+  app.post('/api/games/:gameId/image', upload.single('image'), (req: any, res) => {
     if (!req.user) {
       return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED' } });
     }
@@ -209,7 +213,7 @@ function createTestApp() {
       return res.status(400).json({ success: false, error: { message: 'No file uploaded' } });
     }
 
-    const imageUrl = `http://localhost:3000/uploads/${req.file.filename}`;
+    const imageUrl = `http://localhost:3000/uploads/${req.file.filename || 'test-image.png'}`;
     game.imageUrl = imageUrl;
 
     res.json({ success: true, data: { imageUrl, game } });

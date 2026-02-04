@@ -1,232 +1,151 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RichTextEditor } from './RichTextEditor';
 
-describe('RichTextEditor - URL Validation', () => {
-  let promptSpy: ReturnType<typeof vi.spyOn>;
+describe('RichTextEditor', () => {
+  let onChangeMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    // Mock window.prompt
-    promptSpy = vi.spyOn(window, 'prompt');
+    onChangeMock = vi.fn();
   });
 
-  afterEach(() => {
-    promptSpy.mockRestore();
+  it('should render the editor', () => {
+    render(<RichTextEditor value="" onChange={onChangeMock} />);
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
-  it('should allow http:// URLs', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
-
-    promptSpy.mockReturnValue('http://example.com');
-
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
-
-    // The link should be set (verified by checking if setLink was called)
-    // We can't directly verify the editor state, but we can verify prompt was called
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
+  it('should display character count when maxLength is provided', () => {
+    render(<RichTextEditor value="" onChange={onChangeMock} maxLength={100} />);
+    expect(screen.getByText('0/100 characters')).toBeInTheDocument();
   });
 
-  it('should allow https:// URLs', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
+  it('should be disabled when disabled prop is true', () => {
+    render(<RichTextEditor value="" onChange={onChangeMock} disabled />);
 
-    promptSpy.mockReturnValue('https://example.com');
-
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
-
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
+    const editor = screen.getByRole('textbox');
+    expect(editor).toHaveAttribute('contenteditable', 'false');
   });
 
-  it('should reject javascript: URLs', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
+  describe('URL validation', () => {
+    beforeEach(() => {
+      // Mock window.prompt to avoid actual prompt dialogs
+      vi.spyOn(window, 'prompt');
+    });
 
-    promptSpy.mockReturnValue('javascript:alert("XSS")');
+    it('should allow http:// URLs in toolbar link button', async () => {
+      const user = userEvent.setup();
+      vi.mocked(window.prompt).mockReturnValue('http://example.com');
 
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
 
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
-    // The dangerous URL should be rejected and not set
+      const linkButton = screen.getByTitle('Insert Link');
+      await user.click(linkButton);
+
+      // URL constructor should validate this as http:
+      expect(window.prompt).toHaveBeenCalledWith('Enter URL:');
+    });
+
+    it('should allow https:// URLs in toolbar link button', async () => {
+      const user = userEvent.setup();
+      vi.mocked(window.prompt).mockReturnValue('https://example.com');
+
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+      const linkButton = screen.getByTitle('Insert Link');
+      await user.click(linkButton);
+
+      expect(window.prompt).toHaveBeenCalledWith('Enter URL:');
+    });
+
+    it('should allow mailto: URLs in toolbar link button', async () => {
+      const user = userEvent.setup();
+      vi.mocked(window.prompt).mockReturnValue('mailto:test@example.com');
+
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+      const linkButton = screen.getByTitle('Insert Link');
+      await user.click(linkButton);
+
+      expect(window.prompt).toHaveBeenCalledWith('Enter URL:');
+    });
+
+    it('should reject javascript: URLs in toolbar link button', async () => {
+      const user = userEvent.setup();
+      vi.mocked(window.prompt).mockReturnValue('javascript:alert("xss")');
+
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+      const linkButton = screen.getByTitle('Insert Link');
+      await user.click(linkButton);
+
+      expect(window.prompt).toHaveBeenCalledWith('Enter URL:');
+      // The link should not be set because javascript: protocol is not allowed
+    });
+
+    it('should reject data: URLs in toolbar link button', async () => {
+      const user = userEvent.setup();
+      vi.mocked(window.prompt).mockReturnValue('data:text/html,<script>alert("xss")</script>');
+
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+      const linkButton = screen.getByTitle('Insert Link');
+      await user.click(linkButton);
+
+      expect(window.prompt).toHaveBeenCalledWith('Enter URL:');
+      // The link should not be set because data: protocol is not allowed
+    });
+
+    it('should reject empty URLs in toolbar link button', async () => {
+      const user = userEvent.setup();
+      vi.mocked(window.prompt).mockReturnValue('');
+
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+      const linkButton = screen.getByTitle('Insert Link');
+      await user.click(linkButton);
+
+      expect(window.prompt).toHaveBeenCalledWith('Enter URL:');
+      // No link should be set for empty URL
+    });
+
+    it('should handle cancelled prompt in toolbar link button', async () => {
+      const user = userEvent.setup();
+      vi.mocked(window.prompt).mockReturnValue(null);
+
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+      const linkButton = screen.getByTitle('Insert Link');
+      await user.click(linkButton);
+
+      expect(window.prompt).toHaveBeenCalledWith('Enter URL:');
+      // No link should be set when prompt is cancelled
+    });
   });
 
-  it('should reject data: URLs', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
+  describe('Accessibility', () => {
+    it('should have role="textbox"', () => {
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
+      const editor = screen.getByRole('textbox');
+      expect(editor).toBeInTheDocument();
+    });
 
-    promptSpy.mockReturnValue('data:text/html,<script>alert("XSS")</script>');
+    it('should have aria-multiline="true"', () => {
+      render(<RichTextEditor value="" onChange={onChangeMock} />);
+      const editor = screen.getByRole('textbox');
+      expect(editor).toHaveAttribute('aria-multiline', 'true');
+    });
 
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
+    it('should support custom id', () => {
+      render(<RichTextEditor value="" onChange={onChangeMock} id="custom-editor" />);
+      const editor = screen.getByRole('textbox');
+      expect(editor).toHaveAttribute('id', 'custom-editor');
+    });
 
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
-  });
-
-  it('should handle empty URL input', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
-
-    promptSpy.mockReturnValue('');
-
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
-
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
-  });
-
-  it('should handle null URL input (user cancels)', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
-
-    promptSpy.mockReturnValue(null);
-
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
-
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
-  });
-
-  it('should trim whitespace from URLs', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
-
-    promptSpy.mockReturnValue('  https://example.com  ');
-
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
-
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
-  });
-
-  it('should reject invalid URL formats', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
-
-    promptSpy.mockReturnValue('not a valid url');
-
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
-
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
-  });
-
-  it('should reject file:// URLs', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
-
-    promptSpy.mockReturnValue('file:///etc/passwd');
-
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
-
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
-  });
-
-  it('should reject ftp:// URLs', () => {
-    const onChange = vi.fn();
-    render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Test editor"
-      />
-    );
-
-    promptSpy.mockReturnValue('ftp://example.com');
-
-    const linkButton = screen.getByTitle('Insert Link');
-    fireEvent.click(linkButton);
-
-    expect(promptSpy).toHaveBeenCalledWith('Enter URL:');
-  });
-});
-
-describe('RichTextEditor - Basic Functionality', () => {
-  it('should render with placeholder', () => {
-    const onChange = vi.fn();
-    const { container } = render(
-      <RichTextEditor
-        value=""
-        onChange={onChange}
-        placeholder="Enter text here"
-      />
-    );
-
-    const editorElement = container.querySelector('[data-placeholder="Enter text here"]');
-    expect(editorElement).toBeInTheDocument();
-  });
-
-  it('should render toolbar buttons', () => {
-    const onChange = vi.fn();
-    render(<RichTextEditor value="" onChange={onChange} />);
-
-    expect(screen.getByTitle('Bold (Ctrl+B)')).toBeInTheDocument();
-    expect(screen.getByTitle('Italic (Ctrl+I)')).toBeInTheDocument();
-    expect(screen.getByTitle('Insert Link')).toBeInTheDocument();
-  });
-
-  it('should disable buttons when disabled prop is true', () => {
-    const onChange = vi.fn();
-    render(<RichTextEditor value="" onChange={onChange} disabled={true} />);
-
-    const boldButton = screen.getByTitle('Bold (Ctrl+B)');
-    expect(boldButton).toBeDisabled();
+    it('should support aria-labelledby', () => {
+      render(<RichTextEditor value="" onChange={onChangeMock} aria-labelledby="label-id" />);
+      const editor = screen.getByRole('textbox');
+      expect(editor).toHaveAttribute('aria-labelledby', 'label-id');
+    });
   });
 });

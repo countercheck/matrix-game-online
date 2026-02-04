@@ -104,6 +104,18 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
   // If there's already a result, show it
   if (existingResult) {
     const resultInfo = resultLabels[existingResult.resultType];
+    if (!resultInfo) {
+      console.error(
+        `Unknown resultType encountered: "${existingResult.resultType}". ` +
+          `Expected one of: ${Object.keys(resultLabels).join(', ')}. ` +
+          `This may indicate an API issue or data inconsistency.`
+      );
+    }
+    const displayInfo = resultInfo || {
+      label: existingResult.resultType,
+      description: 'Result',
+      color: 'yellow',
+    };
     return (
       <div className="space-y-6">
         {/* Action summary */}
@@ -120,17 +132,17 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
         {/* Result display */}
         <div
           className={`p-6 border rounded-lg text-center ${
-            resultInfo.color === 'green'
+            displayInfo.color === 'green'
               ? 'bg-green-50 border-green-500 dark:bg-green-950'
-              : resultInfo.color === 'yellow'
+              : displayInfo.color === 'yellow'
               ? 'bg-yellow-50 border-yellow-500 dark:bg-yellow-950'
-              : resultInfo.color === 'orange'
+              : displayInfo.color === 'orange'
               ? 'bg-orange-50 border-orange-500 dark:bg-orange-950'
               : 'bg-red-50 border-red-500 dark:bg-red-950'
           }`}
         >
-          <h3 className="text-2xl font-bold mb-2">{resultInfo.label}</h3>
-          <p className="text-muted-foreground mb-4">{resultInfo.description}</p>
+          <h3 className="text-2xl font-bold mb-2">{displayInfo.label}</h3>
+          <p className="text-muted-foreground mb-4">{displayInfo.description}</p>
 
           {/* Drawn tokens */}
           <div className="flex items-center justify-center gap-2 mb-4">

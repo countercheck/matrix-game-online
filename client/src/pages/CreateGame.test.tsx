@@ -32,7 +32,7 @@ describe('CreateGame Page', () => {
     render(<CreateGame />);
 
     expect(screen.getByLabelText(/game name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
+    expect(screen.getByText(/description/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create game/i })).toBeInTheDocument();
   });
 
@@ -52,26 +52,6 @@ describe('CreateGame Page', () => {
     expect(nameInput).toHaveValue('My Awesome Game');
   });
 
-  it('should update description input on change', async () => {
-    const user = userEvent.setup();
-    render(<CreateGame />);
-
-    const descInput = screen.getByLabelText(/description/i);
-    await user.type(descInput, 'A test game description');
-
-    expect(descInput).toHaveValue('A test game description');
-  });
-
-  it('should show character count for description', async () => {
-    const user = userEvent.setup();
-    render(<CreateGame />);
-
-    const descInput = screen.getByLabelText(/description/i);
-    await user.type(descInput, 'Hello');
-
-    expect(screen.getByText(/5\/1000/)).toBeInTheDocument();
-  });
-
   it('should call API on form submit', async () => {
     mockPost.mockResolvedValue({
       data: { data: { id: 'game-123' } },
@@ -80,13 +60,12 @@ describe('CreateGame Page', () => {
     render(<CreateGame />);
 
     await user.type(screen.getByLabelText(/game name/i), 'Test Game');
-    await user.type(screen.getByLabelText(/description/i), 'A test');
     await user.click(screen.getByRole('button', { name: /create game/i }));
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith('/games', {
         name: 'Test Game',
-        description: 'A test',
+        description: undefined,
       });
     });
   });

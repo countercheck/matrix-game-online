@@ -155,11 +155,12 @@ export default function CreateGame() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="description" className="text-sm font-medium">
+          <label id="description-label" className="text-sm font-medium">
             Description / Setting
           </label>
           <RichTextEditor
             id="description"
+            aria-labelledby="description-label"
             value={description}
             onChange={setDescription}
             maxLength={1000}

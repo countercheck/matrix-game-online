@@ -19,6 +19,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   className?: string;
   id?: string;
+  'aria-labelledby'?: string;
   rows?: number;
   disabled?: boolean;
 }
@@ -203,6 +204,7 @@ export function RichTextEditor({
   placeholder,
   className = '',
   id,
+  'aria-labelledby': ariaLabelledBy,
   rows = 4,
   disabled = false,
 }: RichTextEditorProps) {
@@ -215,6 +217,8 @@ export function RichTextEditor({
         heading: {
           levels: [2, 3],
         },
+        // Disable built-in code block to avoid conflicts
+        codeBlock: false,
       }),
       Table.configure({
         resizable: true,
@@ -256,7 +260,10 @@ export function RichTextEditor({
       attributes: {
         class:
           'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[80px] px-3 py-2',
-        id: id || '',
+        ...(id && { id }),
+        ...(ariaLabelledBy && { 'aria-labelledby': ariaLabelledBy }),
+        role: 'textbox',
+        'aria-multiline': 'true',
       },
     },
   });

@@ -143,16 +143,24 @@ npm test -- --watch
 npm test -- --coverage
 ```
 
-## Environment
+## Environment Variables
 
-The client proxies API requests to the backend. Configure in `vite.config.ts`:
+### Development
 
-```ts
-server: {
-  proxy: {
-    '/api': 'http://localhost:3000'
-  }
-}
+In development, Vite proxies `/api` requests to the backend server (default: `http://localhost:3000`). No environment variables needed.
+
+### Production
+
+For production builds, set `VITE_API_URL` to your API server URL:
+
+```bash
+# Build with production API URL
+VITE_API_URL=https://your-api-domain.com npm run build
 ```
 
-For production, set the `VITE_API_URL` environment variable.
+The client will automatically append `/api` to the URL. For example:
+- `VITE_API_URL=https://api.example.com` → API calls go to `https://api.example.com/api/auth/register`
+
+If `VITE_API_URL` is not set, the client will use relative paths (`/api`), which works when the client and server are served from the same domain.
+
+See `.env.example` for configuration reference.

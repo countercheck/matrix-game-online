@@ -185,6 +185,43 @@ Create a new game.
 }
 ```
 
+---
+
+### POST /games/:gameId/image
+Upload an image for a game. Only the game creator can upload images.
+
+**Request:**
+- Content-Type: `multipart/form-data`
+- Body: Form data with `image` field containing the image file
+
+**Constraints:**
+- Maximum file size: 5MB
+- Allowed formats: JPEG, JPG, PNG, GIF, WebP
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "imageUrl": "http://localhost:3000/uploads/image-1234567890-123456789.jpg",
+    "game": {
+      "id": "uuid",
+      "name": "My Game",
+      "imageUrl": "http://localhost:3000/uploads/image-1234567890-123456789.jpg",
+      "status": "LOBBY",
+      "currentPhase": "WAITING"
+    }
+  }
+}
+```
+
+**Errors:**
+- `400 Bad Request` - No file uploaded or invalid file type/size
+- `403 Forbidden` - User is not the game creator
+- `404 Not Found` - Game not found
+
+---
+
 ### GET /games/:gameId
 Get game details.
 

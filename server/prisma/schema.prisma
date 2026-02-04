@@ -30,6 +30,7 @@ model Game {
   id              String       @id @default(uuid())
   name            String       @db.VarChar(100)
   description     String?      @db.Text
+  imageUrl        String?      @map("image_url") @db.VarChar(500)
   creatorId       String       @map("creator_id")
   status          GameStatus   @default(LOBBY)
   currentPhase    GamePhase    @default(WAITING) @map("current_phase")

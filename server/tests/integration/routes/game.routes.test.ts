@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import multer from 'multer';
 
 // Mock data store
 let games: Map<string, any>;
@@ -16,6 +17,9 @@ function createTestApp() {
     req.user = currentUser;
     next();
   });
+
+  // Configure multer for tests (using memory storage)
+  const upload = multer({ storage: multer.memoryStorage() });
 
   // Create game
   app.post('/api/games', (req: any, res) => {
@@ -190,17 +194,51 @@ function createTestApp() {
     res.json({ success: true, data: { message: 'Left game successfully' } });
   });
 
+  // Upload game image
+  app.post('/api/games/:gameId/image', upload.single('image'), (req: any, res) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED' } });
+    }
+
+    const game = games.get(req.params.gameId);
+    if (!game) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND' } });
+    }
+
+    if (game.creatorId !== req.user.id) {
+      return res.status(403).json({ success: false, error: { code: 'FORBIDDEN' } });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: { message: 'No file uploaded' } });
+    }
+
+    const imageUrl = `http://localhost:3000/uploads/${req.file.filename || 'test-image.png'}`;
+    game.imageUrl = imageUrl;
+
+    res.json({ success: true, data: { imageUrl, game } });
+  });
+
   return app;
 }
 
 describe('Game Routes', () => {
   let app: express.Express;
+  let game: any;
+  let authToken: string;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     games = new Map();
     players = new Map();
     currentUser = { id: 'user-1', email: 'test@example.com', displayName: 'Test User' };
     app = createTestApp();
+    
+    // Create a test game for image upload tests
+    const res = await request(app)
+      .post('/api/games')
+      .send({ name: 'Test Game' });
+    game = res.body.data;
+    authToken = 'mock-token'; // Mock token for tests
   });
 
   describe('POST /api/games', () => {
@@ -410,6 +448,47 @@ describe('Game Routes', () => {
       const response = await request(app).post(`/api/games/${gameId}/leave`);
 
       expect(response.status).toBe(404);
+    });
+  });
+
+  describe('POST /games/:gameId/image', () => {
+    it('should upload an image for a game', async () => {
+      // Create a simple 1x1 PNG image buffer
+      const imageBuffer = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'base64'
+      );
+
+      const response = await request(app)
+        .post(`/api/games/${game.id}/image`)
+        .attach('image', imageBuffer, 'test.png');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.imageUrl).toBeDefined();
+      expect(response.body.data.game.imageUrl).toBeDefined();
+    });
+
+    it('should reject upload if user is not the game creator', async () => {
+      // Change current user to a different user
+      currentUser = { id: 'other-user-id', email: 'other@test.com', displayName: 'Other User' };
+      const imageBuffer = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'base64'
+      );
+
+      const response = await request(app)
+        .post(`/api/games/${game.id}/image`)
+        .attach('image', imageBuffer, 'test.png');
+
+      expect(response.status).toBe(403);
+    });
+
+    it('should reject upload without a file', async () => {
+      const response = await request(app)
+        .post(`/api/games/${game.id}/image`);
+
+      expect(response.status).toBe(400);
     });
   });
 });

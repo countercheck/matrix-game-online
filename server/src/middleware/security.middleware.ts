@@ -130,6 +130,28 @@ export const actionRateLimiter = rateLimit({
 });
 
 /**
+ * Rate limiter for file upload endpoints.
+ * Limits to 20 uploads per 15 minutes per IP.
+ */
+export const uploadRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 uploads per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Too many upload requests, please try again later',
+    },
+  },
+  handler: (req, res, _next, options) => {
+    logger.warn(`Upload rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json(options.message);
+  },
+});
+
+/**
  * Security headers middleware.
  * Adds common security headers to all responses.
  */

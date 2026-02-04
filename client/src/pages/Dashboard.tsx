@@ -7,6 +7,7 @@ interface Game {
   id: string;
   name: string;
   description?: string;
+  imageUrl?: string;
   status: string;
   currentPhase: string;
   playerCount: number;
@@ -76,19 +77,37 @@ export default function Dashboard() {
       {games.length > 0 && (
         <section aria-label="Your games list">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {games.map((game) => (
-              <Link
-                key={game.id}
-                to={
-                  game.status === 'LOBBY'
-                    ? `/game/${game.id}/lobby`
-                    : `/game/${game.id}/play`
-                }
-                className="block p-4 border rounded-lg hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label={`${game.name} - ${game.status} - ${game.playerCount} players${game.isHost ? ' - You are the host' : ''}`}
-              >
-                <article>
-                  <div className="flex items-start justify-between gap-2">
+            {games.map((game) => {
+              // Validate image URL for security
+              const isValidImageUrl = game.imageUrl && 
+                (game.imageUrl.startsWith('http://localhost:') || 
+                 game.imageUrl.startsWith('https://') ||
+                 game.imageUrl.startsWith('/uploads/'));
+              
+              return (
+                <Link
+                  key={game.id}
+                  to={
+                    game.status === 'LOBBY'
+                      ? `/game/${game.id}/lobby`
+                      : `/game/${game.id}/play`
+                  }
+                  className="block p-4 border rounded-lg hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-label={`${game.name} - ${game.status} - ${game.playerCount} players${game.isHost ? ' - You are the host' : ''}`}
+                >
+                  <article>
+                    {/* Game Image */}
+                    {isValidImageUrl && (
+                      <div className="mb-3 -mx-4 -mt-4">
+                        <img
+                          src={game.imageUrl}
+                          alt={game.name}
+                          className="w-full h-32 object-cover rounded-t-lg"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold truncate">{game.name}</h3>
                     <span
                       className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
@@ -132,7 +151,8 @@ export default function Dashboard() {
                   )}
                 </article>
               </Link>
-            ))}
+            );
+          })}
           </div>
         </section>
       )}

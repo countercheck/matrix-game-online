@@ -7,6 +7,9 @@ import {
   joinGameSchema,
   selectPersonaSchema,
 } from '../utils/validators.js';
+import { BadRequestError } from '../middleware/errorHandler.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function createGame(
   req: Request,
@@ -177,3 +180,40 @@ export async function proposeAction(
     next(error);
   }
 }
+
+export async function uploadGameImage(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const gameId = req.params.gameId as string;
+    const userId = req.user!.id;
+
+    if (!req.file) {
+      throw new BadRequestError('No file uploaded');
+    }
+
+    // Build the public URL for the image
+    const storageUrl = process.env.STORAGE_URL || `http://localhost:${process.env.PORT || 3000}/uploads`;
+    const normalizedStorageUrl = storageUrl.replace(/\/+$/, '');
+    const imageUrl = `${normalizedStorageUrl}/${req.file.filename}`;
+
+    // Update the game with the image URL
+    const game = await gameService.updateGameImage(gameId, userId, imageUrl);
+
+    res.json({ success: true, data: { imageUrl, game } });
+  } catch (error) {
+    // Clean up uploaded file if there's an error
+    if (req.file) {
+      const filePath = path.join(process.cwd(), 'uploads', req.file.filename);
+      try {
+        await fs.unlink(filePath);
+      } catch {
+        // Ignore errors during cleanup
+      }
+    }
+    next(error);
+  }
+}
+

@@ -183,8 +183,22 @@ function Toolbar({ editor, disabled }: ToolbarProps) {
         type="button"
         onClick={() => {
           const url = window.prompt('Enter URL:');
-          if (url) {
-            editor.chain().focus().setLink({ href: url }).run();
+          if (!url) {
+            return;
+          }
+
+          const trimmedUrl = url.trim();
+          if (!trimmedUrl) {
+            return;
+          }
+
+          try {
+            const parsed = new URL(trimmedUrl);
+            if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+              editor.chain().focus().setLink({ href: trimmedUrl }).run();
+            }
+          } catch {
+            // Invalid URL; do not set the link
           }
         }}
         disabled={disabled}

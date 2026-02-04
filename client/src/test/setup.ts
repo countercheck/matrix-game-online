@@ -40,3 +40,53 @@ Object.defineProperty(navigator, 'clipboard', {
   writable: true,
   configurable: true,
 });
+
+// Mock DOM methods needed by ProseMirror/TipTap
+if (typeof document !== 'undefined') {
+  // Mock elementFromPoint
+  document.elementFromPoint = vi.fn(() => null);
+
+  // Mock getClientRects for all elements
+  Element.prototype.getClientRects = vi.fn(() => ({
+    length: 0,
+    item: () => null,
+    [Symbol.iterator]: function* () {},
+  } as DOMRectList));
+
+  // Mock getBoundingClientRect for all elements
+  Element.prototype.getBoundingClientRect = vi.fn(() => ({
+    x: 0,
+    y: 0,
+    bottom: 0,
+    height: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    width: 0,
+    toJSON: () => {},
+  }));
+
+  // Mock scrollIntoView
+  Element.prototype.scrollIntoView = vi.fn();
+}
+
+// Mock Range methods
+if (typeof Range !== 'undefined') {
+  Range.prototype.getBoundingClientRect = vi.fn(() => ({
+    x: 0,
+    y: 0,
+    bottom: 0,
+    height: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    width: 0,
+    toJSON: () => {},
+  }));
+
+  Range.prototype.getClientRects = vi.fn(() => ({
+    length: 0,
+    item: () => null,
+    [Symbol.iterator]: function* () {},
+  } as DOMRectList));
+}

@@ -13,11 +13,15 @@ interface Action {
   };
 }
 
+interface DrawnToken {
+  tokenType: 'SUCCESS' | 'FAILURE';
+}
+
 interface DrawResult {
-  drawnTokens: { type: 'SUCCESS' | 'FAILURE' }[];
-  successCount: number;
-  failureCount: number;
-  numericResult: number;
+  drawnTokens: DrawnToken[];
+  drawnSuccess: number;
+  drawnFailure: number;
+  resultValue: number;
   resultType: 'TRIUMPH' | 'SUCCESS_BUT' | 'FAILURE_BUT' | 'DISASTER';
 }
 
@@ -53,7 +57,7 @@ const resultLabels: Record<string, { label: string; description: string; color: 
 export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
   const queryClient = useQueryClient();
   const [isDrawing, setIsDrawing] = useState(false);
-  const [drawnTokens, setDrawnTokens] = useState<{ type: 'SUCCESS' | 'FAILURE' }[]>([]);
+  const [drawnTokens, setDrawnTokens] = useState<DrawnToken[]>([]);
   const [animationComplete, setAnimationComplete] = useState(false);
 
   const isInitiator = action.initiator.userId === currentUserId;
@@ -78,7 +82,7 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
     },
   });
 
-  const animateTokenDraw = (tokens: { type: 'SUCCESS' | 'FAILURE' }[]) => {
+  const animateTokenDraw = (tokens: DrawnToken[]) => {
     setIsDrawing(true);
     setDrawnTokens([]);
 
@@ -134,10 +138,10 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
               <div
                 key={i}
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                  token.type === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'
+                  token.tokenType === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'
                 }`}
               >
-                {token.type === 'SUCCESS' ? 'S' : 'F'}
+                {token.tokenType === 'SUCCESS' ? 'S' : 'F'}
               </div>
             ))}
           </div>
@@ -146,15 +150,15 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
             Numeric Result:{' '}
             <span
               className={
-                existingResult.numericResult > 0
+                existingResult.resultValue > 0
                   ? 'text-green-600'
-                  : existingResult.numericResult < 0
+                  : existingResult.resultValue < 0
                   ? 'text-red-600'
                   : 'text-yellow-600'
               }
             >
-              {existingResult.numericResult > 0 ? '+' : ''}
-              {existingResult.numericResult}
+              {existingResult.resultValue > 0 ? '+' : ''}
+              {existingResult.resultValue}
             </span>
           </p>
         </div>
@@ -180,13 +184,13 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
                 key={i}
                 className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold transition-all duration-500 ${
                   drawnTokens[i]
-                    ? drawnTokens[i].type === 'SUCCESS'
+                    ? drawnTokens[i].tokenType === 'SUCCESS'
                       ? 'bg-green-500 text-white scale-100'
                       : 'bg-red-500 text-white scale-100'
                     : 'bg-muted scale-75 animate-pulse'
                 }`}
               >
-                {drawnTokens[i] ? (drawnTokens[i].type === 'SUCCESS' ? 'S' : 'F') : '?'}
+                {drawnTokens[i] ? (drawnTokens[i].tokenType === 'SUCCESS' ? 'S' : 'F') : '?'}
               </div>
             ))}
           </div>

@@ -1,5 +1,6 @@
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { CodeBlock } from '@tiptap/extension-code-block';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableHeader } from '@tiptap/extension-table-header';
@@ -231,9 +232,10 @@ export function RichTextEditor({
         heading: {
           levels: [2, 3],
         },
-        // Disable built-in code block to avoid conflicts
+        // Disable built-in code block so we can configure it separately
         codeBlock: false,
       }),
+      CodeBlock,
       Table.configure({
         resizable: true,
       }),

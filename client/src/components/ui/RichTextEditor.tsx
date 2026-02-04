@@ -194,7 +194,7 @@ function Toolbar({ editor, disabled }: ToolbarProps) {
 
           try {
             const parsed = new URL(trimmedUrl);
-            if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            if (parsed.protocol === 'http:' || parsed.protocol === 'https:' || parsed.protocol === 'mailto:') {
               editor.chain().focus().setLink({ href: trimmedUrl }).run();
             }
           } catch {

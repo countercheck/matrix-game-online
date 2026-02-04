@@ -18,7 +18,7 @@ interface DrawResult {
   successCount: number;
   failureCount: number;
   numericResult: number;
-  resultType: 'TRIUMPH' | 'SUCCESS_WITH_COMPLICATION' | 'FAILURE_WITH_SILVER_LINING' | 'DISASTER';
+  resultType: 'TRIUMPH' | 'SUCCESS_BUT' | 'FAILURE_BUT' | 'DISASTER';
 }
 
 interface TokenDrawProps {
@@ -33,12 +33,12 @@ const resultLabels: Record<string, { label: string; description: string; color: 
     description: 'Complete success with additional benefits',
     color: 'green',
   },
-  SUCCESS_WITH_COMPLICATION: {
+  SUCCESS_BUT: {
     label: 'Success, but...',
     description: 'You succeed, but with a complication',
     color: 'yellow',
   },
-  FAILURE_WITH_SILVER_LINING: {
+  FAILURE_BUT: {
     label: 'Failure, but...',
     description: 'You fail, but with a silver lining',
     color: 'orange',

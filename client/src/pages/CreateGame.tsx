@@ -163,7 +163,7 @@ export default function CreateGame() {
             aria-labelledby="description-label"
             value={description}
             onChange={setDescription}
-            maxLength={1000}
+            maxLength={1200}
             rows={4}
             placeholder="Describe the scenario or setting for your game..."
           />

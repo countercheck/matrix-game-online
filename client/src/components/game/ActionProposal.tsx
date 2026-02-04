@@ -123,7 +123,7 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
             <RichTextEditor
               value={arg}
               onChange={(value) => handleArgumentChange(index, value)}
-              maxLength={200}
+              maxLength={300}
               rows={2}
               placeholder={`Argument ${index + 1}${index === 0 ? ' (required)' : ' (optional)'}...`}
             />

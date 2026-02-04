@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextEditor, RichTextDisplay } from '../ui';
 
 interface Action {
   id: string;
@@ -14,11 +15,11 @@ interface Action {
 }
 
 interface DrawResult {
-  drawnTokens: { type: 'SUCCESS' | 'FAILURE' }[];
-  successCount: number;
-  failureCount: number;
-  numericResult: number;
-  resultType: 'TRIUMPH' | 'SUCCESS_WITH_COMPLICATION' | 'FAILURE_WITH_SILVER_LINING' | 'DISASTER';
+  drawnTokens: { tokenType: 'SUCCESS' | 'FAILURE' }[];
+  drawnSuccess: number;
+  drawnFailure: number;
+  resultValue: number;
+  resultType: 'TRIUMPH' | 'SUCCESS_BUT' | 'FAILURE_BUT' | 'DISASTER';
 }
 
 interface Narration {
@@ -42,12 +43,12 @@ const resultLabels: Record<string, { label: string; guidance: string; color: str
     guidance: 'Describe a complete success with additional benefits or advantages.',
     color: 'green',
   },
-  SUCCESS_WITH_COMPLICATION: {
+  SUCCESS_BUT: {
     label: 'Success, but...',
     guidance: 'Describe how you succeed, but with an unexpected complication or cost.',
     color: 'yellow',
   },
-  FAILURE_WITH_SILVER_LINING: {
+  FAILURE_BUT: {
     label: 'Failure, but...',
     guidance: 'Describe how you fail, but find some unexpected benefit or opportunity.',
     color: 'orange',
@@ -135,10 +136,10 @@ export function NarrationForm({ gameId, action, currentUserId }: NarrationFormPr
                 <div
                   key={i}
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                    token.type === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'
+                    token.tokenType === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'
                   }`}
                 >
-                  {token.type === 'SUCCESS' ? 'S' : 'F'}
+                  {token.tokenType === 'SUCCESS' ? 'S' : 'F'}
                 </div>
               ))}
             </div>
@@ -155,7 +156,7 @@ export function NarrationForm({ gameId, action, currentUserId }: NarrationFormPr
             Narrated by {existingNarration.author.playerName}
           </p>
           <div className="p-4 bg-muted rounded-md">
-            <p className="whitespace-pre-wrap">{existingNarration.content}</p>
+            <RichTextDisplay content={existingNarration.content} />
           </div>
         </div>
 
@@ -188,10 +189,10 @@ export function NarrationForm({ gameId, action, currentUserId }: NarrationFormPr
               <div
                 key={i}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                  token.type === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'
+                  token.tokenType === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'
                 }`}
               >
-                {token.type === 'SUCCESS' ? 'S' : 'F'}
+                {token.tokenType === 'SUCCESS' ? 'S' : 'F'}
               </div>
             ))}
           </div>
@@ -216,17 +217,13 @@ export function NarrationForm({ gameId, action, currentUserId }: NarrationFormPr
           )}
 
           <div className="space-y-2">
-            <textarea
+            <RichTextEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={setContent}
               maxLength={1000}
               rows={6}
-              className="w-full px-3 py-2 border rounded-md bg-background resize-none"
               placeholder="Describe what happens as a result of your action..."
             />
-            <p className="text-xs text-muted-foreground text-right">
-              {content.length}/1000 characters
-            </p>
           </div>
 
           <button

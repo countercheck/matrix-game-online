@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextEditor } from '../ui';
 
 interface ActionProposalProps {
   gameId: string;
@@ -86,38 +87,28 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
         <label htmlFor="actionDescription" className="text-sm font-medium">
           What do you want to do?
         </label>
-        <textarea
+        <RichTextEditor
           id="actionDescription"
           value={actionDescription}
-          onChange={(e) => setActionDescription(e.target.value)}
-          required
+          onChange={setActionDescription}
           maxLength={500}
           rows={3}
-          className="w-full px-3 py-2 border rounded-md bg-background resize-none"
           placeholder="Describe the action you want to attempt..."
         />
-        <p className="text-xs text-muted-foreground text-right">
-          {actionDescription.length}/500 characters
-        </p>
       </div>
 
       <div className="space-y-2">
         <label htmlFor="desiredOutcome" className="text-sm font-medium">
           What outcome are you hoping for?
         </label>
-        <textarea
+        <RichTextEditor
           id="desiredOutcome"
           value={desiredOutcome}
-          onChange={(e) => setDesiredOutcome(e.target.value)}
-          required
+          onChange={setDesiredOutcome}
           maxLength={300}
           rows={2}
-          className="w-full px-3 py-2 border rounded-md bg-background resize-none"
           placeholder="Describe your desired outcome..."
         />
-        <p className="text-xs text-muted-foreground text-right">
-          {desiredOutcome.length}/300 characters
-        </p>
       </div>
 
       <div className="space-y-3">
@@ -128,18 +119,14 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
           Provide 1-3 arguments supporting your action. These will form the initial case for success.
         </p>
         {arguments_.map((arg, index) => (
-          <div key={index} className="space-y-1">
-            <textarea
+          <div key={index}>
+            <RichTextEditor
               value={arg}
-              onChange={(e) => handleArgumentChange(index, e.target.value)}
+              onChange={(value) => handleArgumentChange(index, value)}
               maxLength={200}
               rows={2}
-              className="w-full px-3 py-2 border rounded-md bg-background resize-none"
               placeholder={`Argument ${index + 1}${index === 0 ? ' (required)' : ' (optional)'}...`}
             />
-            <p className="text-xs text-muted-foreground text-right">
-              {arg.length}/200 characters
-            </p>
           </div>
         ))}
       </div>

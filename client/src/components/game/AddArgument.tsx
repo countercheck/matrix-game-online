@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextEditor } from '../ui';
 
 interface AddArgumentProps {
   actionId: string;
@@ -125,14 +126,12 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
         <label htmlFor="argument-content" className="sr-only">
           Argument content
         </label>
-        <textarea
+        <RichTextEditor
           id="argument-content"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={setContent}
           maxLength={200}
           rows={3}
-          aria-describedby="argument-char-count"
-          className="w-full px-3 py-2 border rounded-md bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder={
             argumentType === 'FOR'
               ? 'Why this action should succeed...'
@@ -141,13 +140,6 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
               : 'Additional context or clarification...'
           }
         />
-        <p
-          id="argument-char-count"
-          className="text-xs text-muted-foreground text-right"
-          aria-live="polite"
-        >
-          {content.length}/200 characters
-        </p>
       </div>
 
       <button

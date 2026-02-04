@@ -103,7 +103,11 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
 
   // If there's already a result, show it
   if (existingResult) {
-    const resultInfo = resultLabels[existingResult.resultType];
+    const resultInfo = resultLabels[existingResult.resultType] || {
+      label: existingResult.resultType,
+      description: 'Result',
+      color: 'yellow',
+    };
     return (
       <div className="space-y-6">
         {/* Action summary */}

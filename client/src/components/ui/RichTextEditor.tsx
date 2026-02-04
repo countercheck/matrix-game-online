@@ -249,6 +249,8 @@ export function RichTextEditor({
         HTMLAttributes: {
           class: 'text-primary underline',
         },
+        validate: (href) =>
+          /^https?:\/\//.test(href) || /^mailto:/.test(href),
       }),
       Placeholder.configure({
         placeholder: placeholder || 'Write something...',

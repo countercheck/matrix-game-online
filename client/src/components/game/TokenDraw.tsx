@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextDisplay } from '../ui';
 
 interface Action {
   id: string;
@@ -122,7 +123,7 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
         <div className="p-6 border rounded-lg">
           <h2 className="text-lg font-semibold mb-4">Resolution</h2>
           <div className="p-4 bg-muted rounded-md">
-            <p className="font-medium">{action.actionDescription}</p>
+            <RichTextDisplay content={action.actionDescription} className="font-medium" />
             <p className="text-xs text-muted-foreground mt-2">
               Proposed by {action.initiator.playerName}
             </p>
@@ -218,7 +219,7 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
       <div className="p-6 border rounded-lg">
         <h2 className="text-lg font-semibold mb-4">Resolution Phase</h2>
         <div className="p-4 bg-muted rounded-md">
-          <p className="font-medium">{action.actionDescription}</p>
+          <RichTextDisplay content={action.actionDescription} className="font-medium" />
           <p className="text-xs text-muted-foreground mt-2">
             Proposed by {action.initiator.playerName}
           </p>

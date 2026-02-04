@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { RichTextEditor } from '../components/ui';
 
 interface Persona {
   name: string;
@@ -154,19 +155,18 @@ export default function CreateGame() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="description" className="text-sm font-medium">
+          <label id="description-label" className="text-sm font-medium">
             Description / Setting
           </label>
-          <textarea
+          <RichTextEditor
             id="description"
+            aria-labelledby="description-label"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={1000}
+            onChange={setDescription}
+            maxLength={1200}
             rows={4}
-            className="w-full px-3 py-2 border rounded-md bg-background resize-none"
             placeholder="Describe the scenario or setting for your game..."
           />
-          <p className="text-xs text-muted-foreground">{description.length}/1000 characters</p>
         </div>
 
         {/* Image Upload Section */}
@@ -265,12 +265,11 @@ export default function CreateGame() {
                       Remove
                     </button>
                   </div>
-                  <textarea
+                  <RichTextEditor
                     value={persona.description}
-                    onChange={(e) => updatePersona(index, 'description', e.target.value)}
+                    onChange={(value) => updatePersona(index, 'description', value)}
                     maxLength={500}
                     rows={2}
-                    className="w-full px-2 py-1 border rounded-md bg-background text-sm resize-none"
                     placeholder="Description (optional)"
                   />
                 </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextDisplay } from '../ui';
 
 interface Action {
   id: string;
@@ -91,10 +92,11 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
       <div className="p-6 border rounded-lg">
         <h2 className="text-lg font-semibold mb-4">Vote on Action</h2>
         <div className="p-4 bg-muted rounded-md">
-          <p className="font-medium">{action.actionDescription}</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            <span className="font-medium">Desired outcome:</span> {action.desiredOutcome}
-          </p>
+          <RichTextDisplay content={action.actionDescription} className="font-medium" />
+          <div className="text-sm text-muted-foreground mt-2">
+            <span className="font-medium">Desired outcome:</span>
+            <RichTextDisplay content={action.desiredOutcome} className="mt-1" />
+          </div>
           <p className="text-xs text-muted-foreground mt-2">
             Proposed by {action.initiator.playerName}
           </p>

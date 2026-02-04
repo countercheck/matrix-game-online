@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextDisplay } from '../ui';
 
 interface Argument {
   id: string;
@@ -77,7 +78,7 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
                   : 'Clarification'}
               </span>
             </div>
-            <p className="text-sm">{arg.content}</p>
+            <RichTextDisplay content={arg.content} className="text-sm" />
           </div>
         ))}
       </div>

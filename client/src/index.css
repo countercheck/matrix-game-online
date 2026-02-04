@@ -58,3 +58,98 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* TipTap Editor Styles */
+@layer components {
+  /* Placeholder styling */
+  .tiptap p.is-editor-empty:first-child::before {
+    @apply text-muted-foreground;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* Focus state */
+  .tiptap:focus {
+    outline: none;
+  }
+
+  /* Table styling */
+  .tiptap table {
+    @apply border-collapse w-full my-4;
+  }
+
+  .tiptap table td,
+  .tiptap table th {
+    @apply border border-border p-2 min-w-[100px];
+  }
+
+  .tiptap table th {
+    @apply bg-muted font-semibold;
+  }
+
+  /* Task list styling */
+  .tiptap ul[data-type="taskList"] {
+    @apply list-none p-0;
+  }
+
+  .tiptap ul[data-type="taskList"] li {
+    @apply flex items-start gap-2;
+  }
+
+  .tiptap ul[data-type="taskList"] li > label {
+    @apply flex-shrink-0 mt-0.5;
+  }
+
+  .tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
+    @apply w-4 h-4 rounded border-border;
+  }
+
+  .tiptap ul[data-type="taskList"] li > div {
+    @apply flex-1;
+  }
+
+  /* Code block styling */
+  .tiptap pre {
+    @apply bg-muted rounded-md p-4 my-4 overflow-x-auto;
+  }
+
+  .tiptap pre code {
+    @apply bg-transparent p-0;
+  }
+
+  /* Inline code styling */
+  .tiptap code {
+    @apply bg-muted px-1.5 py-0.5 rounded text-sm;
+  }
+
+  /* Blockquote styling */
+  .tiptap blockquote {
+    @apply border-l-4 border-primary pl-4 italic my-4;
+  }
+
+  /* Horizontal rule */
+  .tiptap hr {
+    @apply border-border my-4;
+  }
+
+  /* Link styling */
+  .tiptap a {
+    @apply text-primary underline hover:no-underline;
+  }
+
+  /* Prose overrides for display component */
+  .prose table {
+    @apply border-collapse w-full;
+  }
+
+  .prose td,
+  .prose th {
+    @apply border border-border p-2;
+  }
+
+  .prose th {
+    @apply bg-muted font-semibold;
+  }
+}

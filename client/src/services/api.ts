@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 // Use environment variable for API URL in production, fall back to /api for development
-const baseURL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : '/api';
+const apiRoot = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/+$/, '')
+  : '';
 
+const baseURL = apiRoot ? `${apiRoot}/api` : '/api';
 export const api = axios.create({
   baseURL,
   headers: {

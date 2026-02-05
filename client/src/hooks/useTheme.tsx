@@ -11,16 +11,20 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_KEY = 'mosaic-theme';
+const USER_SET_KEY = 'mosaic-theme-user-set';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Check localStorage first
+    // Check if user explicitly set a preference
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(THEME_KEY);
-      if (stored === 'bright' || stored === 'dark') {
-        return stored;
+      const userSet = localStorage.getItem(USER_SET_KEY);
+      if (userSet === 'true') {
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored === 'bright' || stored === 'dark') {
+          return stored;
+        }
       }
-      // Check system preference
+      // Use system preference if user hasn't explicitly set a theme
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         return 'dark';
       }
@@ -45,9 +49,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleChange = (e: MediaQueryListEvent) => {
-      const stored = localStorage.getItem(THEME_KEY);
+      const userSet = localStorage.getItem(USER_SET_KEY);
       // Only auto-switch if user hasn't explicitly set a preference
-      if (!stored) {
+      if (userSet !== 'true') {
         setThemeState(e.matches ? 'dark' : 'bright');
       }
     };
@@ -58,10 +62,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
+    localStorage.setItem(USER_SET_KEY, 'true');
   };
 
   const toggleTheme = () => {
     setThemeState((prev) => (prev === 'bright' ? 'dark' : 'bright'));
+    localStorage.setItem(USER_SET_KEY, 'true');
   };
 
   return (

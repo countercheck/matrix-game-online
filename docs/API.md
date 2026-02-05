@@ -279,12 +279,14 @@ Select or change persona (lobby only).
 #### NPC Personas
 
 When a persona is marked as `isNpc: true`, the system:
-1. Creates an NPC player automatically when the game starts
+1. Creates an NPC player automatically when the game starts using a dedicated NPC system user
 2. The NPC always proposes last each round
 3. Uses the scripted `npcActionDescription` and `npcDesiredOutcome` for proposals
 4. Tracks cumulative success/failure in `game.npcMomentum` (sum of all NPC action result values)
 5. NPC does not participate in argumentation or voting
 6. Any player can draw tokens and narrate NPC actions
+
+**Note:** The NPC system user must be seeded in the database before games with NPC personas can be started. Run `pnpm db:seed` to create the NPC user.
 
 ### POST /games/:gameId/leave
 Leave a game (lobby only).

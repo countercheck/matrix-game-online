@@ -57,6 +57,9 @@ pnpm db:generate
 
 # Run migrations
 pnpm db:migrate
+
+# Seed the database (creates NPC system user)
+pnpm db:seed
 ```
 
 ### 4. Start development servers

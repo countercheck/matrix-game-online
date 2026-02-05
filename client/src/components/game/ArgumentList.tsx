@@ -44,43 +44,68 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
     );
   }
 
+  const getArgumentStyles = (type: string) => {
+    if (type === 'FOR' || type === 'INITIATOR_FOR') {
+      return {
+        container: 'bg-arg-for-bg border-arg-for-border text-arg-for-text',
+        badge: 'bg-arg-for-badge-bg text-arg-for-badge-text',
+        icon: (
+          <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        ),
+        label: 'For',
+      };
+    }
+    if (type === 'AGAINST') {
+      return {
+        container: 'bg-arg-against-bg border-arg-against-border text-arg-against-text',
+        badge: 'bg-arg-against-badge-bg text-arg-against-badge-text',
+        icon: (
+          <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        ),
+        label: 'Against',
+      };
+    }
+    return {
+      container: 'bg-arg-clarify-bg border-arg-clarify-border text-arg-clarify-text',
+      badge: 'bg-arg-clarify-badge-bg text-arg-clarify-badge-text',
+      icon: (
+        <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+        </svg>
+      ),
+      label: 'Clarification',
+    };
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="font-semibold">Arguments ({args.length})</h3>
 
       <div className="space-y-4">
-        {args.map((arg) => (
-          <div
-            key={arg.id}
-            className={`p-3 rounded-md border-l-4 ${
-              arg.argumentType === 'FOR' || arg.argumentType === 'INITIATOR_FOR'
-                ? 'bg-green-50 border-green-500 text-green-900 dark:bg-green-950 dark:text-green-100'
-                : arg.argumentType === 'AGAINST'
-                ? 'bg-red-50 border-red-500 text-red-900 dark:bg-red-950 dark:text-red-100'
-                : 'bg-blue-50 border-blue-500 text-blue-900 dark:bg-blue-950 dark:text-blue-100'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium">{arg.player.playerName}</span>
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
-                  arg.argumentType === 'FOR' || arg.argumentType === 'INITIATOR_FOR'
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                    : arg.argumentType === 'AGAINST'
-                    ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                }`}
-              >
-                {arg.argumentType === 'FOR' || arg.argumentType === 'INITIATOR_FOR'
-                  ? 'For'
-                  : arg.argumentType === 'AGAINST'
-                  ? 'Against'
-                  : 'Clarification'}
-              </span>
+        {args.map((arg) => {
+          const styles = getArgumentStyles(arg.argumentType);
+          return (
+            <div
+              key={arg.id}
+              className={`p-3 rounded-md border-l-4 ${styles.container}`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium">{arg.player.playerName}</span>
+                <span
+                  className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${styles.badge}`}
+                >
+                  {styles.icon}
+                  {styles.label}
+                </span>
+              </div>
+              <RichTextDisplay content={arg.content} className="text-sm" />
             </div>
-            <RichTextDisplay content={arg.content} className="text-sm" />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -84,6 +85,7 @@ export default function Layout() {
             >
               Logout
             </button>
+            <ThemeToggle />
           </nav>
         </div>
 
@@ -121,6 +123,9 @@ export default function Layout() {
             >
               Logout
             </button>
+            <div className="py-2">
+              <ThemeToggle />
+            </div>
           </nav>
         )}
       </header>

@@ -9,6 +9,7 @@ interface Persona {
   id: string;
   name: string;
   description: string | null;
+  isNpc?: boolean;
   claimedBy: { id: string; playerName: string } | null;
 }
 
@@ -16,6 +17,7 @@ interface Player {
   id: string;
   playerName: string;
   isHost: boolean;
+  isNpc?: boolean;
   user: { id: string; displayName: string };
   persona: { id: string; name: string } | null;
 }
@@ -69,7 +71,9 @@ export default function GameLobby() {
 
   const hasPersonas = (game?.personas?.length || 0) > 0;
   const personasRequired = game?.settings?.personasRequired || false;
-  const availablePersonas = game?.personas?.filter((p) => !p.claimedBy) || [];
+  // NPC personas cannot be claimed by players
+  const availablePersonas = game?.personas?.filter((p) => !p.claimedBy && !p.isNpc) || [];
+  const hasNpcPersona = game?.personas?.some((p) => p.isNpc) || false;
 
   // Check if all players have personas (for start validation warning)
   const playersWithoutPersona = game?.players.filter((p) => !p.persona) || [];
@@ -250,12 +254,25 @@ export default function GameLobby() {
               <div
                 key={persona.id}
                 className={`p-2 rounded-md text-sm ${
-                  persona.claimedBy ? 'bg-muted/50 text-muted-foreground' : 'bg-muted'
+                  persona.isNpc
+                    ? 'bg-amber-100/50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
+                    : persona.claimedBy
+                    ? 'bg-muted/50 text-muted-foreground'
+                    : 'bg-muted'
                 }`}
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">{persona.name}</span>
-                  {persona.claimedBy ? (
+                  <span className="font-medium flex items-center gap-2">
+                    {persona.name}
+                    {persona.isNpc && (
+                      <span className="text-xs bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 rounded">
+                        NPC
+                      </span>
+                    )}
+                  </span>
+                  {persona.isNpc ? (
+                    <span className="text-xs text-amber-600 dark:text-amber-400">Auto-controlled</span>
+                  ) : persona.claimedBy ? (
                     <span className="text-xs">{persona.claimedBy.playerName}</span>
                   ) : (
                     <span className="text-xs text-green-600 dark:text-green-400">Available</span>
@@ -264,6 +281,11 @@ export default function GameLobby() {
               </div>
             ))}
           </div>
+          {hasNpcPersona && (
+            <p className="text-xs text-muted-foreground">
+              The NPC goes last each round and automatically proposes an action.
+            </p>
+          )}
         </div>
       )}
 

@@ -12,6 +12,7 @@ interface ActionResult {
   actionDescription: string;
   initiator: {
     playerName: string;
+    isNpc?: boolean;
     user: { displayName: string };
   };
   tokenDraw?: {
@@ -33,6 +34,15 @@ interface RoundData {
   actions: ActionResult[];
 }
 
+interface GameData {
+  npcMomentum?: number;
+  players: Array<{
+    id: string;
+    playerName: string;
+    isNpc?: boolean;
+  }>;
+}
+
 export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
@@ -42,6 +52,12 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
   const { data: roundData, isLoading } = useQuery<{ data: RoundData }>({
     queryKey: ['round', roundId],
     queryFn: () => api.get(`/rounds/${roundId}`).then((res) => res.data),
+  });
+
+  // Fetch game data for NPC momentum
+  const { data: gameData } = useQuery<{ data: GameData }>({
+    queryKey: ['game', gameId],
+    queryFn: () => api.get(`/games/${gameId}`).then((res) => res.data),
   });
 
   const submitMutation = useMutation({
@@ -88,11 +104,18 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
 
   const round = roundData.data;
   const actions = round.actions || [];
+  const game = gameData?.data;
 
   // Calculate statistics
   const triumphs = actions.filter((a) => a.tokenDraw?.resultType === 'TRIUMPH').length;
   const disasters = actions.filter((a) => a.tokenDraw?.resultType === 'DISASTER').length;
   const netResult = actions.reduce((sum, a) => sum + (a.tokenDraw?.resultValue || 0), 0);
+
+  // NPC-specific stats
+  const npcPlayer = game?.players.find((p) => p.isNpc);
+  const npcAction = actions.find((a) => a.initiator.isNpc);
+  const npcMomentum = game?.npcMomentum || 0;
+  const npcRoundResult = npcAction?.tokenDraw?.resultValue || 0;
 
   const getResultColor = (resultType?: string) => {
     switch (resultType) {
@@ -135,7 +158,7 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
       </div>
 
       {/* Round Statistics */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className={`grid gap-4 ${npcPlayer ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
         <div className="p-4 border rounded-lg text-center">
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">{triumphs}</div>
           <div className="text-sm text-muted-foreground">Triumphs</div>
@@ -159,6 +182,28 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
           </div>
           <div className="text-sm text-muted-foreground">Net Momentum</div>
         </div>
+        {npcPlayer && (
+          <div className="p-4 border rounded-lg text-center bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+            <div
+              className={`text-2xl font-bold ${
+                npcMomentum > 0
+                  ? 'text-red-600 dark:text-red-400'
+                  : npcMomentum < 0
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              {npcMomentum > 0 ? '+' : ''}
+              {npcMomentum}
+            </div>
+            <div className="text-sm text-amber-700 dark:text-amber-300">{npcPlayer.playerName}</div>
+            {npcRoundResult !== 0 && (
+              <div className={`text-xs mt-1 ${npcRoundResult > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                ({npcRoundResult > 0 ? '+' : ''}{npcRoundResult} this round)
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Actions Summary */}
@@ -174,6 +219,11 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-muted-foreground">#{index + 1}</span>
                     <span className="text-sm font-medium">{action.initiator.playerName}</span>
+                    {action.initiator.isNpc && (
+                      <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                        NPC
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm">{action.actionDescription}</p>
                   {action.narration && (

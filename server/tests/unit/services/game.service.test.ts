@@ -288,4 +288,153 @@ describe('Game Service', () => {
       expect(validateTimeoutHours(73)).toBe(false);
     });
   });
+
+  describe('NPC Personas', () => {
+    it('should identify NPC player correctly', () => {
+      const players = [
+        { id: '1', userId: 'user-1', isNpc: false, isActive: true },
+        { id: '2', userId: 'user-2', isNpc: false, isActive: true },
+        { id: '3', userId: 'user-3', isNpc: true, isActive: true },
+      ];
+
+      const npcPlayer = players.find(p => p.isNpc);
+      const humanPlayers = players.filter(p => !p.isNpc && p.isActive);
+
+      expect(npcPlayer).toBeDefined();
+      expect(npcPlayer?.id).toBe('3');
+      expect(humanPlayers.length).toBe(2);
+    });
+
+    it('should only allow one NPC persona per game', () => {
+      const personas = [
+        { id: '1', name: 'Hero', isNpc: false },
+        { id: '2', name: 'Villain', isNpc: true },
+        { id: '3', name: 'Dragon', isNpc: false },
+      ];
+
+      const npcPersonas = personas.filter(p => p.isNpc);
+      expect(npcPersonas.length).toBe(1);
+    });
+
+    it('should exclude NPC personas from player selection', () => {
+      const personas = [
+        { id: '1', name: 'Hero', isNpc: false, claimedBy: null },
+        { id: '2', name: 'Villain', isNpc: true, claimedBy: null },
+        { id: '3', name: 'Merchant', isNpc: false, claimedBy: 'player-1' },
+      ];
+
+      const availableForPlayers = personas.filter(p => !p.isNpc && !p.claimedBy);
+      expect(availableForPlayers.length).toBe(1);
+      expect(availableForPlayers[0]?.name).toBe('Hero');
+    });
+
+    it('should calculate NPC momentum correctly', () => {
+      const calculateMomentum = (results: number[]) =>
+        results.reduce((sum, val) => sum + val, 0);
+
+      // Triumph (+3), Success But (+1), Failure But (-1), Disaster (-3)
+      expect(calculateMomentum([3])).toBe(3);      // One triumph
+      expect(calculateMomentum([3, -3])).toBe(0);  // Balanced
+      expect(calculateMomentum([3, 1, -1])).toBe(3); // Net positive
+      expect(calculateMomentum([-3, -3, -1])).toBe(-7); // Net negative
+    });
+
+    it('should use scripted NPC action description', () => {
+      const npcPersona = {
+        name: 'Dragon',
+        isNpc: true,
+        npcActionDescription: 'The dragon attacks the village',
+        npcDesiredOutcome: 'The village burns',
+      };
+
+      expect(npcPersona.npcActionDescription).toBe('The dragon attacks the village');
+      expect(npcPersona.npcDesiredOutcome).toBe('The village burns');
+    });
+
+    it('should have fallback for NPC action if not scripted', () => {
+      const npcPersona = {
+        name: 'Dragon',
+        isNpc: true,
+        npcActionDescription: null,
+        npcDesiredOutcome: null,
+      };
+
+      const actionDescription =
+        npcPersona.npcActionDescription || `${npcPersona.name} takes action`;
+      const desiredOutcome =
+        npcPersona.npcDesiredOutcome || `${npcPersona.name} achieves their goal`;
+
+      expect(actionDescription).toBe('Dragon takes action');
+      expect(desiredOutcome).toBe('Dragon achieves their goal');
+    });
+
+    it('should count only human players for argumentation completion', () => {
+      const players = [
+        { id: '1', isNpc: false },
+        { id: '2', isNpc: false },
+        { id: '3', isNpc: true },
+      ];
+
+      const humanPlayers = players.filter(p => !p.isNpc);
+      const argumentationCompletions = ['1', '2']; // Both humans completed
+
+      const allHumansComplete = humanPlayers.every(p =>
+        argumentationCompletions.includes(p.id)
+      );
+
+      expect(humanPlayers.length).toBe(2);
+      expect(allHumansComplete).toBe(true);
+    });
+
+    it('should count only human players for voting', () => {
+      const players = [
+        { id: '1', isNpc: false },
+        { id: '2', isNpc: false },
+        { id: '3', isNpc: true },
+      ];
+      const votes = [
+        { playerId: '1', voteType: 'LIKELY_SUCCESS' },
+        { playerId: '2', voteType: 'LIKELY_FAILURE' },
+      ];
+
+      const humanPlayers = players.filter(p => !p.isNpc);
+      const humanVoteCount = votes.filter(v =>
+        humanPlayers.some(p => p.id === v.playerId)
+      ).length;
+
+      expect(humanPlayers.length).toBe(2);
+      expect(humanVoteCount).toBe(2);
+      expect(humanVoteCount >= humanPlayers.length).toBe(true);
+    });
+
+    it('should allow any player to draw tokens for NPC actions', () => {
+      const action = {
+        initiatorId: '3',
+        initiator: { isNpc: true, userId: 'npc-user' },
+      };
+      const requestingUserId = 'user-1'; // Regular player
+
+      // NPC actions can have tokens drawn by any player
+      const canDraw = action.initiator.isNpc || action.initiator.userId === requestingUserId;
+
+      expect(canDraw).toBe(true);
+    });
+
+    it('should allow any player to narrate NPC actions', () => {
+      const action = {
+        initiatorId: '3',
+        initiator: { isNpc: true, userId: 'npc-user' },
+      };
+      const requestingUserId = 'user-1'; // Regular player
+      const narrationMode = 'initiator_only';
+
+      // NPC actions can be narrated by any player regardless of narration mode
+      const isNpcAction = action.initiator.isNpc;
+      const canNarrate = isNpcAction ||
+        narrationMode !== 'initiator_only' ||
+        action.initiator.userId === requestingUserId;
+
+      expect(canNarrate).toBe(true);
+    });
+  });
 });

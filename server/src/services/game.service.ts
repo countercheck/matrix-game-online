@@ -37,6 +37,9 @@ export async function createGame(userId: string, data: CreateGameInput) {
             create: data.personas.map((persona, index) => ({
               name: persona.name,
               description: persona.description,
+              isNpc: persona.isNpc || false,
+              npcActionDescription: persona.npcActionDescription,
+              npcDesiredOutcome: persona.npcDesiredOutcome,
               sortOrder: index,
             })),
           }
@@ -217,6 +220,10 @@ export async function joinGame(
     if (!persona) {
       throw new BadRequestError('Invalid persona selected');
     }
+    // NPC personas cannot be selected by players
+    if (persona.isNpc) {
+      throw new BadRequestError('Cannot select an NPC persona');
+    }
     if (persona.claimedBy) {
       throw new ConflictError('This persona has already been claimed');
     }
@@ -325,6 +332,10 @@ export async function selectPersona(
     if (!persona) {
       throw new BadRequestError('Invalid persona');
     }
+    // NPC personas cannot be selected by players
+    if (persona.isNpc) {
+      throw new BadRequestError('Cannot select an NPC persona');
+    }
     // Allow if unclaimed or claimed by this player
     if (persona.claimedBy && persona.claimedBy.id !== player.id) {
       throw new ConflictError('This persona has already been claimed');
@@ -371,9 +382,10 @@ export async function startGame(gameId: string, userId: string) {
     throw new BadRequestError('Need at least 2 players to start');
   }
 
-  // Validate personas if required
+  // Validate personas if required (excluding NPC personas)
   const settings = (game.settings as GameSettings) || {};
-  if (settings.personasRequired && game.personas.length > 0) {
+  const nonNpcPersonas = game.personas.filter((p) => !p.isNpc);
+  if (settings.personasRequired && nonNpcPersonas.length > 0) {
     const playersWithoutPersona = game.players.filter((p) => !p.personaId);
     if (playersWithoutPersona.length > 0) {
       const names = playersWithoutPersona.map((p) => p.playerName).join(', ');
@@ -383,13 +395,40 @@ export async function startGame(gameId: string, userId: string) {
     }
   }
 
+  // Check if there's an NPC persona and create an NPC player
+  const npcPersona = game.personas.find((p) => p.isNpc);
+  let totalPlayers = game.players.length;
+
+  if (npcPersona) {
+    // Create NPC player with highest joinOrder so it goes last
+    // Use the game creator's userId as a reference (NPC is marked by isNpc flag)
+    await db.gamePlayer.create({
+      data: {
+        gameId,
+        userId: game.creatorId, // NPC uses creator's userId but is marked as NPC
+        playerName: npcPersona.name,
+        personaId: npcPersona.id,
+        joinOrder: game.players.length + 1, // NPC always goes last
+        isHost: false,
+        isNpc: true,
+      },
+    });
+
+    await db.game.update({
+      where: { id: gameId },
+      data: { playerCount: { increment: 1 } },
+    });
+
+    totalPlayers += 1;
+  }
+
   // Create first round
   const round = await db.round.create({
     data: {
       gameId,
       roundNumber: 1,
       status: 'IN_PROGRESS',
-      totalActionsRequired: game.players.length,
+      totalActionsRequired: totalPlayers,
     },
   });
 

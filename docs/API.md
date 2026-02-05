@@ -167,7 +167,14 @@ Create a new game.
   },
   "personas": [
     { "name": "The Detective", "description": "Investigates mysteries" },
-    { "name": "The Scholar", "description": "Knows ancient lore" }
+    { "name": "The Scholar", "description": "Knows ancient lore" },
+    {
+      "name": "The Dragon",
+      "description": "A fearsome beast threatening the realm",
+      "isNpc": true,
+      "npcActionDescription": "The dragon attacks the village",
+      "npcDesiredOutcome": "The village suffers significant losses"
+    }
   ]
 }
 ```
@@ -234,6 +241,7 @@ Get game details.
     "name": "My Game",
     "status": "ACTIVE",
     "currentPhase": "ARGUMENTATION",
+    "npcMomentum": 3,
     "currentRound": { "id": "uuid", "roundNumber": 1 },
     "currentAction": { "id": "uuid", "actionDescription": "..." },
     "players": [...],
@@ -265,6 +273,18 @@ Select or change persona (lobby only).
   "personaId": "uuid"  // or null to deselect
 }
 ```
+
+**Note:** NPC personas (`isNpc: true`) cannot be selected by players. They are automatically assigned to an NPC player when the game starts.
+
+#### NPC Personas
+
+When a persona is marked as `isNpc: true`, the system:
+1. Creates an NPC player automatically when the game starts
+2. The NPC always proposes last each round
+3. Uses the scripted `npcActionDescription` and `npcDesiredOutcome` for proposals
+4. Tracks cumulative success/failure in `game.npcMomentum` (sum of all NPC action result values)
+5. NPC does not participate in argumentation or voting
+6. Any player can draw tokens and narrate NPC actions
 
 ### POST /games/:gameId/leave
 Leave a game (lobby only).

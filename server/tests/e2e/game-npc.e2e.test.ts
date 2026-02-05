@@ -180,13 +180,13 @@ describe('Game with NPC Persona E2E Tests', () => {
       const dragonPersonaId = createResponse.body.data.personas.find((p: any) => p.isNpc).id;
 
       // Try to select NPC persona - should fail
+      // Note: Returns 404 because the route doesn't exist in the current implementation
+      // If the route existed, it should return 400 for validation errors
       const selectResponse = await request(app)
         .post(`/api/games/${gameId}/persona`)
         .set('Authorization', `Bearer ${user1Token}`)
         .send({ personaId: dragonPersonaId });
 
-      // The test expects a 400 error but gets 404 - let's accept either
-      // The important thing is that it fails
       expect([400, 404]).toContain(selectResponse.status);
       expect(selectResponse.body.success).toBe(false);
     });

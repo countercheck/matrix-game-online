@@ -1,15 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { PrismaClient } from '@prisma/client';
+import { db as prisma } from '../../src/config/database.js';
 import bcrypt from 'bcryptjs';
 
 const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '4', 10);
 
 describe('NPC System User', () => {
-  const prisma = new PrismaClient();
-
   beforeEach(async () => {
     // Seed the NPC user before each test
-    const npcPasswordHash = await bcrypt.hash('npc-system-user-no-login', 12);
+    const npcPasswordHash = await bcrypt.hash('npc-system-user-no-login', BCRYPT_ROUNDS);
     await prisma.user.upsert({
       where: { email: NPC_USER_EMAIL },
       update: {

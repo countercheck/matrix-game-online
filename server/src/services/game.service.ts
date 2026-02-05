@@ -6,9 +6,28 @@ import { notifyGameStarted } from './notification.service.js';
 import fs from 'fs/promises';
 import path from 'path';
 
+const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
+
 interface GameSettings {
   argumentLimit?: number;
   personasRequired?: boolean;
+}
+
+/**
+ * Get or throw if NPC system user doesn't exist
+ */
+async function getNpcUser() {
+  const npcUser = await db.user.findUnique({
+    where: { email: NPC_USER_EMAIL },
+  });
+
+  if (!npcUser) {
+    throw new Error(
+      `NPC system user not found. Please run 'pnpm db:seed' to create the NPC user with email: ${NPC_USER_EMAIL}`
+    );
+  }
+
+  return npcUser;
 }
 
 export async function createGame(userId: string, data: CreateGameInput) {
@@ -400,12 +419,14 @@ export async function startGame(gameId: string, userId: string) {
   let totalPlayers = game.players.length;
 
   if (npcPersona) {
+    // Get the NPC system user
+    const npcUser = await getNpcUser();
+
     // Create NPC player with highest joinOrder so it goes last
-    // Use the game creator's userId as a reference (NPC is marked by isNpc flag)
     await db.gamePlayer.create({
       data: {
         gameId,
-        userId: game.creatorId, // NPC uses creator's userId but is marked as NPC
+        userId: npcUser.id, // Use dedicated NPC system user
         playerName: npcPersona.name,
         personaId: npcPersona.id,
         joinOrder: game.players.length + 1, // NPC always goes last

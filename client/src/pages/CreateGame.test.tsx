@@ -28,8 +28,8 @@ describe('CreateGame Page', () => {
     mockPost.mockReset();
     
     // Mock URL.createObjectURL for image preview
-    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
-    global.URL.revokeObjectURL = vi.fn();
+    globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    globalThis.URL.revokeObjectURL = vi.fn();
   });
 
   it('should render create game form', () => {

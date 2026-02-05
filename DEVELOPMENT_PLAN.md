@@ -157,6 +157,8 @@
 - [✓] Test game creation
 - [✓] Test game settings validation
 - [✓] Support personas definition at game creation (added feature)
+- [✓] Support NPC personas with scripted actions (added feature)
+- [✓] Track NPC momentum across rounds (added feature)
 
 ### 3.2 Game Joining
 - [✓] Create join game validation schema
@@ -166,6 +168,7 @@
 - [✓] Test joining game
 - [✓] Test joining full/started games (should fail)
 - [✓] Support persona selection when joining (added feature)
+- [✓] Prevent selection of NPC personas by players (added feature)
 
 ### 3.3 Game Starting
 - [✓] Create POST /api/games/:gameId/start endpoint
@@ -177,6 +180,7 @@
 - [✓] Test game start
 - [✓] Test non-host trying to start (should fail)
 - [✓] Validate personas selected if required (added feature)
+- [✓] Auto-create NPC player from NPC persona on game start (added feature)
 
 ### 3.4 Game Retrieval
 - [✓] Create GET /api/games/:gameId endpoint

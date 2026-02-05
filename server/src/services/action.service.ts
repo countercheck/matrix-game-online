@@ -12,6 +12,105 @@ import {
   notifyRoundSummaryNeeded,
 } from './notification.service.js';
 
+/**
+ * Check if NPC should auto-propose and do it if needed.
+ * NPC proposes when all human players have proposed this round.
+ * Returns the NPC action if created, null otherwise.
+ */
+export async function checkAndProposeNpcAction(gameId: string) {
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: {
+      currentRound: true,
+      players: {
+        where: { isActive: true },
+        include: { persona: true },
+      },
+    },
+  });
+
+  if (!game || !game.currentRound) return null;
+  if (game.currentPhase !== 'PROPOSAL') return null;
+
+  // Find NPC player
+  const npcPlayer = game.players.find((p) => p.isNpc);
+  if (!npcPlayer) return null;
+
+  // Check if NPC already proposed this round
+  const npcAction = await db.action.findFirst({
+    where: {
+      roundId: game.currentRound.id,
+      initiatorId: npcPlayer.id,
+    },
+  });
+  if (npcAction) return null;
+
+  // Count how many human players have proposed this round
+  const humanPlayers = game.players.filter((p) => !p.isNpc);
+  const humanProposals = await db.action.count({
+    where: {
+      roundId: game.currentRound.id,
+      initiatorId: { in: humanPlayers.map((p) => p.id) },
+    },
+  });
+
+  // If all humans have proposed, NPC auto-proposes
+  if (humanProposals < humanPlayers.length) return null;
+
+  // Create NPC action using scripted proposal from persona
+  const npcName = npcPlayer.persona?.name || npcPlayer.playerName;
+  const actionDescription =
+    npcPlayer.persona?.npcActionDescription || `${npcName} takes action`;
+  const desiredOutcome =
+    npcPlayer.persona?.npcDesiredOutcome || `${npcName} achieves their goal`;
+
+  // Get next sequence number
+  const lastAction = await db.action.findFirst({
+    where: { gameId },
+    orderBy: { sequenceNumber: 'desc' },
+  });
+  const sequenceNumber = (lastAction?.sequenceNumber || 0) + 1;
+
+  const action = await db.action.create({
+    data: {
+      gameId,
+      roundId: game.currentRound.id,
+      initiatorId: npcPlayer.id,
+      sequenceNumber,
+      actionDescription,
+      desiredOutcome,
+      status: 'ARGUING',
+      argumentationStartedAt: new Date(),
+      // NPC doesn't provide initial arguments - players will argue about it
+    },
+    include: {
+      initiator: {
+        include: {
+          user: { select: { displayName: true } },
+          persona: true,
+        },
+      },
+    },
+  });
+
+  // Update game state to argumentation
+  await db.game.update({
+    where: { id: gameId },
+    data: {
+      currentPhase: 'ARGUMENTATION',
+      currentActionId: action.id,
+    },
+  });
+
+  await logGameEvent(gameId, null, 'NPC_ACTION_PROPOSED', {
+    actionId: action.id,
+    npcName,
+    description: actionDescription,
+  });
+
+  return action;
+}
+
 export async function proposeAction(gameId: string, userId: string, data: ActionProposalInput) {
   const player = await db.gamePlayer.findFirst({
     where: { gameId, userId, isActive: true },
@@ -300,18 +399,19 @@ export async function completeArgumentation(actionId: string, userId: string) {
     update: {},
   });
 
-  const allPlayers = action.game.players;
+  // NPC doesn't participate in argumentation
+  const humanPlayers = action.game.players.filter((p) => !p.isNpc);
 
-  // Check if all players have completed argumentation
+  // Check if all human players have completed argumentation
   const completedCount = await db.argumentationComplete.count({
     where: { actionId },
   });
 
-  if (completedCount < allPlayers.length) {
+  if (completedCount < humanPlayers.length) {
     // Not all players have marked themselves as done
     return {
       message: 'Marked as done. Waiting for other players to finish.',
-      playersRemaining: allPlayers.length - completedCount,
+      playersRemaining: humanPlayers.length - completedCount,
     };
   }
 
@@ -391,7 +491,7 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
 
   await logGameEvent(action.gameId, userId, 'VOTE_CAST', { actionId });
 
-  // Check if all players have voted
+  // Check if all players have voted (excluding NPC - they don't vote)
   const game = await db.game.findUnique({
     where: { id: action.gameId },
     include: {
@@ -400,8 +500,9 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
   });
 
   const voteCount = await db.vote.count({ where: { actionId } });
+  const humanPlayers = game?.players.filter((p) => !p.isNpc) || [];
 
-  if (game && voteCount >= game.players.length) {
+  if (game && voteCount >= humanPlayers.length) {
     // Get full action details for notification
     const fullAction = await db.action.findUnique({
       where: { id: actionId },
@@ -481,7 +582,8 @@ export async function drawTokens(actionId: string, userId: string) {
     throw new BadRequestError('Action is not ready for token draw');
   }
 
-  if (action.initiator.userId !== userId) {
+  // NPC actions can have tokens drawn by any player
+  if (!action.initiator.isNpc && action.initiator.userId !== userId) {
     throw new ForbiddenError('Only the initiator can draw tokens');
   }
 
@@ -531,12 +633,23 @@ export async function drawTokens(actionId: string, userId: string) {
     data: { resolvedAt: new Date() },
   });
 
+  // Update NPC momentum if this is an NPC action
+  if (action.initiator.isNpc) {
+    await db.game.update({
+      where: { id: action.gameId },
+      data: {
+        npcMomentum: { increment: drawResult.resultValue },
+      },
+    });
+  }
+
   await transitionPhase(action.gameId, GamePhase.NARRATION);
 
   await logGameEvent(action.gameId, userId, 'TOKENS_DRAWN', {
     actionId,
     result: drawResult.resultType,
     value: drawResult.resultValue,
+    isNpcAction: action.initiator.isNpc,
   });
 
   // Notify initiator that narration is needed
@@ -660,7 +773,10 @@ export async function submitNarration(actionId: string, userId: string, data: Na
   const settings = (action.game.settings as Record<string, unknown>) || {};
   const narrationMode = settings.narrationMode || 'initiator_only';
 
-  if (narrationMode === 'initiator_only' && action.initiator.userId !== userId) {
+  // NPC actions can be narrated by any player
+  const isNpcAction = action.initiator.isNpc;
+
+  if (!isNpcAction && narrationMode === 'initiator_only' && action.initiator.userId !== userId) {
     throw new ForbiddenError('Only the initiator can narrate this action');
   }
 
@@ -721,6 +837,9 @@ export async function submitNarration(actionId: string, userId: string, data: Na
           currentActionId: null,
         },
       });
+
+      // Check if NPC should auto-propose (all humans have proposed)
+      await checkAndProposeNpcAction(action.gameId);
     }
   }
 

@@ -38,6 +38,7 @@ model Game {
   currentActionId String?      @unique @map("current_action_id")
   playerCount     Int          @default(0) @map("player_count")
   settings        Json         @default("{}")
+  npcMomentum     Int          @default(0) @map("npc_momentum")
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
   startedAt       DateTime?    @map("started_at")
@@ -104,6 +105,7 @@ model GamePlayer {
   playerName String    @map("player_name") @db.VarChar(50)
   joinOrder  Int       @map("join_order")
   isHost     Boolean   @default(false) @map("is_host")
+  isNpc      Boolean   @default(false) @map("is_npc")
   isActive   Boolean   @default(true) @map("is_active")
   joinedAt   DateTime  @default(now()) @map("joined_at")
   lastSeenAt DateTime? @map("last_seen_at")
@@ -127,12 +129,15 @@ model GamePlayer {
 }
 
 model Persona {
-  id          String      @id @default(uuid())
-  gameId      String      @map("game_id")
-  name        String      @db.VarChar(50)
-  description String?     @db.Text
-  sortOrder   Int         @default(0) @map("sort_order")
-  createdAt   DateTime    @default(now()) @map("created_at")
+  id                   String      @id @default(uuid())
+  gameId               String      @map("game_id")
+  name                 String      @db.VarChar(50)
+  description          String?     @db.Text
+  isNpc                Boolean     @default(false) @map("is_npc")
+  npcActionDescription String?     @map("npc_action_description") @db.Text
+  npcDesiredOutcome    String?     @map("npc_desired_outcome") @db.Text
+  sortOrder            Int         @default(0) @map("sort_order")
+  createdAt            DateTime    @default(now()) @map("created_at")
 
   // Relations
   game        Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)

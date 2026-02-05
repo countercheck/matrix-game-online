@@ -42,6 +42,13 @@ export const personaSchema = z.object({
   description: z.string()
     .max(600, 'Persona description must be 600 characters or less')
     .optional(),
+  isNpc: z.boolean().default(false),
+  npcActionDescription: z.string()
+    .max(600, 'NPC action description must be 600 characters or less')
+    .optional(),
+  npcDesiredOutcome: z.string()
+    .max(400, 'NPC desired outcome must be 400 characters or less')
+    .optional(),
 });
 
 // Game schemas

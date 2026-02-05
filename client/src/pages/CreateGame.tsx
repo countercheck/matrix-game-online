@@ -7,6 +7,9 @@ import { RichTextEditor } from '../components/ui';
 interface Persona {
   name: string;
   description: string;
+  isNpc?: boolean;
+  npcActionDescription?: string;
+  npcDesiredOutcome?: string;
 }
 
 interface CreateGameData {
@@ -98,15 +101,33 @@ export default function CreateGame() {
 
   const addPersona = () => {
     if (personas.length < 20) {
-      setPersonas([...personas, { name: '', description: '' }]);
+      setPersonas([
+        ...personas,
+        { name: '', description: '', isNpc: false, npcActionDescription: '', npcDesiredOutcome: '' },
+      ]);
     }
   };
+
+  const toggleNpc = (index: number) => {
+    const newPersonas = personas.map((p, i) => ({
+      ...p,
+      // Only one NPC allowed - toggle off others when toggling one on
+      isNpc: i === index ? !p.isNpc : false,
+    }));
+    setPersonas(newPersonas);
+  };
+
+  const hasNpc = personas.some((p) => p.isNpc);
 
   const removePersona = (index: number) => {
     setPersonas(personas.filter((_, i) => i !== index));
   };
 
-  const updatePersona = (index: number, field: 'name' | 'description', value: string) => {
+  const updatePersona = (
+    index: number,
+    field: 'name' | 'description' | 'isNpc' | 'npcActionDescription' | 'npcDesiredOutcome',
+    value: string | boolean
+  ) => {
     const newPersonas = [...personas];
     newPersonas[index] = { ...newPersonas[index], [field]: value };
     setPersonas(newPersonas);
@@ -241,7 +262,9 @@ export default function CreateGame() {
           >
             <span>Personas (Optional)</span>
             <span className="text-muted-foreground">
-              {personas.length > 0 ? `${personas.length} defined` : 'None'}
+              {personas.length > 0
+                ? `${personas.length} defined${hasNpc ? ' (1 NPC)' : ''}`
+                : 'None'}
             </span>
           </button>
 
@@ -249,10 +272,12 @@ export default function CreateGame() {
             <div className="p-4 border-t space-y-4">
               <p className="text-sm text-muted-foreground">
                 Define character personas that players can claim when joining the game.
+                You can mark one persona as an NPC — it will always go last and automatically
+                propose an action each round.
               </p>
 
               {personas.map((persona, index) => (
-                <div key={index} className="p-3 border rounded-md space-y-2 bg-muted/30">
+                <div key={index} className={`p-3 border rounded-md space-y-2 ${persona.isNpc ? 'bg-primary/10 border-primary/30' : 'bg-muted/30'}`}>
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -277,6 +302,50 @@ export default function CreateGame() {
                     rows={2}
                     placeholder="Description (optional)"
                   />
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={persona.isNpc || false}
+                      onChange={() => toggleNpc(index)}
+                      className="rounded"
+                    />
+                    <span className={persona.isNpc ? 'font-medium text-primary' : ''}>
+                      NPC (Non-Player Character)
+                    </span>
+                    {persona.isNpc && (
+                      <span className="text-xs text-muted-foreground">
+                        — goes last, auto-proposes each round
+                      </span>
+                    )}
+                  </label>
+                  {persona.isNpc && (
+                    <div className="mt-3 space-y-2 pl-4 border-l-2 border-primary/30">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">
+                          NPC Action (proposed each round)
+                        </label>
+                        <RichTextEditor
+                          value={persona.npcActionDescription || ''}
+                          onChange={(value) => updatePersona(index, 'npcActionDescription', value)}
+                          maxLength={500}
+                          rows={2}
+                          placeholder="e.g., The dragon attacks the village"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">
+                          NPC Desired Outcome (what success looks like)
+                        </label>
+                        <RichTextEditor
+                          value={persona.npcDesiredOutcome || ''}
+                          onChange={(value) => updatePersona(index, 'npcDesiredOutcome', value)}
+                          maxLength={500}
+                          rows={2}
+                          placeholder="e.g., The village suffers significant losses"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 

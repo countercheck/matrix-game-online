@@ -12,6 +12,14 @@ const registerSchema = z.object({
   displayName: z.string().min(1).max(50, 'Display name must be 50 characters or less'),
 });
 
+const personaSchema = z.object({
+  name: z.string().min(1, 'Persona name is required').max(50),
+  description: z.string().max(600).optional(),
+  isNpc: z.boolean().default(false),
+  npcActionDescription: z.string().max(600).optional(),
+  npcDesiredOutcome: z.string().max(400).optional(),
+});
+
 const createGameSchema = z.object({
   name: z.string().min(1, 'Game name is required').max(100, 'Game name must be 100 characters or less'),
   description: z.string().max(1000).optional(),
@@ -21,6 +29,7 @@ const createGameSchema = z.object({
     votingTimeoutHours: z.number().int().min(1).max(72).default(24),
     narrationMode: z.enum(['initiator_only', 'collaborative']).default('initiator_only'),
   }).optional(),
+  personas: z.array(personaSchema).max(20).optional(),
 });
 
 const actionProposalSchema = z.object({
@@ -305,6 +314,88 @@ describe('Validators', () => {
     it('should accept narration at max length', () => {
       const data = { content: 'a'.repeat(1000) };
       expect(() => narrationSchema.parse(data)).not.toThrow();
+    });
+  });
+
+  describe('personaSchema', () => {
+    it('should accept valid persona', () => {
+      const data = { name: 'Hero', description: 'A brave warrior' };
+      expect(() => personaSchema.parse(data)).not.toThrow();
+    });
+
+    it('should accept NPC persona with action description', () => {
+      const data = {
+        name: 'Dragon',
+        isNpc: true,
+        npcActionDescription: 'The dragon attacks the village',
+        npcDesiredOutcome: 'The village burns',
+      };
+      expect(() => personaSchema.parse(data)).not.toThrow();
+    });
+
+    it('should reject persona without name', () => {
+      const data = { description: 'Description without name' };
+      expect(() => personaSchema.parse(data)).toThrow();
+    });
+
+    it('should reject persona with name over 50 chars', () => {
+      const data = { name: 'a'.repeat(51) };
+      expect(() => personaSchema.parse(data)).toThrow();
+    });
+
+    it('should reject NPC action description over 600 chars', () => {
+      const data = {
+        name: 'Dragon',
+        isNpc: true,
+        npcActionDescription: 'a'.repeat(601),
+      };
+      expect(() => personaSchema.parse(data)).toThrow();
+    });
+
+    it('should reject NPC desired outcome over 400 chars', () => {
+      const data = {
+        name: 'Dragon',
+        isNpc: true,
+        npcDesiredOutcome: 'a'.repeat(401),
+      };
+      expect(() => personaSchema.parse(data)).toThrow();
+    });
+
+    it('should default isNpc to false', () => {
+      const data = { name: 'Hero' };
+      const result = personaSchema.parse(data);
+      expect(result.isNpc).toBe(false);
+    });
+  });
+
+  describe('createGameSchema with personas', () => {
+    it('should accept game with personas', () => {
+      const data = {
+        name: 'Test Game',
+        personas: [
+          { name: 'Hero', description: 'A brave warrior' },
+          { name: 'Villain', isNpc: true, npcActionDescription: 'Evil plans unfold' },
+        ],
+      };
+      expect(() => createGameSchema.parse(data)).not.toThrow();
+    });
+
+    it('should reject game with more than 20 personas', () => {
+      const personas = Array.from({ length: 21 }, (_, i) => ({
+        name: `Persona ${i + 1}`,
+      }));
+      const data = { name: 'Test Game', personas };
+      expect(() => createGameSchema.parse(data)).toThrow();
+    });
+
+    it('should accept game with empty personas array', () => {
+      const data = { name: 'Test Game', personas: [] };
+      expect(() => createGameSchema.parse(data)).not.toThrow();
+    });
+
+    it('should accept game without personas', () => {
+      const data = { name: 'Test Game' };
+      expect(() => createGameSchema.parse(data)).not.toThrow();
     });
   });
 });

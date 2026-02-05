@@ -21,6 +21,7 @@ interface Game {
   imageUrl?: string;
   status: string;
   currentPhase: string;
+  npcMomentum?: number;
   settings: {
     argumentLimit: number;
   };
@@ -39,6 +40,7 @@ interface Game {
       id: string;
       playerName: string;
       userId: string;
+      isNpc?: boolean;
       user: { displayName: string };
     };
   };
@@ -46,8 +48,10 @@ interface Game {
     id: string;
     playerName: string;
     isHost: boolean;
+    isNpc?: boolean;
     userId: string;
     user: { id: string; displayName: string };
+    persona?: { id: string; name: string } | null;
   }>;
   myPlayer?: {
     id: string;
@@ -364,15 +368,27 @@ export default function GameView() {
                     {player.playerName}
                     {player.userId === currentUserId && ' (you)'}
                   </span>
-                  {player.isHost && (
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                      Host
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {player.isNpc && (
+                      <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">
+                        NPC
+                      </span>
+                    )}
+                    {player.isHost && (
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                        Host
+                      </span>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
           </div>
+
+          {/* NPC Momentum - only show if there's an NPC */}
+          {game.players.some((p) => p.isNpc) && (
+            <NpcMomentumDisplay momentum={game.npcMomentum || 0} npcName={game.players.find((p) => p.isNpc)?.playerName || 'NPC'} />
+          )}
 
           {/* Current Action Summary (when not in proposal) */}
           {game.currentAction && game.currentPhase !== 'PROPOSAL' && (
@@ -432,6 +448,50 @@ export default function GameView() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function NpcMomentumDisplay({ momentum, npcName }: { momentum: number; npcName: string }) {
+  const getMomentumColor = () => {
+    if (momentum >= 3) return 'text-red-600 dark:text-red-400';
+    if (momentum >= 1) return 'text-orange-600 dark:text-orange-400';
+    if (momentum <= -3) return 'text-green-600 dark:text-green-400';
+    if (momentum <= -1) return 'text-emerald-600 dark:text-emerald-400';
+    return 'text-muted-foreground';
+  };
+
+  const getMomentumLabel = () => {
+    if (momentum >= 6) return 'Dominant';
+    if (momentum >= 3) return 'Advancing';
+    if (momentum >= 1) return 'Gaining';
+    if (momentum === 0) return 'Neutral';
+    if (momentum <= -6) return 'Defeated';
+    if (momentum <= -3) return 'Weakening';
+    return 'Losing';
+  };
+
+  return (
+    <div className="p-4 border rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+      <h3 className="font-semibold mb-2 flex items-center gap-2">
+        <span className="text-amber-600 dark:text-amber-400">⚔</span>
+        {npcName} Momentum
+      </h3>
+      <div className="flex items-center justify-between">
+        <span className={`text-2xl font-bold ${getMomentumColor()}`}>
+          {momentum > 0 ? '+' : ''}{momentum}
+        </span>
+        <span className={`text-sm ${getMomentumColor()}`}>
+          {getMomentumLabel()}
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        {momentum > 0
+          ? `${npcName} is succeeding in their goals`
+          : momentum < 0
+          ? `${npcName} is being thwarted`
+          : `The conflict is evenly balanced`}
+      </p>
     </div>
   );
 }

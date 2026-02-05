@@ -49,6 +49,17 @@ export const personaSchema = z.object({
   npcDesiredOutcome: z.string()
     .max(400, 'NPC desired outcome must be 400 characters or less')
     .optional(),
+}).superRefine((data, ctx) => {
+  if (data.isNpc) {
+    const desc = data.npcActionDescription;
+    if (!desc || desc.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['npcActionDescription'],
+        message: 'NPC action description is required and must contain meaningful content when isNpc is true.',
+      });
+    }
+  }
 });
 
 // Game schemas

@@ -1,8 +1,8 @@
 # Mosaic Strict Matrix Game - Development Plan
 ## Actionable Task Checklist
 
-**Version:** 1.1
-**Last Updated:** February 2, 2026
+**Version:** 1.2
+**Last Updated:** February 5, 2026
 **Estimated Total Time:** 8-12 weeks (1-2 developers)
 
 ---
@@ -899,6 +899,44 @@
 - [ ] Set up uptime monitoring
 - [ ] Configure logging
 - [ ] Create monitoring dashboard
+
+---
+
+## Admin System ✓
+**Estimated Time:** 2-3 days
+
+### Admin Infrastructure
+- [✓] Create UserRole enum (USER, MODERATOR, ADMIN)
+- [✓] Add admin fields to User model (role, isBanned, bannedAt, bannedReason)
+- [✓] Create AdminAuditLog model for tracking admin actions
+- [✓] Create admin middleware (requireRole, requireModerator, requireAdmin)
+- [✓] Update auth middleware to block banned users
+
+### User Management
+- [✓] Create GET /api/admin/users endpoint (list users with pagination/filtering)
+- [✓] Create GET /api/admin/users/:userId endpoint (user details)
+- [✓] Create PUT /api/admin/users/:userId/role endpoint (change role)
+- [✓] Create POST /api/admin/users/:userId/ban endpoint (ban user)
+- [✓] Create POST /api/admin/users/:userId/unban endpoint (unban user)
+
+### Game Moderation
+- [✓] Create GET /api/admin/games endpoint (list games with pagination/filtering)
+- [✓] Create GET /api/admin/games/:gameId endpoint (game details)
+- [✓] Create DELETE /api/admin/games/:gameId endpoint (delete game)
+- [✓] Create POST /api/admin/games/:gameId/pause endpoint (pause game)
+- [✓] Create POST /api/admin/games/:gameId/resume endpoint (resume game)
+- [✓] Create POST /api/admin/games/:gameId/players/:playerId/remove endpoint (remove player)
+
+### Dashboard & Audit
+- [✓] Create GET /api/admin/dashboard endpoint (stats overview)
+- [✓] Create GET /api/admin/audit-logs endpoint (view audit logs)
+
+### Bootstrap
+- [✓] Create CLI script to create/promote first admin user
+
+### Testing
+- [✓] Write unit tests for admin service (26 tests)
+- [✓] Write unit tests for admin middleware (12 tests)
 
 ---
 

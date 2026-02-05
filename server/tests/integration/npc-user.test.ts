@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -6,6 +6,23 @@ const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
 
 describe('NPC System User', () => {
   const prisma = new PrismaClient();
+
+  beforeEach(async () => {
+    // Seed the NPC user before each test
+    const npcPasswordHash = await bcrypt.hash('npc-system-user-no-login', 12);
+    await prisma.user.upsert({
+      where: { email: NPC_USER_EMAIL },
+      update: {
+        displayName: 'NPC System',
+        passwordHash: npcPasswordHash,
+      },
+      create: {
+        email: NPC_USER_EMAIL,
+        displayName: 'NPC System',
+        passwordHash: npcPasswordHash,
+      },
+    });
+  });
 
   afterAll(async () => {
     await prisma.$disconnect();
@@ -48,6 +65,7 @@ describe('NPC System User', () => {
       where: { email: NPC_USER_EMAIL },
     });
 
+    expect(npcUser).toBeDefined();
     // NPC user should have a unique email that won't conflict with real users
     expect(npcUser?.email).toContain('@system.local');
   });

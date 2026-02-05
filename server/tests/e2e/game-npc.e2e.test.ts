@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createTestApp } from './test-app.js';
 import { testDb, cleanDatabase } from './setup.js';
-import bcrypt from 'bcryptjs';
 
 const app = createTestApp();
 const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
@@ -17,16 +16,11 @@ describe('Game with NPC Persona E2E Tests', () => {
   beforeEach(async () => {
     await cleanDatabase();
 
-    // Create NPC system user (mimicking seed)
-    const npcPasswordHash = await bcrypt.hash('npc-system-user-no-login', 4);
-    const npcUser = await testDb.user.create({
-      data: {
-        email: NPC_USER_EMAIL,
-        displayName: 'NPC System',
-        passwordHash: npcPasswordHash,
-      },
+    // Get NPC system user (created by cleanDatabase)
+    const npcUser = await testDb.user.findUnique({
+      where: { email: NPC_USER_EMAIL },
     });
-    npcUserId = npcUser.id;
+    npcUserId = npcUser!.id;
 
     // Create two test users
     const user1Response = await request(app)

@@ -8,6 +8,9 @@ process.env.ENABLE_TIMEOUT_WORKER = 'false'; // Disable timeout worker during te
 import { beforeAll, afterAll, beforeEach } from 'vitest';
 // Use the same db instance as the app to ensure we're cleaning the right database
 import { db as prisma } from '../../src/config/database.js';
+import bcrypt from 'bcryptjs';
+
+const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
 
 // Clean up database before each test with retry logic for deadlocks
 export async function cleanDatabase(retries = 3): Promise<void> {
@@ -28,6 +31,17 @@ export async function cleanDatabase(retries = 3): Promise<void> {
         prisma.game.deleteMany(),
         prisma.user.deleteMany(),
       ]);
+      
+      // Re-create NPC system user after cleaning
+      const npcPasswordHash = await bcrypt.hash('npc-system-user-no-login', 4);
+      await prisma.user.create({
+        data: {
+          email: NPC_USER_EMAIL,
+          displayName: 'NPC System',
+          passwordHash: npcPasswordHash,
+        },
+      });
+      
       return;
     } catch (error: any) {
       if (attempt === retries) {

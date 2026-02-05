@@ -13,6 +13,10 @@ model User {
   passwordHash            String       @map("password_hash")
   displayName             String       @map("display_name") @db.VarChar(50)
   avatarUrl               String?      @map("avatar_url") @db.VarChar(500)
+  role                    UserRole     @default(USER)
+  isBanned                Boolean      @default(false) @map("is_banned")
+  bannedAt                DateTime?    @map("banned_at")
+  bannedReason            String?      @map("banned_reason") @db.VarChar(500)
   notificationPreferences Json         @default("{}") @map("notification_preferences")
   createdAt               DateTime     @default(now()) @map("created_at")
   updatedAt               DateTime     @updatedAt @map("updated_at")
@@ -22,7 +26,10 @@ model User {
   createdGames            Game[]       @relation("GameCreator")
   gamePlayers             GamePlayer[]
   gameEvents              GameEvent[]
+  adminActions            AdminAuditLog[] @relation("AdminActor")
 
+  @@index([role])
+  @@index([isBanned])
   @@map("users")
 }
 
@@ -298,7 +305,33 @@ model GameEvent {
   @@map("game_events")
 }
 
+model AdminAuditLog {
+  id         String   @id @default(uuid())
+  adminId    String   @map("admin_id")
+  action     String   @db.VarChar(50)
+  targetType String   @map("target_type") @db.VarChar(50)
+  targetId   String?  @map("target_id")
+  details    Json     @default("{}")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  admin User @relation("AdminActor", fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([adminId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("admin_audit_logs")
+}
+
 // Enums
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
 enum GameStatus {
   LOBBY
   ACTIVE

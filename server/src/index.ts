@@ -15,6 +15,7 @@ import userRoutes from './routes/user.routes.js';
 import gameRoutes from './routes/game.routes.js';
 import actionRoutes from './routes/action.routes.js';
 import roundRoutes from './routes/round.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import { startTimeoutWorker } from './workers/timeout.worker.js';
 
 dotenv.config();
@@ -61,6 +62,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/actions', actionRoutes);
 app.use('/api/rounds', roundRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling
 app.use(errorHandler);

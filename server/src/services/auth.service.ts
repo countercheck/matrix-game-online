@@ -27,6 +27,7 @@ export async function register(data: RegisterInput) {
       id: true,
       email: true,
       displayName: true,
+      role: true,
       createdAt: true,
     },
   });
@@ -66,6 +67,7 @@ export async function login(data: LoginInput) {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
+      role: user.role,
     },
     token,
   };

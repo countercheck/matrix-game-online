@@ -478,6 +478,228 @@ All errors follow this format:
 
 ---
 
+## Admin API
+
+Admin endpoints require authentication with a user who has `MODERATOR` or `ADMIN` role.
+
+### User Roles
+
+| Role | Description |
+|------|-------------|
+| `USER` | Standard user (default) |
+| `MODERATOR` | Can view users/games, ban/unban users, pause/resume games |
+| `ADMIN` | Full access including role changes, game deletion, audit logs |
+
+### Creating the First Admin
+
+Use the CLI script to create or promote an admin:
+
+```bash
+# Create a new admin user
+pnpm tsx server/scripts/create-admin.ts admin@example.com "Admin User" SecurePass123
+
+# Promote an existing user to admin
+pnpm tsx server/scripts/create-admin.ts existing@example.com
+```
+
+---
+
+### GET /admin/dashboard
+Get admin dashboard statistics. (Moderator+)
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "totalUsers": 100,
+      "bannedUsers": 5,
+      "activeGames": 20,
+      "completedGames": 50
+    },
+    "recentUsers": [...],
+    "recentGames": [...]
+  }
+}
+```
+
+---
+
+### GET /admin/users
+List all users with pagination and filtering. (Moderator+)
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | number | 1 | Page number |
+| `limit` | number | 20 | Items per page (max 100) |
+| `search` | string | - | Search by email or display name |
+| `role` | string | - | Filter by role: USER, MODERATOR, ADMIN |
+| `isBanned` | boolean | - | Filter by ban status |
+| `sortBy` | string | createdAt | Sort field: createdAt, lastLogin, displayName, email |
+| `sortOrder` | string | desc | Sort order: asc, desc |
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "id": "uuid",
+        "email": "user@example.com",
+        "displayName": "User",
+        "role": "USER",
+        "isBanned": false,
+        "createdAt": "2024-01-01T00:00:00Z",
+        "_count": { "gamePlayers": 5, "createdGames": 2 }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 100,
+      "totalPages": 5
+    }
+  }
+}
+```
+
+---
+
+### GET /admin/users/:userId
+Get detailed user information. (Moderator+)
+
+**Response:** `200 OK`
+
+---
+
+### PUT /admin/users/:userId/role
+Update a user's role. (Admin only)
+
+**Request Body:**
+```json
+{
+  "role": "MODERATOR"
+}
+```
+
+**Note:** Cannot change your own role.
+
+---
+
+### POST /admin/users/:userId/ban
+Ban a user. (Moderator+)
+
+**Request Body:**
+```json
+{
+  "reason": "Violation of terms of service"
+}
+```
+
+**Notes:**
+- Cannot ban yourself
+- Cannot ban admin users
+- Banned users receive 403 on all authenticated requests
+
+---
+
+### POST /admin/users/:userId/unban
+Unban a user. (Moderator+)
+
+---
+
+### GET /admin/games
+List all games with pagination and filtering. (Moderator+)
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | number | 1 | Page number |
+| `limit` | number | 20 | Items per page (max 100) |
+| `status` | string | - | Filter by status: LOBBY, ACTIVE, PAUSED, COMPLETED |
+| `creatorId` | string | - | Filter by creator user ID |
+| `search` | string | - | Search by game name |
+| `sortBy` | string | createdAt | Sort field: createdAt, updatedAt, name, playerCount |
+| `sortOrder` | string | desc | Sort order: asc, desc |
+
+---
+
+### GET /admin/games/:gameId
+Get detailed game information. (Moderator+)
+
+---
+
+### DELETE /admin/games/:gameId
+Delete a game and all related data. (Admin only)
+
+---
+
+### POST /admin/games/:gameId/pause
+Pause an active game. (Moderator+)
+
+---
+
+### POST /admin/games/:gameId/resume
+Resume a paused game. (Moderator+)
+
+---
+
+### POST /admin/games/:gameId/players/:playerId/remove
+Remove a player from a game. (Moderator+)
+
+---
+
+### GET /admin/audit-logs
+View admin action audit logs. (Admin only)
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | number | 1 | Page number |
+| `limit` | number | 50 | Items per page (max 100) |
+| `adminId` | string | - | Filter by admin user ID |
+| `action` | string | - | Filter by action type |
+| `targetType` | string | - | Filter by target type: USER, GAME, GAME_PLAYER |
+| `targetId` | string | - | Filter by target ID |
+| `startDate` | date | - | Filter from date |
+| `endDate` | date | - | Filter to date |
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "logs": [
+      {
+        "id": "uuid",
+        "action": "BAN_USER",
+        "targetType": "USER",
+        "targetId": "uuid",
+        "details": { "reason": "...", "userEmail": "..." },
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2024-01-01T00:00:00Z",
+        "admin": { "id": "uuid", "email": "admin@example.com", "displayName": "Admin" }
+      }
+    ],
+    "pagination": { ... }
+  }
+}
+```
+
+**Audit Actions:**
+- `UPDATE_ROLE` - User role changed
+- `BAN_USER` - User banned
+- `UNBAN_USER` - User unbanned
+- `DELETE_GAME` - Game deleted
+- `PAUSE_GAME` - Game paused
+- `RESUME_GAME` - Game resumed
+- `REMOVE_PLAYER` - Player removed from game
+
+---
+
 ## Webhooks & Polling
 
 The API uses polling for real-time updates. Recommended intervals:

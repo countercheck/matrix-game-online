@@ -34,11 +34,17 @@ export async function authenticateToken(
         id: true,
         email: true,
         displayName: true,
+        role: true,
+        isBanned: true,
       },
     });
 
     if (!user) {
       throw new UnauthorizedError('User not found');
+    }
+
+    if (user.isBanned) {
+      throw new ForbiddenError('Your account has been banned');
     }
 
     req.user = user;

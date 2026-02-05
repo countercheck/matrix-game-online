@@ -29,7 +29,7 @@ export async function logAdminAction(data: AuditLogData) {
       action: data.action,
       targetType: data.targetType,
       targetId: data.targetId,
-      details: data.details ?? {},
+      details: (data.details ?? {}) as Prisma.InputJsonValue,
       ipAddress: data.ipAddress,
     },
   });

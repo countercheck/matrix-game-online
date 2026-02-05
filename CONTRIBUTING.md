@@ -187,6 +187,7 @@ Key documentation files:
 - `docs/API.md` - API reference
 - `docs/DEPLOYMENT.md` - Deployment guide
 - `CLAUDE.md` - Development conventions
+- `.github/copilot-instructions.md` - GitHub Copilot configuration
 
 ## Getting Help
 

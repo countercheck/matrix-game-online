@@ -145,6 +145,7 @@ See `server/.env.example` for all available configuration options.
 - [Technical Specification](./Technical_Spec_Mosaic_Matrix_Game.md)
 - [Entity Relationship Diagram](./ERD_Mosaic_Matrix_Game.md)
 - [Development Plan](./DEVELOPMENT_PLAN.md)
+- [GitHub Copilot Instructions](./.github/copilot-instructions.md)
 
 ## License
 

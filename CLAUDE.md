@@ -1,5 +1,7 @@
 # Mosaic Matrix Game - Claude Code Configuration
 
+> **Note**: This repository also has [GitHub Copilot Instructions](./.github/copilot-instructions.md) configured for Copilot coding agent.
+
 ## Project Overview
 
 Web-based implementation of the Mosaic Strict Matrix Game's Action Resolution system. Enables asynchronous, play-by-post gameplay for distributed groups.

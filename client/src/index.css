@@ -24,6 +24,53 @@
     --destructive-foreground: 210 40% 98%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+
+    /* Colorblind-friendly argument colors - Bright mode */
+    /* For/Success: Teal - high contrast, distinguishable by all types of color vision */
+    --argument-for: 175 70% 35%;
+    --argument-for-bg: 175 65% 95%;
+    --argument-for-border: 175 70% 40%;
+    --argument-for-text: 175 80% 20%;
+    --argument-for-badge-bg: 175 60% 90%;
+    --argument-for-badge-text: 175 75% 25%;
+
+    /* Against/Failure: Orange - distinct from teal, works for red-green colorblindness */
+    --argument-against: 25 95% 45%;
+    --argument-against-bg: 25 90% 95%;
+    --argument-against-border: 25 95% 50%;
+    --argument-against-text: 25 90% 20%;
+    --argument-against-badge-bg: 25 85% 90%;
+    --argument-against-badge-text: 25 90% 28%;
+
+    /* Clarification: Blue - universally distinguishable */
+    --argument-clarify: 215 80% 50%;
+    --argument-clarify-bg: 215 75% 96%;
+    --argument-clarify-border: 215 80% 55%;
+    --argument-clarify-text: 215 85% 22%;
+    --argument-clarify-badge-bg: 215 70% 92%;
+    --argument-clarify-badge-text: 215 80% 30%;
+
+    /* Vote colors - colorblind friendly */
+    --vote-success: 175 70% 35%;
+    --vote-success-bg: 175 65% 95%;
+    --vote-uncertain: 50 90% 50%;
+    --vote-uncertain-bg: 50 85% 95%;
+    --vote-failure: 25 95% 45%;
+    --vote-failure-bg: 25 90% 95%;
+
+    /* Result colors */
+    --result-triumph: 175 70% 35%;
+    --result-triumph-bg: 175 65% 95%;
+    --result-triumph-text: 175 80% 20%;
+    --result-success-but: 50 90% 40%;
+    --result-success-but-bg: 50 85% 95%;
+    --result-success-but-text: 50 95% 18%;
+    --result-failure-but: 35 90% 45%;
+    --result-failure-but-bg: 35 85% 95%;
+    --result-failure-but-text: 35 90% 22%;
+    --result-disaster: 25 95% 45%;
+    --result-disaster-bg: 25 90% 95%;
+    --result-disaster-text: 25 90% 20%;
   }
 
   .dark {
@@ -46,6 +93,53 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* Colorblind-friendly argument colors - Dark mode */
+    /* For/Success: Teal - brighter for dark backgrounds */
+    --argument-for: 175 70% 55%;
+    --argument-for-bg: 175 50% 12%;
+    --argument-for-border: 175 65% 45%;
+    --argument-for-text: 175 60% 90%;
+    --argument-for-badge-bg: 175 50% 20%;
+    --argument-for-badge-text: 175 60% 85%;
+
+    /* Against/Failure: Orange - brighter for dark backgrounds */
+    --argument-against: 25 95% 60%;
+    --argument-against-bg: 25 50% 12%;
+    --argument-against-border: 25 90% 50%;
+    --argument-against-text: 25 70% 90%;
+    --argument-against-badge-bg: 25 50% 22%;
+    --argument-against-badge-text: 25 70% 85%;
+
+    /* Clarification: Blue - brighter for dark backgrounds */
+    --argument-clarify: 215 80% 65%;
+    --argument-clarify-bg: 215 50% 12%;
+    --argument-clarify-border: 215 75% 50%;
+    --argument-clarify-text: 215 70% 90%;
+    --argument-clarify-badge-bg: 215 50% 22%;
+    --argument-clarify-badge-text: 215 70% 85%;
+
+    /* Vote colors - colorblind friendly dark mode */
+    --vote-success: 175 70% 55%;
+    --vote-success-bg: 175 50% 15%;
+    --vote-uncertain: 50 90% 55%;
+    --vote-uncertain-bg: 50 50% 15%;
+    --vote-failure: 25 95% 60%;
+    --vote-failure-bg: 25 50% 15%;
+
+    /* Result colors - dark mode */
+    --result-triumph: 175 70% 55%;
+    --result-triumph-bg: 175 50% 12%;
+    --result-triumph-text: 175 60% 90%;
+    --result-success-but: 50 90% 55%;
+    --result-success-but-bg: 50 50% 12%;
+    --result-success-but-text: 50 85% 90%;
+    --result-failure-but: 35 90% 55%;
+    --result-failure-but-bg: 35 50% 12%;
+    --result-failure-but-text: 35 80% 90%;
+    --result-disaster: 25 95% 60%;
+    --result-disaster-bg: 25 50% 12%;
+    --result-disaster-text: 25 70% 90%;
   }
 }
 

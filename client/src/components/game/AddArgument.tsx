@@ -86,12 +86,15 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
           role="radio"
           aria-checked={argumentType === 'FOR'}
           onClick={() => setArgumentType('FOR')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
+          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-for inline-flex items-center justify-center gap-1.5 ${
             argumentType === 'FOR'
-              ? 'bg-green-600 text-white'
-              : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300'
+              ? 'bg-arg-for text-white'
+              : 'bg-arg-for-bg text-arg-for-text hover:bg-arg-for-badge-bg border border-arg-for-border'
           }`}
         >
+          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
           For
         </button>
         <button
@@ -99,12 +102,15 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
           role="radio"
           aria-checked={argumentType === 'AGAINST'}
           onClick={() => setArgumentType('AGAINST')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
+          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-against inline-flex items-center justify-center gap-1.5 ${
             argumentType === 'AGAINST'
-              ? 'bg-red-600 text-white'
-              : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300'
+              ? 'bg-arg-against text-white'
+              : 'bg-arg-against-bg text-arg-against-text hover:bg-arg-against-badge-bg border border-arg-against-border'
           }`}
         >
+          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
           Against
         </button>
         <button
@@ -112,12 +118,15 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
           role="radio"
           aria-checked={argumentType === 'CLARIFICATION'}
           onClick={() => setArgumentType('CLARIFICATION')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-clarify inline-flex items-center justify-center gap-1.5 ${
             argumentType === 'CLARIFICATION'
-              ? 'bg-blue-600 text-white'
-              : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300'
+              ? 'bg-arg-clarify text-white'
+              : 'bg-arg-clarify-bg text-arg-clarify-text hover:bg-arg-clarify-badge-bg border border-arg-clarify-border'
           }`}
         >
+          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          </svg>
           Clarify
         </button>
       </div>

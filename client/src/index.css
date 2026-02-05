@@ -14,7 +14,8 @@
     --card-foreground: 222.2 84% 4.9%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --primary: 222.2 47.4% 11.2%;
+    /* Primary button color - blue that works in both modes */
+    --primary: 215 70% 45%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -80,19 +81,20 @@
     --muted-foreground: 215 20.2% 65.1%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 217.2 32.6% 10%;
     --card-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 22%;
     --input: 217.2 32.6% 17.5%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Keep primary consistent - slightly lighter in dark mode for visibility */
+    --primary: 215 70% 50%;
+    --primary-foreground: 210 40% 98%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50%;
     --destructive-foreground: 210 40% 98%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 215 70% 50%;
 
     /* Colorblind-friendly argument colors - Dark mode */
     /* For/Success: Teal - brighter for dark backgrounds */

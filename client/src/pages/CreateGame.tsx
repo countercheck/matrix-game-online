@@ -39,7 +39,12 @@ export default function CreateGame() {
         try {
           const formData = new FormData();
           formData.append('image', imageFile);
-          await api.post(`/games/${gameId}/image`, formData);
+          // Remove Content-Type header so browser sets it with correct multipart boundary
+          await api.post(`/games/${gameId}/image`, formData, {
+            headers: {
+              'Content-Type': undefined,
+            },
+          });
         } catch (err) {
           console.error('Failed to upload image:', err);
           // Continue anyway - game was created successfully

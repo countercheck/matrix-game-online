@@ -254,7 +254,7 @@ Get game details.
 Update game settings (host only, lobby status only).
 
 ### DELETE /games/:gameId
-Delete a game (host only, lobby status only).
+Delete a game (host only, lobby status only). This performs a soft delete by marking the game as deleted while preserving the data.
 
 **Response:** `200 OK`
 ```json
@@ -269,7 +269,7 @@ Delete a game (host only, lobby status only).
 **Error Responses:**
 - `403 Forbidden` - Not the game host
 - `400 Bad Request` - Game has already started (status is not LOBBY)
-- `404 Not Found` - Game not found
+- `404 Not Found` - Game not found or already deleted
 
 ### POST /games/:gameId/join
 Join a game.

@@ -43,6 +43,7 @@ export default function GameLobby() {
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const { data, isLoading, error, refetch } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
@@ -62,6 +63,9 @@ export default function GameLobby() {
     mutationFn: () => api.delete(`/games/${gameId}`),
     onSuccess: () => {
       navigate('/');
+    },
+    onError: (err: { response?: { data?: { error?: { message?: string } } } }) => {
+      setDeleteError(err.response?.data?.error?.message || 'Failed to delete game');
     },
   });
 
@@ -322,7 +326,10 @@ export default function GameLobby() {
 
           {!showDeleteConfirm ? (
             <button
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={() => {
+                setShowDeleteConfirm(true);
+                setDeleteError('');
+              }}
               className="w-full py-2 px-4 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
             >
               Delete Game
@@ -332,6 +339,11 @@ export default function GameLobby() {
               <p className="text-sm text-destructive font-medium">
                 Are you sure you want to delete this game? This cannot be undone.
               </p>
+              {deleteError && (
+                <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                  {deleteError}
+                </div>
+              )}
               <div className="flex gap-2">
                 <button
                   onClick={() => deleteMutation.mutate()}

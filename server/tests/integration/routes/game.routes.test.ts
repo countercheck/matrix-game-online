@@ -219,6 +219,40 @@ function createTestApp() {
     res.json({ success: true, data: { imageUrl, game } });
   });
 
+  // Delete game
+  app.delete('/api/games/:gameId', (req: any, res) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED' } });
+    }
+
+    const game = games.get(req.params.gameId);
+    if (!game || game.deletedAt) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Game not found' } });
+    }
+
+    const gamePlayers = players.get(req.params.gameId) || [];
+    const hostPlayer = gamePlayers.find((p: any) => p.isHost);
+
+    if (!hostPlayer || hostPlayer.userId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Only the game host can delete this game' },
+      });
+    }
+
+    if (game.status !== 'LOBBY') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'Cannot delete a game that has already started' },
+      });
+    }
+
+    // Soft delete
+    game.deletedAt = new Date();
+
+    res.json({ success: true, data: { message: 'Game deleted successfully' } });
+  });
+
   return app;
 }
 
@@ -489,6 +523,97 @@ describe('Game Routes', () => {
         .post(`/api/games/${game.id}/image`);
 
       expect(response.status).toBe(400);
+    });
+  });
+
+  describe('DELETE /api/games/:gameId', () => {
+    it('should allow host to delete a game in lobby status', async () => {
+      // Create game as host
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Delete as host
+      const response = await request(app).delete(`/api/games/${gameId}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.message).toBe('Game deleted successfully');
+    });
+
+    it('should reject deletion by non-host player', async () => {
+      // Create game as user 1
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Join as user 2
+      currentUser = { id: 'user-2', email: 'other@example.com', displayName: 'Other User' };
+      await request(app).post(`/api/games/${gameId}/join`).send({});
+
+      // Try to delete as non-host (user 2)
+      const response = await request(app).delete(`/api/games/${gameId}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('FORBIDDEN');
+      expect(response.body.error.message).toContain('host');
+    });
+
+    it('should reject deletion when game has started', async () => {
+      // Create game as user 1
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Add player 2
+      currentUser = { id: 'user-2', email: 'other@example.com', displayName: 'Other User' };
+      await request(app).post(`/api/games/${gameId}/join`).send({});
+
+      // Start game as host
+      currentUser = { id: 'user-1', email: 'test@example.com', displayName: 'Test User' };
+      await request(app).post(`/api/games/${gameId}/start`);
+
+      // Try to delete started game
+      const response = await request(app).delete(`/api/games/${gameId}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('BAD_REQUEST');
+      expect(response.body.error.message).toContain('already started');
+    });
+
+    it('should return 404 for non-existent game', async () => {
+      const response = await request(app).delete('/api/games/nonexistent-game-id');
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('NOT_FOUND');
+    });
+
+    it('should return 404 for already deleted game', async () => {
+      // Create game
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Delete game
+      await request(app).delete(`/api/games/${gameId}`);
+
+      // Try to delete again
+      const response = await request(app).delete(`/api/games/${gameId}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('NOT_FOUND');
     });
   });
 });

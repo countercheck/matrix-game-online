@@ -33,6 +33,10 @@ vi.mock('../../../src/config/database.js', () => ({
   },
 }));
 
+import { db } from '../../../src/config/database.js';
+import * as gameService from '../../../src/services/game.service.js';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../../../src/middleware/errorHandler.js';
+
 // Game state machine logic
 type GamePhase =
   | 'WAITING'
@@ -440,82 +444,123 @@ describe('Game Service', () => {
   });
 
   describe('Game Deletion', () => {
-    it('should allow host to delete game in LOBBY status', () => {
-      const game = {
+    it('should allow host to delete game in LOBBY status', async () => {
+      const mockGame = {
         id: 'game-1',
+        name: 'Test Game',
         status: 'LOBBY',
+        deletedAt: null,
         players: [
           { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
           { id: 'player-2', userId: 'user-2', isHost: false, isActive: true },
         ],
       };
-      const requestingUserId = 'user-1';
 
-      const hostPlayer = game.players.find((p) => p.isHost);
-      const isHost = hostPlayer?.userId === requestingUserId;
-      const canDelete = isHost && game.status === 'LOBBY';
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+      vi.mocked(db.game.update).mockResolvedValue({ ...mockGame, deletedAt: new Date() } as any);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as any);
 
-      expect(canDelete).toBe(true);
+      const result = await gameService.deleteGame('game-1', 'user-1');
+
+      expect(result.message).toBe('Game deleted successfully');
+      expect(db.game.findUnique).toHaveBeenCalledWith({
+        where: { id: 'game-1' },
+        include: {
+          players: { where: { isActive: true } },
+        },
+      });
+      expect(db.game.update).toHaveBeenCalledWith({
+        where: { id: 'game-1' },
+        data: { deletedAt: expect.any(Date) },
+      });
+      expect(db.gameEvent.create).toHaveBeenCalled();
     });
 
-    it('should not allow non-host to delete game', () => {
-      const game = {
+    it('should not allow non-host to delete game', async () => {
+      const mockGame = {
         id: 'game-1',
+        name: 'Test Game',
         status: 'LOBBY',
+        deletedAt: null,
         players: [
           { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
           { id: 'player-2', userId: 'user-2', isHost: false, isActive: true },
         ],
       };
-      const requestingUserId = 'user-2'; // Not the host
 
-      const hostPlayer = game.players.find((p) => p.isHost);
-      const isHost = hostPlayer?.userId === requestingUserId;
-      const canDelete = isHost && game.status === 'LOBBY';
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
 
-      expect(canDelete).toBe(false);
+      await expect(gameService.deleteGame('game-1', 'user-2')).rejects.toThrow(
+        new ForbiddenError('Only the game host can delete this game')
+      );
+      expect(db.game.update).not.toHaveBeenCalled();
     });
 
-    it('should not allow deleting game that has started', () => {
-      const game = {
+    it('should not allow deleting game that has started', async () => {
+      const mockGame = {
         id: 'game-1',
+        name: 'Test Game',
         status: 'ACTIVE',
+        deletedAt: null,
         players: [
           { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
           { id: 'player-2', userId: 'user-2', isHost: false, isActive: true },
         ],
       };
-      const requestingUserId = 'user-1';
 
-      const hostPlayer = game.players.find((p) => p.isHost);
-      const isHost = hostPlayer?.userId === requestingUserId;
-      const canDelete = isHost && game.status === 'LOBBY';
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
 
-      expect(canDelete).toBe(false);
+      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(
+        new BadRequestError('Cannot delete a game that has already started')
+      );
+      expect(db.game.update).not.toHaveBeenCalled();
     });
 
-    it('should not allow deleting completed game', () => {
-      const game = {
+    it('should not allow deleting completed game', async () => {
+      const mockGame = {
         id: 'game-1',
+        name: 'Test Game',
         status: 'COMPLETED',
+        deletedAt: null,
         players: [
           { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
         ],
       };
-      const requestingUserId = 'user-1';
 
-      const hostPlayer = game.players.find((p) => p.isHost);
-      const isHost = hostPlayer?.userId === requestingUserId;
-      const canDelete = isHost && game.status === 'LOBBY';
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
 
-      expect(canDelete).toBe(false);
+      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(
+        new BadRequestError('Cannot delete a game that has already started')
+      );
+      expect(db.game.update).not.toHaveBeenCalled();
     });
 
-    it('should return not found error for non-existent game', () => {
-      const game = null;
-      const shouldThrowNotFound = game === null;
+    it('should throw NotFoundError for non-existent game', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue(null);
 
-      expect(shouldThrowNotFound).toBe(true);
+      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(
+        new NotFoundError('Game not found')
+      );
+      expect(db.game.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundError for already deleted game', async () => {
+      const mockGame = {
+        id: 'game-1',
+        name: 'Test Game',
+        status: 'LOBBY',
+        deletedAt: new Date(),
+        players: [
+          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
+        ],
+      };
+
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+
+      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(
+        new NotFoundError('Game not found')
+      );
+      expect(db.game.update).not.toHaveBeenCalled();
     });
   });
 });

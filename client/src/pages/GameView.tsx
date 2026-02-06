@@ -12,6 +12,7 @@ import {
   RoundSummary,
   GameHistory,
   RoundHistory,
+  HostControls,
 } from '../components/game';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 
@@ -364,6 +365,14 @@ export default function GameView() {
             <h3 className="font-semibold mb-2">Phase Guide</h3>
             <PhaseGuide phase={game.currentPhase} />
           </div>
+
+          {/* Host Controls for skipping phases */}
+          <HostControls
+            gameId={game.id}
+            currentPhase={game.currentPhase}
+            currentActionId={game.currentAction?.id}
+            isHost={myPlayer?.isHost || false}
+          />
 
           {/* Players */}
           <div className="p-4 border rounded-lg">

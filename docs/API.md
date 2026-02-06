@@ -435,6 +435,69 @@ Submit narration for the action outcome (initiator only).
 ### GET /actions/:actionId/narration
 Get the narration for an action.
 
+### POST /actions/:actionId/skip-argumentation
+Skip the argumentation phase (host only). Moves the action directly to voting phase.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Argumentation skipped, moved to voting phase"
+  }
+}
+```
+
+**Notes:**
+- Only the game host can skip phases
+- Action must be in ARGUING status
+- Sets `argumentationWasSkipped: true` on the action for history tracking
+
+### POST /actions/:actionId/skip-voting
+Skip the voting phase (host only). Auto-fills missing votes as UNCERTAIN and moves to resolution.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Voting skipped, moved to resolution phase",
+    "skippedVotes": 2
+  }
+}
+```
+
+**Notes:**
+- Only the game host can skip phases
+- Action must be in VOTING status
+- Missing votes are auto-filled as UNCERTAIN (1 success, 1 failure token)
+- Auto-filled votes have `wasSkipped: true` for history tracking
+- Sets `votingWasSkipped: true` on the action
+
+---
+
+## Games (Host Skip Controls)
+
+### POST /games/:gameId/skip-proposals
+Skip remaining proposals and move to round summary (host only). Ends the proposal phase early.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Remaining proposals skipped, moved to round summary",
+    "completedActions": 2
+  }
+}
+```
+
+**Notes:**
+- Only the game host can skip proposals
+- Game must be in PROPOSAL phase with no current action (waiting for proposals)
+- At least one action must have been proposed in the current round
+- Updates round's `totalActionsRequired` to match completed actions
+
 ---
 
 ## Rounds

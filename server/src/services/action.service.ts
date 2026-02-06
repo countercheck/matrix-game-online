@@ -872,3 +872,218 @@ export async function getNarration(actionId: string, userId: string) {
 
   return narration;
 }
+
+/**
+ * Helper to verify a user is the host of a game
+ */
+async function requireHost(gameId: string, userId: string) {
+  const player = await db.gamePlayer.findFirst({
+    where: { gameId, userId, isActive: true, isHost: true },
+  });
+
+  if (!player) {
+    throw new ForbiddenError('Only the game host can perform this action');
+  }
+
+  return player;
+}
+
+/**
+ * Skip the argumentation phase - host can force transition to voting
+ */
+export async function skipArgumentation(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: {
+      game: {
+        include: {
+          players: { where: { isActive: true } },
+        },
+      },
+    },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (action.status !== 'ARGUING') {
+    throw new BadRequestError('Action is not in argumentation phase');
+  }
+
+  await requireHost(action.gameId, userId);
+
+  // Transition to voting
+  await db.action.update({
+    where: { id: actionId },
+    data: {
+      status: 'VOTING',
+      votingStartedAt: new Date(),
+      argumentationWasSkipped: true,
+    },
+  });
+
+  await transitionPhase(action.gameId, GamePhase.VOTING);
+
+  await logGameEvent(action.gameId, userId, 'ARGUMENTATION_SKIPPED', {
+    actionId,
+    skippedByHost: true,
+  });
+
+  // Send notifications
+  notifyVotingStarted(
+    action.gameId,
+    action.game.name,
+    action.actionDescription
+  ).catch(() => {});
+
+  return { message: 'Argumentation skipped, moved to voting phase' };
+}
+
+/**
+ * Skip the voting phase - host can force transition to resolution
+ * Missing votes are auto-filled as UNCERTAIN with wasSkipped=true
+ */
+export async function skipVoting(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: {
+      game: {
+        include: {
+          players: { where: { isActive: true } },
+        },
+      },
+      votes: true,
+      initiator: {
+        include: { user: { select: { id: true } } },
+      },
+    },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (action.status !== 'VOTING') {
+    throw new BadRequestError('Action is not in voting phase');
+  }
+
+  await requireHost(action.gameId, userId);
+
+  // Find players who haven't voted (excluding NPC)
+  const humanPlayers = action.game.players.filter((p) => !p.isNpc);
+  const votedPlayerIds = new Set(action.votes.map((v) => v.playerId));
+  const missingVoters = humanPlayers.filter((p) => !votedPlayerIds.has(p.id));
+
+  // Auto-fill missing votes as UNCERTAIN with wasSkipped=true
+  if (missingVoters.length > 0) {
+    await db.vote.createMany({
+      data: missingVoters.map((player) => ({
+        actionId,
+        playerId: player.id,
+        voteType: 'UNCERTAIN',
+        successTokens: 1,
+        failureTokens: 1,
+        wasSkipped: true,
+      })),
+    });
+  }
+
+  // Update action status
+  await db.action.update({
+    where: { id: actionId },
+    data: {
+      status: 'RESOLVED',
+      votingWasSkipped: true,
+    },
+  });
+
+  await transitionPhase(action.gameId, GamePhase.RESOLUTION);
+
+  await logGameEvent(action.gameId, userId, 'VOTING_SKIPPED', {
+    actionId,
+    skippedByHost: true,
+    missingVotersCount: missingVoters.length,
+    missingVoterNames: missingVoters.map((p) => p.playerName),
+  });
+
+  // Notify initiator that resolution is ready
+  notifyResolutionReady(
+    action.gameId,
+    action.game.name,
+    action.initiator.userId,
+    action.actionDescription
+  ).catch(() => {});
+
+  return {
+    message: 'Voting skipped, moved to resolution phase',
+    skippedVotes: missingVoters.length,
+  };
+}
+
+/**
+ * Skip waiting for proposals and move to next action or round summary
+ * This skips any remaining proposals in the current round
+ */
+export async function skipToNextAction(gameId: string, userId: string) {
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: {
+      currentRound: true,
+      currentAction: true,
+      players: { where: { isActive: true } },
+    },
+  });
+
+  if (!game || game.deletedAt) {
+    throw new NotFoundError('Game not found');
+  }
+
+  await requireHost(gameId, userId);
+
+  // If we're in proposal phase with no current action, we're waiting for proposals
+  if (game.currentPhase === 'PROPOSAL' && !game.currentActionId) {
+    // Check if there are any actions this round
+    const roundActions = await db.action.count({
+      where: { roundId: game.currentRound?.id },
+    });
+
+    if (roundActions === 0) {
+      throw new BadRequestError('Cannot skip - at least one action must be proposed before moving on');
+    }
+
+    // Update round to complete with current actions
+    if (game.currentRound) {
+      await db.round.update({
+        where: { id: game.currentRound.id },
+        data: {
+          totalActionsRequired: roundActions,
+          actionsCompleted: roundActions,
+        },
+      });
+
+      await transitionPhase(gameId, GamePhase.ROUND_SUMMARY);
+
+      await logGameEvent(gameId, userId, 'PROPOSALS_SKIPPED', {
+        roundId: game.currentRound.id,
+        skippedByHost: true,
+        completedActions: roundActions,
+      });
+
+      // Notify players that round summary is needed
+      notifyRoundSummaryNeeded(
+        gameId,
+        game.name,
+        game.currentRound.roundNumber,
+        roundActions
+      ).catch(() => {});
+
+      return {
+        message: 'Remaining proposals skipped, moved to round summary',
+        completedActions: roundActions,
+      };
+    }
+  }
+
+  throw new BadRequestError('Cannot skip - game is not waiting for proposals');
+}

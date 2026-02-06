@@ -158,19 +158,21 @@ model Persona {
 }
 
 model Action {
-  id                     String       @id @default(uuid())
-  gameId                 String       @map("game_id")
-  roundId                String       @map("round_id")
-  initiatorId            String       @map("initiator_id")
-  sequenceNumber         Int          @map("sequence_number")
-  actionDescription      String       @map("action_description") @db.Text
-  desiredOutcome         String       @map("desired_outcome") @db.Text
-  status                 ActionStatus @default(PROPOSED)
-  proposedAt             DateTime     @default(now()) @map("proposed_at")
-  argumentationStartedAt DateTime?    @map("argumentation_started_at")
-  votingStartedAt        DateTime?    @map("voting_started_at")
-  resolvedAt             DateTime?    @map("resolved_at")
-  completedAt            DateTime?    @map("completed_at")
+  id                      String       @id @default(uuid())
+  gameId                  String       @map("game_id")
+  roundId                 String       @map("round_id")
+  initiatorId             String       @map("initiator_id")
+  sequenceNumber          Int          @map("sequence_number")
+  actionDescription       String       @map("action_description") @db.Text
+  desiredOutcome          String       @map("desired_outcome") @db.Text
+  status                  ActionStatus @default(PROPOSED)
+  argumentationWasSkipped Boolean      @default(false) @map("argumentation_was_skipped")
+  votingWasSkipped        Boolean      @default(false) @map("voting_was_skipped")
+  proposedAt              DateTime     @default(now()) @map("proposed_at")
+  argumentationStartedAt  DateTime?    @map("argumentation_started_at")
+  votingStartedAt         DateTime?    @map("voting_started_at")
+  resolvedAt              DateTime?    @map("resolved_at")
+  completedAt             DateTime?    @map("completed_at")
 
   // Relations
   game                   Game                   @relation("GameActions", fields: [gameId], references: [id], onDelete: Cascade)
@@ -217,6 +219,7 @@ model Vote {
   voteType      VoteType @map("vote_type")
   successTokens Int      @map("success_tokens")
   failureTokens Int      @map("failure_tokens")
+  wasSkipped    Boolean  @default(false) @map("was_skipped")
   castAt        DateTime @default(now()) @map("cast_at")
 
   // Relations

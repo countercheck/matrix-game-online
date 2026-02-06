@@ -562,6 +562,7 @@ export async function getGameHistory(gameId: string, userId: string) {
           voteType: true,
           successTokens: true,
           failureTokens: true,
+          wasSkipped: true,
         },
       },
       tokenDraw: true,
@@ -577,8 +578,9 @@ export async function getGameHistory(gameId: string, userId: string) {
         totalSuccessTokens: acc.totalSuccessTokens + vote.successTokens,
         totalFailureTokens: acc.totalFailureTokens + vote.failureTokens,
         voteCount: acc.voteCount + 1,
+        skippedVotes: acc.skippedVotes + (vote.wasSkipped ? 1 : 0),
       }),
-      { totalSuccessTokens: 1, totalFailureTokens: 1, voteCount: 0 } // Base pool of 1+1
+      { totalSuccessTokens: 1, totalFailureTokens: 1, voteCount: 0, skippedVotes: 0 } // Base pool of 1+1
     );
 
     return {

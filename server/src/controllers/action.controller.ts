@@ -154,3 +154,33 @@ export async function getNarration(
     next(error);
   }
 }
+
+export async function skipArgumentation(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const actionId = req.params.actionId as string;
+    const userId = req.user!.id;
+    const result = await actionService.skipArgumentation(actionId, userId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function skipVoting(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const actionId = req.params.actionId as string;
+    const userId = req.user!.id;
+    const result = await actionService.skipVoting(actionId, userId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}

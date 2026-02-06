@@ -490,8 +490,9 @@ describe('Game Service', () => {
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
 
-      await expect(gameService.deleteGame('game-1', 'user-2')).rejects.toThrow(ForbiddenError);
-      await expect(gameService.deleteGame('game-1', 'user-2')).rejects.toThrow('Only the game host can delete this game');
+      await expect(gameService.deleteGame('game-1', 'user-2')).rejects.toThrow(
+        new ForbiddenError('Only the game host can delete this game')
+      );
       expect(db.game.update).not.toHaveBeenCalled();
     });
 
@@ -509,8 +510,9 @@ describe('Game Service', () => {
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
 
-      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(BadRequestError);
-      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow('Cannot delete a game that has already started');
+      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(
+        new BadRequestError('Cannot delete a game that has already started')
+      );
       expect(db.game.update).not.toHaveBeenCalled();
     });
 
@@ -527,16 +529,18 @@ describe('Game Service', () => {
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
 
-      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(BadRequestError);
-      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow('Cannot delete a game that has already started');
+      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(
+        new BadRequestError('Cannot delete a game that has already started')
+      );
       expect(db.game.update).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundError for non-existent game', async () => {
       vi.mocked(db.game.findUnique).mockResolvedValue(null);
 
-      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(NotFoundError);
-      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow('Game not found');
+      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(
+        new NotFoundError('Game not found')
+      );
       expect(db.game.update).not.toHaveBeenCalled();
     });
 
@@ -553,8 +557,9 @@ describe('Game Service', () => {
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
 
-      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(NotFoundError);
-      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow('Game not found');
+      await expect(gameService.deleteGame('game-1', 'user-1')).rejects.toThrow(
+        new NotFoundError('Game not found')
+      );
       expect(db.game.update).not.toHaveBeenCalled();
     });
   });

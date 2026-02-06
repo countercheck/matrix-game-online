@@ -13,7 +13,7 @@ vi.mock('../../services/api', () => ({
 
 // Mock formatRelativeTime
 vi.mock('../../utils/formatTime', () => ({
-  formatRelativeTime: vi.fn((date: string) => {
+  formatRelativeTime: vi.fn(() => {
     // Return a predictable format for testing
     return '5m ago';
   }),

@@ -4,7 +4,7 @@ import { RichTextEditor } from '../ui/RichTextEditor';
 interface EditGameModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { name: string; description: string }) => Promise<void>;
+  onSave: (data: { name: string; description: string | null }) => Promise<void>;
   initialName: string;
   initialDescription: string;
 }
@@ -29,7 +29,10 @@ export function EditGameModal({
     setIsLoading(true);
 
     try {
-      await onSave({ name, description });
+      await onSave({ 
+        name, 
+        description: description.trim() || null
+      });
       onClose();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: { message?: string } } } };

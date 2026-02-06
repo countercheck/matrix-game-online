@@ -699,8 +699,11 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
       const oldFilename = game.imageUrl.split('/').pop();
       if (oldFilename) {
         const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
-        const oldFilePath = path.join(uploadsDir, oldFilename);
-        await fs.unlink(oldFilePath);
+        const uploadsDirResolved = path.resolve(uploadsDir);
+        const oldFilePath = path.resolve(uploadsDirResolved, oldFilename);
+        if (oldFilePath.startsWith(uploadsDirResolved + path.sep)) {
+          await fs.unlink(oldFilePath);
+        }
       }
     } catch {
       // Ignore errors if old file doesn't exist or can't be deleted

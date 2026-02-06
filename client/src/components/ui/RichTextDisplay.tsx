@@ -35,7 +35,7 @@ export function RichTextDisplay({ content, className = '', inline = false, disab
         components={disableLinks ? {
           a: ({ children, ...props }) => {
             // Remove invalid HTML attributes for span element
-            const { href, target, rel, ...rest } = props;
+            const { href: _, target: __, rel: ___, ...rest } = props;
             return <span {...rest}>{children}</span>;
           },
         } : undefined}

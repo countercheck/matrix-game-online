@@ -251,7 +251,7 @@ export async function importGameFromYaml(yamlString: string, userId: string) {
   
   // Validate each persona is an object
   for (let i = 0; i < personasData.length; i++) {
-    if (!personasData[i] || typeof personasData[i] !== 'object') {
+    if (typeof personasData[i] !== 'object' || personasData[i] === null || Array.isArray(personasData[i])) {
       throw new BadRequestError(`Invalid YAML: persona at index ${i} must be an object`);
     }
   }

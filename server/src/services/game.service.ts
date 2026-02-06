@@ -340,15 +340,14 @@ export async function deleteGame(gameId: string, userId: string) {
     throw new BadRequestError('Cannot delete a game that has already started');
   }
 
-  // Log the deletion event before soft deleting
-  await logGameEvent(gameId, userId, 'GAME_DELETED', { gameName: game.name });
-
   // Soft delete the game by setting deletedAt timestamp
   await db.game.update({
     where: { id: gameId },
     data: { deletedAt: new Date() },
   });
 
+  // Log the deletion event after successful soft delete
+  await logGameEvent(gameId, userId, 'GAME_DELETED', { gameName: game.name });
   return { message: 'Game deleted successfully' };
 }
 

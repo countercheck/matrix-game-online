@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui/RichTextDisplay';
+import { formatRelativeTime } from '../../utils/formatTime';
 
 interface GameHistoryProps {
   gameId: string;
@@ -12,6 +13,7 @@ interface HistoryArgument {
   id: string;
   argumentType: 'INITIATOR_FOR' | 'FOR' | 'AGAINST' | 'CLARIFICATION';
   content: string;
+  createdAt: string;
   player: {
     playerName: string;
   };
@@ -22,6 +24,7 @@ interface HistoryAction {
   sequenceNumber: number;
   actionDescription: string;
   desiredOutcome: string;
+  proposedAt: string;
   argumentationWasSkipped?: boolean;
   votingWasSkipped?: boolean;
   initiator: {
@@ -40,9 +43,11 @@ interface HistoryAction {
     resultType: 'TRIUMPH' | 'SUCCESS_BUT' | 'FAILURE_BUT' | 'DISASTER';
     drawnSuccess: number;
     drawnFailure: number;
+    drawnAt: string;
   };
   narration?: {
     content: string;
+    createdAt: string;
   };
 }
 
@@ -305,6 +310,9 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
                                 {getArgumentTypeLabel(arg.argumentType)}
                               </span>
                               <span className="font-medium">{arg.player.playerName}</span>
+                              <span className="text-muted-foreground">
+                                {formatRelativeTime(arg.createdAt)}
+                              </span>
                             </div>
                             <RichTextDisplay
                               content={arg.content}
@@ -318,11 +326,14 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
                 )}
 
                 {action.narration && (
-                  <div className="text-sm bg-muted/50 p-3 rounded-lg italic">
+                  <div className="text-sm bg-muted/50 p-3 rounded-lg">
                     <RichTextDisplay
                       content={action.narration.content}
-                      className="[&_p]:my-1"
+                      className="italic [&_p]:my-1"
                     />
+                    <p className="text-xs text-muted-foreground mt-2 not-italic">
+                      Narrated {formatRelativeTime(action.narration.createdAt)}
+                    </p>
                   </div>
                 )}
 

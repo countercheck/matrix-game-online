@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui';
+import { formatRelativeTime } from '../../utils/formatTime';
 
 interface Argument {
   id: string;
@@ -94,7 +95,12 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
               className={`p-3 rounded-md border-l-4 ${styles.container}`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium">{arg.player.playerName}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{arg.player.playerName}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatRelativeTime(arg.createdAt)}
+                  </span>
+                </div>
                 <span
                   className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${styles.badge}`}
                 >

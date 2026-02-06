@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
-import { RichTextDisplay } from '../ui/RichTextDisplay';
+import { RichTextDisplay, RichTextEditor } from '../ui';
 
 interface RoundSummaryProps {
   gameId: string;
@@ -262,22 +262,15 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
 
         <div className="space-y-4">
           <div>
-            <textarea
+            <RichTextEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full h-48 px-4 py-3 border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="As the dust settled from this round's events..."
+              onChange={setContent}
               maxLength={2000}
+              rows={8}
+              placeholder="As the dust settled from this round's events..."
             />
-            <div className="flex justify-between items-center mt-1">
-              <span className="text-xs text-muted-foreground">
-                Summarize the events, consequences, and how the world has changed.
-              </span>
-              <span
-                className={`text-xs ${content.length > 1900 ? 'text-orange-500' : 'text-muted-foreground'}`}
-              >
-                {content.length}/2000
-              </span>
+            <div className="text-xs text-muted-foreground mt-1">
+              Summarize the events, consequences, and how the world has changed.
             </div>
           </div>
 

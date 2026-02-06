@@ -281,11 +281,15 @@ describe('RichTextDisplay', () => {
         <RichTextDisplay content="[link text](https://example.com)" disableLinks />
       );
       const link = container.querySelector('a');
-      const span = container.querySelector('span span'); // nested span for link content
+      // The custom a component renders as a span, wrapped in the prose div
+      const spans = container.querySelectorAll('span');
       
       expect(link).not.toBeInTheDocument();
-      expect(span).toBeInTheDocument();
-      expect(span?.textContent).toBe('link text');
+      // Should have at least one span (the one replacing the link)
+      expect(spans.length).toBeGreaterThan(0);
+      // Find the span with the link text
+      const linkSpan = Array.from(spans).find(s => s.textContent === 'link text');
+      expect(linkSpan).toBeInTheDocument();
     });
 
     it('should disable autolinks when disableLinks prop is true', () => {

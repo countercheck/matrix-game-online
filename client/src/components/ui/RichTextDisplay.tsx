@@ -33,7 +33,11 @@ export function RichTextDisplay({ content, className = '', inline = false, disab
       <ReactMarkdown 
         remarkPlugins={[remarkGfm]}
         components={disableLinks ? {
-          a: ({ children }) => <span>{children}</span>,
+          a: ({ children, ...props }) => {
+            // Remove invalid HTML attributes for span element
+            const { href, target, rel, ...rest } = props;
+            return <span {...rest}>{children}</span>;
+          },
         } : undefined}
       >
         {content}

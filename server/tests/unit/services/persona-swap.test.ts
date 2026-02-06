@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../../../src/middleware/errorHandler.js';
+import { BadRequestError, ConflictError } from '../../../src/middleware/errorHandler.js';
 
 // Mock the database
 vi.mock('../../../src/config/database.js', () => ({
@@ -61,15 +61,15 @@ describe('Persona Swapping', () => {
         ],
       };
 
-      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
       vi.mocked(db.gamePlayer.update).mockResolvedValue({
         id: playerId,
         userId: userId,
         playerName: 'Test Player',
         personaId: persona2Id,
         persona: { id: persona2Id, name: 'Mage' },
-      } as any);
-      vi.mocked(db.gameEvent.create).mockResolvedValue({} as any);
+      } as never);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as never);
 
       // Player swaps from Warrior to Mage
       const result = await selectPersona(gameId, userId, persona2Id);
@@ -82,7 +82,7 @@ describe('Persona Swapping', () => {
       });
     });
 
-    it('should allow player to select same persona (no-op)', async () => {
+    it('should allow player to re-select their current persona (idempotent)', async () => {
       const gameId = 'game-123';
       const userId = 'user-456';
       const playerId = 'player-789';
@@ -110,13 +110,13 @@ describe('Persona Swapping', () => {
         ],
       };
 
-      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
       vi.mocked(db.gamePlayer.update).mockResolvedValue({
         id: playerId,
         personaId: personaId,
         persona: { id: personaId, name: 'Warrior' },
-      } as any);
-      vi.mocked(db.gameEvent.create).mockResolvedValue({} as any);
+      } as never);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as never);
 
       // Player selects the same persona they already have
       await selectPersona(gameId, userId, personaId);
@@ -156,13 +156,13 @@ describe('Persona Swapping', () => {
         ],
       };
 
-      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
       vi.mocked(db.gamePlayer.update).mockResolvedValue({
         id: playerId,
         personaId: null,
         persona: null,
-      } as any);
-      vi.mocked(db.gameEvent.create).mockResolvedValue({} as any);
+      } as never);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as never);
 
       // Player clears their persona
       const result = await selectPersona(gameId, userId, null);
@@ -211,7 +211,7 @@ describe('Persona Swapping', () => {
         ],
       };
 
-      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
       // Player tries to swap to persona claimed by another player
       await expect(selectPersona(gameId, userId, persona2Id)).rejects.toThrow(ConflictError);
@@ -253,7 +253,7 @@ describe('Persona Swapping', () => {
         ],
       };
 
-      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
       // Player tries to swap persona after game started
       await expect(selectPersona(gameId, userId, persona2Id)).rejects.toThrow(BadRequestError);
@@ -288,7 +288,7 @@ describe('Persona Swapping', () => {
         ],
       };
 
-      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
       // Player tries to select NPC persona
       await expect(selectPersona(gameId, userId, npcPersonaId)).rejects.toThrow(BadRequestError);

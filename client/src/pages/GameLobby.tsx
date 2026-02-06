@@ -101,6 +101,24 @@ export default function GameLobby() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Helper to render persona selection button
+  const renderPersonaButton = (persona: Persona) => (
+    <button
+      key={persona.id}
+      onClick={() => selectPersonaMutation.mutate(persona.id)}
+      disabled={selectPersonaMutation.isPending}
+      className="w-full p-3 text-left border rounded-md hover:bg-muted/50 transition-colors"
+    >
+      <div className="font-medium">{persona.name}</div>
+      {persona.description && (
+        <RichTextDisplay
+          content={persona.description}
+          className="text-sm text-muted-foreground [&_p]:my-1"
+        />
+      )}
+    </button>
+  );
+
   // Redirect if game already started
   if (game?.status === 'ACTIVE') {
     navigate(`/game/${gameId}/play`, { replace: true });
@@ -239,57 +257,25 @@ export default function GameLobby() {
               {availablePersonas.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Switch to:</p>
-                  {availablePersonas.map((persona) => (
-                    <button
-                      key={persona.id}
-                      onClick={() => selectPersonaMutation.mutate(persona.id)}
-                      disabled={selectPersonaMutation.isPending}
-                      className="w-full p-3 text-left border rounded-md hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="font-medium">{persona.name}</div>
-                      {persona.description && (
-                        <RichTextDisplay
-                          content={persona.description}
-                          className="text-sm text-muted-foreground [&_p]:my-1"
-                        />
-                      )}
-                    </button>
-                  ))}
+                  {availablePersonas.map(renderPersonaButton)}
                 </div>
               )}
               
               {/* Option to clear persona selection */}
-              {!personasRequired && (
-                <button
-                  onClick={() => selectPersonaMutation.mutate(null)}
-                  disabled={selectPersonaMutation.isPending}
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Clear persona selection
-                </button>
-              )}
+              <button
+                onClick={() => selectPersonaMutation.mutate(null)}
+                disabled={selectPersonaMutation.isPending}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Clear persona selection
+              </button>
             </div>
           ) : (
             <div className="space-y-2">
               {availablePersonas.length === 0 ? (
                 <p className="text-sm text-muted-foreground">All personas have been claimed.</p>
               ) : (
-                availablePersonas.map((persona) => (
-                  <button
-                    key={persona.id}
-                    onClick={() => selectPersonaMutation.mutate(persona.id)}
-                    disabled={selectPersonaMutation.isPending}
-                    className="w-full p-3 text-left border rounded-md hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="font-medium">{persona.name}</div>
-                    {persona.description && (
-                      <RichTextDisplay
-                        content={persona.description}
-                        className="text-sm text-muted-foreground [&_p]:my-1"
-                      />
-                    )}
-                  </button>
-                ))
+                availablePersonas.map(renderPersonaButton)
               )}
             </div>
           )}

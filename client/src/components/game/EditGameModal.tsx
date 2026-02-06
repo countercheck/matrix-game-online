@@ -31,8 +31,9 @@ export function EditGameModal({
     try {
       await onSave({ name, description });
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Failed to update game');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: { message?: string } } } };
+      setError(error.response?.data?.error?.message || 'Failed to update game');
     } finally {
       setIsLoading(false);
     }

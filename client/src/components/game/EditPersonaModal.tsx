@@ -41,7 +41,12 @@ export function EditPersonaModal({
     setIsLoading(true);
 
     try {
-      const data: any = { 
+      const data: {
+        name: string;
+        description?: string;
+        npcActionDescription?: string;
+        npcDesiredOutcome?: string;
+      } = { 
         name, 
         description: description || undefined,
       };
@@ -53,8 +58,9 @@ export function EditPersonaModal({
       
       await onSave(data);
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Failed to update persona');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: { message?: string } } } };
+      setError(error.response?.data?.error?.message || 'Failed to update persona');
     } finally {
       setIsLoading(false);
     }

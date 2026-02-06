@@ -87,17 +87,24 @@ export const selectPersonaSchema = z.object({
 export const updatePersonaSchema = z.object({
   name: z.string()
     .min(1, 'Persona name is required')
-    .max(100, 'Persona name must be 100 characters or less')
+    .max(50, 'Persona name must be 50 characters or less')
     .optional(),
   description: z.string()
     .max(1800, 'Persona description must be 1800 characters or less')
-    .optional(),
+    .optional()
+    .nullable(),
   npcActionDescription: z.string()
+    .trim()
+    .min(1, 'NPC action description is required')
     .max(1800, 'NPC action description must be 1800 characters or less')
-    .optional(),
+    .optional()
+    .nullable(),
   npcDesiredOutcome: z.string()
+    .trim()
+    .min(1, 'NPC desired outcome is required')
     .max(1200, 'NPC desired outcome must be 1200 characters or less')
-    .optional(),
+    .optional()
+    .nullable(),
 });
 
 // Action schemas

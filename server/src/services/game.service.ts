@@ -1,7 +1,7 @@
 import { db } from '../config/database.js';
 import { GamePhase, Prisma } from '@prisma/client';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
-import type { CreateGameInput } from '../utils/validators.js';
+import type { CreateGameInput, UpdatePersonaInput } from '../utils/validators.js';
 import { notifyGameStarted } from './notification.service.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -189,7 +189,20 @@ export async function getGame(gameId: string, userId: string) {
 export async function updateGame(gameId: string, userId: string, data: Partial<CreateGameInput>) {
   await requireHost(gameId, userId);
 
-  const game = await db.game.update({
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    select: { id: true, status: true, deletedAt: true },
+  });
+
+  if (!game || game.deletedAt) {
+    throw new NotFoundError('Game not found');
+  }
+
+  if (game.status !== 'LOBBY') {
+    throw new BadRequestError('Cannot edit game after it has started');
+  }
+
+  const updatedGame = await db.game.update({
     where: { id: gameId },
     data: {
       name: data.name,
@@ -198,7 +211,7 @@ export async function updateGame(gameId: string, userId: string, data: Partial<C
     },
   });
 
-  return game;
+  return updatedGame;
 }
 
 export async function joinGame(
@@ -413,7 +426,7 @@ export async function updatePersona(
   gameId: string,
   personaId: string,
   userId: string,
-  data: { name?: string; description?: string; npcActionDescription?: string; npcDesiredOutcome?: string }
+  data: UpdatePersonaInput
 ) {
   await requireHost(gameId, userId);
 
@@ -435,21 +448,33 @@ export async function updatePersona(
     throw new NotFoundError('Persona not found');
   }
 
-  const updatedPersona = await db.persona.update({
-    where: { id: personaId },
-    data: {
-      name: data.name,
-      description: data.description,
-      npcActionDescription: data.npcActionDescription,
-      npcDesiredOutcome: data.npcDesiredOutcome,
-    },
-  });
+  try {
+    const updatedPersona = await db.persona.update({
+      where: { id: personaId },
+      data: {
+        name: data.name,
+        description: data.description,
+        npcActionDescription: data.npcActionDescription,
+        npcDesiredOutcome: data.npcDesiredOutcome,
+      },
+    });
 
-  await logGameEvent(gameId, userId, 'PERSONA_UPDATED', {
-    personaName: updatedPersona.name,
-  });
+    await logGameEvent(gameId, userId, 'PERSONA_UPDATED', {
+      personaName: updatedPersona.name,
+    });
 
-  return updatedPersona;
+    return updatedPersona;
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002') {
+        throw new ConflictError('Persona name must be unique within the game');
+      }
+      if (err.code === 'P2000') {
+        throw new BadRequestError('Persona fields exceed allowed length');
+      }
+    }
+    throw err;
+  }
 }
 
 export async function startGame(gameId: string, userId: string) {

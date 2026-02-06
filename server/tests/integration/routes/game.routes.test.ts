@@ -4,9 +4,37 @@ import request from 'supertest';
 import multer from 'multer';
 
 // Mock data store
-let games: Map<string, any>;
-let players: Map<string, any[]>;
-let personas: Map<string, any[]>;
+interface MockGame {
+  id: string;
+  name: string;
+  description?: string;
+  creatorId: string;
+  status: string;
+  currentPhase: string;
+  playerCount: number;
+  deletedAt?: Date;
+}
+
+interface MockPlayer {
+  id: string;
+  userId: string;
+  playerName: string;
+  isHost: boolean;
+  isActive: boolean;
+}
+
+interface MockPersona {
+  id: string;
+  name: string;
+  description?: string;
+  isNpc: boolean;
+  npcActionDescription?: string;
+  npcDesiredOutcome?: string;
+}
+
+let games: Map<string, MockGame>;
+let players: Map<string, MockPlayer[]>;
+let personas: Map<string, MockPersona[]>;
 let currentUser: { id: string; email: string; displayName: string } | null;
 
 function createTestApp() {
@@ -255,8 +283,9 @@ function createTestApp() {
   });
 
   // Update persona
-  app.put('/api/games/:gameId/personas/:personaId', (req: any, res) => {
-    if (!req.user) {
+  app.put('/api/games/:gameId/personas/:personaId', (req: express.Request, res) => {
+    const user = (req as express.Request & { user?: typeof currentUser }).user;
+    if (!user) {
       return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED' } });
     }
 
@@ -266,9 +295,9 @@ function createTestApp() {
     }
 
     const gamePlayers = players.get(req.params.gameId) || [];
-    const hostPlayer = gamePlayers.find((p: any) => p.isHost);
+    const hostPlayer = gamePlayers.find((p) => p.isHost);
 
-    if (!hostPlayer || hostPlayer.userId !== req.user.id) {
+    if (!hostPlayer || hostPlayer.userId !== user.id) {
       return res.status(403).json({
         success: false,
         error: { code: 'FORBIDDEN', message: 'Only the host can edit personas' },
@@ -283,7 +312,7 @@ function createTestApp() {
     }
 
     const gamePersonas = personas.get(req.params.gameId) || [];
-    const persona = gamePersonas.find((p: any) => p.id === req.params.personaId);
+    const persona = gamePersonas.find((p) => p.id === req.params.personaId);
 
     if (!persona) {
       return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Persona not found' } });

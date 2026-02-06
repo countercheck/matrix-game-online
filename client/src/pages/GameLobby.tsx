@@ -96,9 +96,9 @@ export default function GameLobby() {
       personaId: string; 
       data: { 
         name?: string; 
-        description?: string;
-        npcActionDescription?: string;
-        npcDesiredOutcome?: string;
+        description?: string | null;
+        npcActionDescription?: string | null;
+        npcDesiredOutcome?: string | null;
       } 
     }) =>
       api.put(`/games/${gameId}/personas/${personaId}`, data),
@@ -378,6 +378,7 @@ export default function GameLobby() {
                         onClick={() => setEditingPersona(persona)}
                         className="ml-2 px-2 py-0.5 text-xs border rounded hover:bg-muted"
                         title="Edit persona"
+                        aria-label={`Edit persona ${persona.name}`}
                       >
                         ✏️
                       </button>

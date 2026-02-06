@@ -120,7 +120,7 @@ export async function getGame(gameId: string, userId: string) {
     },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
@@ -217,7 +217,7 @@ export async function joinGame(
     },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
@@ -325,7 +325,7 @@ export async function deleteGame(gameId: string, userId: string) {
     },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
@@ -340,9 +340,13 @@ export async function deleteGame(gameId: string, userId: string) {
     throw new BadRequestError('Cannot delete a game that has already started');
   }
 
-  // Delete the game (cascades to players, personas, etc. via Prisma schema)
-  await db.game.delete({
+  // Log the deletion event before soft deleting
+  await logGameEvent(gameId, userId, 'GAME_DELETED', { gameName: game.name });
+
+  // Soft delete the game by setting deletedAt timestamp
+  await db.game.update({
     where: { id: gameId },
+    data: { deletedAt: new Date() },
   });
 
   return { message: 'Game deleted successfully' };
@@ -363,7 +367,7 @@ export async function selectPersona(
     },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
@@ -420,7 +424,7 @@ export async function startGame(gameId: string, userId: string) {
     },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
@@ -608,10 +612,10 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
   // Verify the game exists and user is the creator
   const game = await db.game.findUnique({
     where: { id: gameId },
-    select: { id: true, creatorId: true, imageUrl: true },
+    select: { id: true, creatorId: true, imageUrl: true, deletedAt: true },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
@@ -656,7 +660,7 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
 
 export async function transitionPhase(gameId: string, newPhase: GamePhase) {
   const game = await db.game.findUnique({ where: { id: gameId } });
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 

@@ -29,7 +29,7 @@ export async function checkAndProposeNpcAction(gameId: string) {
     },
   });
 
-  if (!game || !game.currentRound) return null;
+  if (!game || game.deletedAt || !game.currentRound) return null;
   if (game.currentPhase !== 'PROPOSAL') return null;
 
   // Find NPC player
@@ -125,7 +125,7 @@ export async function proposeAction(gameId: string, userId: string, data: Action
     include: { currentRound: true },
   });
 
-  if (!game || !game.currentRound) {
+  if (!game || game.deletedAt || !game.currentRound) {
     throw new NotFoundError('Game or round not found');
   }
 
@@ -502,7 +502,7 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
   const voteCount = await db.vote.count({ where: { actionId } });
   const humanPlayers = game?.players.filter((p) => !p.isNpc) || [];
 
-  if (game && voteCount >= humanPlayers.length) {
+  if (game && !game.deletedAt && voteCount >= humanPlayers.length) {
     // Get full action details for notification
     const fullAction = await db.action.findUnique({
       where: { id: actionId },

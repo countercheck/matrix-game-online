@@ -489,10 +489,10 @@ export default function GameView() {
                 const disposition = res.headers['content-disposition'] || '';
                 const match = disposition.match(/filename="(.+)"/);
                 // Sanitize filename from game name: remove invalid chars, limit length
-                const sanitizedName = game.name
+                const sanitizedName = (game.name || 'game')
                   .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
                   .substring(0, 100);
-                const filename = match?.[1] || `${sanitizedName || 'game'}-export.yaml`;
+                const filename = match?.[1] || `${sanitizedName}-export.yaml`;
                 const url = URL.createObjectURL(res.data);
                 const a = document.createElement('a');
                 a.href = url;

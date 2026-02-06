@@ -268,7 +268,6 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
               maxLength={7500}
               rows={8}
               placeholder="As the dust settled from this round's events..."
-              maxLength={7500}
             />
             <div className="flex justify-between items-center mt-1">
               <span className="text-xs text-muted-foreground">

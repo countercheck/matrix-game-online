@@ -252,4 +252,64 @@ describe('GameLobby Page', () => {
       expect(screen.getByText(/waiting for at least 2 players/i)).toBeInTheDocument();
     });
   });
+
+  it('should render markdown in game description', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        data: {
+          id: 'game-123',
+          name: 'Test Game',
+          description: 'A game with **bold text** and *italic text*.',
+          status: 'LOBBY',
+          players: [
+            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
+          ],
+        },
+      },
+    });
+
+    const { container } = render(<GameLobby />);
+
+    await waitFor(() => {
+      // Check that markdown is rendered, not raw syntax
+      expect(screen.getByText(/A game with/i)).toBeInTheDocument();
+      
+      // Verify bold and italic elements are present (not raw ** or *)
+      const boldElement = container.querySelector('strong');
+      const italicElement = container.querySelector('em');
+      
+      expect(boldElement).toBeInTheDocument();
+      expect(boldElement?.textContent).toBe('bold text');
+      expect(italicElement).toBeInTheDocument();
+      expect(italicElement?.textContent).toBe('italic text');
+      
+      // Verify raw markdown syntax is NOT present
+      expect(screen.queryByText(/\*\*bold text\*\*/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/\*italic text\*/)).not.toBeInTheDocument();
+    });
+  });
+
+  it('should not render markdown description when description is null', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        data: {
+          id: 'game-123',
+          name: 'Test Game',
+          description: null,
+          status: 'LOBBY',
+          players: [
+            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
+          ],
+        },
+      },
+    });
+
+    const { container } = render(<GameLobby />);
+
+    await waitFor(() => {
+      // Check that the description div is not rendered
+      const proseElement = container.querySelector('.prose');
+      expect(proseElement).not.toBeInTheDocument();
+    });
+  });
 });

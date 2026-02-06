@@ -263,4 +263,39 @@ describe('RichTextDisplay', () => {
       expect(element).toHaveClass('custom');
     });
   });
+
+  describe('Link handling', () => {
+    it('should render links by default', () => {
+      const { container } = render(
+        <RichTextDisplay content="[link text](https://example.com)" />
+      );
+      const link = container.querySelector('a');
+      
+      expect(link).toBeInTheDocument();
+      expect(link?.textContent).toBe('link text');
+      expect(link?.getAttribute('href')).toBe('https://example.com');
+    });
+
+    it('should disable links when disableLinks prop is true', () => {
+      const { container } = render(
+        <RichTextDisplay content="[link text](https://example.com)" disableLinks />
+      );
+      const link = container.querySelector('a');
+      const span = container.querySelector('span span'); // nested span for link content
+      
+      expect(link).not.toBeInTheDocument();
+      expect(span).toBeInTheDocument();
+      expect(span?.textContent).toBe('link text');
+    });
+
+    it('should disable autolinks when disableLinks prop is true', () => {
+      const { container } = render(
+        <RichTextDisplay content="https://example.com" disableLinks />
+      );
+      const link = container.querySelector('a');
+      
+      expect(link).not.toBeInTheDocument();
+      expect(container.textContent).toContain('https://example.com');
+    });
+  });
 });

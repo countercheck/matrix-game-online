@@ -35,8 +35,9 @@ app.use(cors({
 // Body parsing with size limit
 app.use(express.json({ limit: '10kb' }));
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Serve static files from uploads directory (UPLOADS_DIR for Railway volume, fallback to local)
+const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
+app.use('/uploads', express.static(uploadsDir));
 
 // Rate limiting (skip in test environment)
 if (process.env.NODE_ENV !== 'test') {

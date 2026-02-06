@@ -6,9 +6,9 @@ interface EditPersonaModalProps {
   onClose: () => void;
   onSave: (data: { 
     name?: string; 
-    description?: string;
-    npcActionDescription?: string;
-    npcDesiredOutcome?: string;
+    description?: string | null;
+    npcActionDescription?: string | null;
+    npcDesiredOutcome?: string | null;
   }) => Promise<void>;
   persona: {
     id: string;
@@ -43,17 +43,17 @@ export function EditPersonaModal({
     try {
       const data: {
         name: string;
-        description?: string;
-        npcActionDescription?: string;
-        npcDesiredOutcome?: string;
+        description?: string | null;
+        npcActionDescription?: string | null;
+        npcDesiredOutcome?: string | null;
       } = { 
         name, 
-        description: description || undefined,
+        description: description || null,
       };
       
       if (persona.isNpc) {
-        data.npcActionDescription = npcActionDescription || undefined;
-        data.npcDesiredOutcome = npcDesiredOutcome || undefined;
+        data.npcActionDescription = npcActionDescription || null;
+        data.npcDesiredOutcome = npcDesiredOutcome || null;
       }
       
       await onSave(data);
@@ -114,7 +114,7 @@ export function EditPersonaModal({
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Enter persona name"
                 required
-                maxLength={100}
+                maxLength={50}
               />
             </div>
 

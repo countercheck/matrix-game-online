@@ -13,16 +13,16 @@ const registerSchema = z.object({
 });
 
 const personaSchema = z.object({
-  name: z.string().min(1, 'Persona name is required').max(50),
-  description: z.string().max(600).optional(),
+  name: z.string().min(1, 'Persona name is required').max(100),
+  description: z.string().max(1800).optional(),
   isNpc: z.boolean().default(false),
-  npcActionDescription: z.string().max(600).optional(),
-  npcDesiredOutcome: z.string().max(400).optional(),
+  npcActionDescription: z.string().max(1800).optional(),
+  npcDesiredOutcome: z.string().max(1200).optional(),
 });
 
 const createGameSchema = z.object({
-  name: z.string().min(1, 'Game name is required').max(100, 'Game name must be 100 characters or less'),
-  description: z.string().max(1000).optional(),
+  name: z.string().min(1, 'Game name is required').max(150, 'Game name must be 150 characters or less'),
+  description: z.string().max(3600).optional(),
   settings: z.object({
     argumentLimit: z.number().int().min(1).max(10).default(3),
     argumentationTimeoutHours: z.number().int().min(1).max(72).default(24),
@@ -33,14 +33,14 @@ const createGameSchema = z.object({
 });
 
 const actionProposalSchema = z.object({
-  actionDescription: z.string().min(1).max(500),
-  desiredOutcome: z.string().min(1).max(300),
-  initialArguments: z.array(z.string().min(1).max(200)).min(1).max(3),
+  actionDescription: z.string().min(1).max(1800),
+  desiredOutcome: z.string().min(1).max(1200),
+  initialArguments: z.array(z.string().min(1).max(900)).min(1).max(3),
 });
 
 const argumentSchema = z.object({
   argumentType: z.enum(['FOR', 'AGAINST', 'CLARIFICATION']),
-  content: z.string().min(1).max(200),
+  content: z.string().min(1).max(900),
 });
 
 const voteSchema = z.object({
@@ -48,7 +48,7 @@ const voteSchema = z.object({
 });
 
 const narrationSchema = z.object({
-  content: z.string().min(1).max(1000),
+  content: z.string().min(1).max(3600),
 });
 
 describe('Validators', () => {
@@ -145,13 +145,13 @@ describe('Validators', () => {
       expect(() => createGameSchema.parse(data)).toThrow();
     });
 
-    it('should reject game name over 100 chars', () => {
-      const data = { name: 'a'.repeat(101) };
+    it('should reject game name over 150 chars', () => {
+      const data = { name: 'a'.repeat(151) };
       expect(() => createGameSchema.parse(data)).toThrow();
     });
 
-    it('should reject description over 1000 chars', () => {
-      const data = { name: 'Test', description: 'a'.repeat(1001) };
+    it('should reject description over 3600 chars', () => {
+      const data = { name: 'Test', description: 'a'.repeat(3601) };
       expect(() => createGameSchema.parse(data)).toThrow();
     });
 
@@ -213,29 +213,29 @@ describe('Validators', () => {
       expect(() => actionProposalSchema.parse(data)).toThrow();
     });
 
-    it('should reject action description over 500 chars', () => {
+    it('should reject action description over 1800 chars', () => {
       const data = {
-        actionDescription: 'a'.repeat(501),
+        actionDescription: 'a'.repeat(1801),
         desiredOutcome: 'Success',
         initialArguments: ['Arg'],
       };
       expect(() => actionProposalSchema.parse(data)).toThrow();
     });
 
-    it('should reject desired outcome over 300 chars', () => {
+    it('should reject desired outcome over 1200 chars', () => {
       const data = {
         actionDescription: 'Action',
-        desiredOutcome: 'a'.repeat(301),
+        desiredOutcome: 'a'.repeat(1201),
         initialArguments: ['Arg'],
       };
       expect(() => actionProposalSchema.parse(data)).toThrow();
     });
 
-    it('should reject argument over 200 chars', () => {
+    it('should reject argument over 900 chars', () => {
       const data = {
         actionDescription: 'Action',
         desiredOutcome: 'Outcome',
-        initialArguments: ['a'.repeat(201)],
+        initialArguments: ['a'.repeat(901)],
       };
       expect(() => actionProposalSchema.parse(data)).toThrow();
     });
@@ -267,8 +267,8 @@ describe('Validators', () => {
       expect(() => argumentSchema.parse(data)).toThrow();
     });
 
-    it('should reject content over 200 chars', () => {
-      const data = { argumentType: 'FOR', content: 'a'.repeat(201) };
+    it('should reject content over 900 chars', () => {
+      const data = { argumentType: 'FOR', content: 'a'.repeat(901) };
       expect(() => argumentSchema.parse(data)).toThrow();
     });
   });
@@ -306,13 +306,13 @@ describe('Validators', () => {
       expect(() => narrationSchema.parse(data)).toThrow();
     });
 
-    it('should reject narration over 1000 chars', () => {
-      const data = { content: 'a'.repeat(1001) };
+    it('should reject narration over 3600 chars', () => {
+      const data = { content: 'a'.repeat(3601) };
       expect(() => narrationSchema.parse(data)).toThrow();
     });
 
     it('should accept narration at max length', () => {
-      const data = { content: 'a'.repeat(1000) };
+      const data = { content: 'a'.repeat(3600) };
       expect(() => narrationSchema.parse(data)).not.toThrow();
     });
   });
@@ -338,25 +338,25 @@ describe('Validators', () => {
       expect(() => personaSchema.parse(data)).toThrow();
     });
 
-    it('should reject persona with name over 50 chars', () => {
-      const data = { name: 'a'.repeat(51) };
+    it('should reject persona with name over 100 chars', () => {
+      const data = { name: 'a'.repeat(101) };
       expect(() => personaSchema.parse(data)).toThrow();
     });
 
-    it('should reject NPC action description over 600 chars', () => {
+    it('should reject NPC action description over 1800 chars', () => {
       const data = {
         name: 'Dragon',
         isNpc: true,
-        npcActionDescription: 'a'.repeat(601),
+        npcActionDescription: 'a'.repeat(1801),
       };
       expect(() => personaSchema.parse(data)).toThrow();
     });
 
-    it('should reject NPC desired outcome over 400 chars', () => {
+    it('should reject NPC desired outcome over 1200 chars', () => {
       const data = {
         name: 'Dragon',
         isNpc: true,
-        npcDesiredOutcome: 'a'.repeat(401),
+        npcDesiredOutcome: 'a'.repeat(1201),
       };
       expect(() => personaSchema.parse(data)).toThrow();
     });

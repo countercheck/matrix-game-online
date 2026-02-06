@@ -91,7 +91,7 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
           id="actionDescription"
           value={actionDescription}
           onChange={setActionDescription}
-          maxLength={500}
+          maxLength={1800}
           rows={3}
           placeholder="Describe the action you want to attempt..."
         />
@@ -105,7 +105,7 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
           id="desiredOutcome"
           value={desiredOutcome}
           onChange={setDesiredOutcome}
-          maxLength={300}
+          maxLength={1200}
           rows={2}
           placeholder="Describe your desired outcome..."
         />
@@ -123,7 +123,7 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
             <RichTextEditor
               value={arg}
               onChange={(value) => handleArgumentChange(index, value)}
-              maxLength={300}
+              maxLength={900}
               rows={2}
               placeholder={`Argument ${index + 1}${index === 0 ? ' (required)' : ' (optional)'}...`}
             />

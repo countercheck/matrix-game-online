@@ -83,8 +83,8 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
       return;
     }
 
-    if (content.length > 2000) {
-      setError('Summary must be 2000 characters or less');
+    if (content.length > 7500) {
+      setError('Summary must be 7500 characters or less');
       return;
     }
 
@@ -265,7 +265,7 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
             <RichTextEditor
               value={content}
               onChange={setContent}
-              maxLength={2000}
+              maxLength={7500}
               rows={8}
               placeholder="As the dust settled from this round's events..."
             />

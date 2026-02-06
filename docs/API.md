@@ -333,6 +333,43 @@ Get complete action history for the game.
 ### GET /games/:gameId/rounds
 Get all rounds for the game.
 
+### GET /games/:gameId/export
+Export the full game state as a downloadable YAML file. Includes game info, personas, players, and complete round/action history.
+
+**Response:** `200 OK` (Content-Type: `text/yaml`)
+
+Returns a YAML file as an attachment. The filename is derived from the game name and current date, e.g. `my-game-export-2025-01-15.yaml`.
+
+**Errors:**
+- `403 Forbidden` - Not a member of the game
+- `404 Not Found` - Game not found
+
+---
+
+### POST /games/import
+Create a new game from an exported YAML file. Imports game name, description, settings, and personas as a fresh LOBBY game. Historical data (rounds, actions, etc.) is ignored. The game name is appended with " (Copy)".
+
+**Request:**
+- Content-Type: `text/yaml` (raw YAML body) or `application/json` with `{ "yaml": "..." }`
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "name": "Original Name (Copy)",
+    "status": "LOBBY"
+  }
+}
+```
+
+**Errors:**
+- `400 Bad Request` - Invalid YAML or missing required fields
+- `401 Unauthorized` - Not authenticated
+
+---
+
 ### POST /games/:gameId/actions
 Propose a new action (one per player per round).
 

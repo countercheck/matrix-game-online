@@ -480,6 +480,29 @@ export default function GameView() {
 
           {/* Game History */}
           <GameHistory gameId={game.id} compact />
+
+          {/* Export */}
+          <button
+            onClick={async () => {
+              try {
+                const res = await api.get(`/games/${game.id}/export`, { responseType: 'blob' });
+                const disposition = res.headers['content-disposition'] || '';
+                const match = disposition.match(/filename="(.+)"/);
+                const filename = match?.[1] || `${game.name}-export.yaml`;
+                const url = URL.createObjectURL(res.data);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch {
+                // silent fail — network errors are shown by the interceptor
+              }
+            }}
+            className="w-full text-sm px-3 py-2 border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
+          >
+            Export Game (YAML)
+          </button>
         </div>
       </div>
 

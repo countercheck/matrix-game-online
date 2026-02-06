@@ -5,6 +5,7 @@ import type { CreateGameInput, UpdatePersonaInput } from '../utils/validators.js
 import { notifyGameStarted } from './notification.service.js';
 import fs from 'fs/promises';
 import path from 'path';
+import { getUploadsDir } from '../config/uploads.js';
 
 const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
 
@@ -698,8 +699,7 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
       // Extract filename from URL
       const oldFilename = game.imageUrl.split('/').pop();
       if (oldFilename) {
-        const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
-        const uploadsDirResolved = path.resolve(uploadsDir);
+        const uploadsDirResolved = path.resolve(getUploadsDir());
         const oldFilePath = path.resolve(uploadsDirResolved, oldFilename);
         if (oldFilePath.startsWith(uploadsDirResolved + path.sep)) {
           await fs.unlink(oldFilePath);

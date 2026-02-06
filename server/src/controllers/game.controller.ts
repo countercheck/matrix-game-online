@@ -11,6 +11,7 @@ import {
 import { BadRequestError } from '../middleware/errorHandler.js';
 import fs from 'fs/promises';
 import path from 'path';
+import { getUploadsDir } from '../config/uploads.js';
 
 export async function createGame(
   req: Request,
@@ -239,8 +240,7 @@ export async function uploadGameImage(
   } catch (error) {
     // Clean up uploaded file if there's an error
     if (req.file) {
-      const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
-      const filePath = path.join(uploadsDir, req.file.filename);
+      const filePath = path.join(getUploadsDir(), req.file.filename);
       try {
         await fs.unlink(filePath);
       } catch {

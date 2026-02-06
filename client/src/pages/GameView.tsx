@@ -488,13 +488,23 @@ export default function GameView() {
                 const res = await api.get(`/games/${game.id}/export`, { responseType: 'blob' });
                 const disposition = res.headers['content-disposition'] || '';
                 const match = disposition.match(/filename="(.+)"/);
-                const filename = match?.[1] || `${game.name}-export.yaml`;
+                // Sanitize filename from game name: remove invalid chars, limit length
+                const sanitizedName = game.name
+                  .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+                  .substring(0, 100);
+                const filename = match?.[1] || `${sanitizedName || 'game'}-export.yaml`;
                 const url = URL.createObjectURL(res.data);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
+                a.style.display = 'none';
+                document.body.appendChild(a);
                 a.click();
-                URL.revokeObjectURL(url);
+                // Delay cleanup to ensure download starts in all browsers
+                setTimeout(() => {
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }, 100);
               } catch {
                 // silent fail — network errors are shown by the interceptor
               }

@@ -6,6 +6,7 @@ import {
   actionProposalSchema,
   joinGameSchema,
   selectPersonaSchema,
+  updatePersonaSchema,
 } from '../utils/validators.js';
 import { BadRequestError } from '../middleware/errorHandler.js';
 import fs from 'fs/promises';
@@ -85,6 +86,23 @@ export async function selectPersona(
     const { personaId } = selectPersonaSchema.parse(req.body);
     const player = await gameService.selectPersona(gameId, userId, personaId);
     res.json({ success: true, data: player });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updatePersona(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const gameId = req.params.gameId as string;
+    const personaId = req.params.personaId as string;
+    const userId = req.user!.id;
+    const data = updatePersonaSchema.parse(req.body);
+    const persona = await gameService.updatePersona(gameId, personaId, userId, data);
+    res.json({ success: true, data: persona });
   } catch (error) {
     next(error);
   }

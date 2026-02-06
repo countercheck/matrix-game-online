@@ -12,6 +12,8 @@ interface RoundAction {
   sequenceNumber: number;
   actionDescription: string;
   initiatorId: string;
+  argumentationWasSkipped?: boolean;
+  votingWasSkipped?: boolean;
   tokenDraw?: {
     resultValue: number;
     resultType: 'TRIUMPH' | 'SUCCESS_BUT' | 'FAILURE_BUT' | 'DISASTER';
@@ -242,6 +244,16 @@ export function RoundHistory({ gameId, currentRoundNumber }: RoundHistoryProps) 
                               <span className="text-xs text-muted-foreground">
                                 #{index + 1}
                               </span>
+                              {action.argumentationWasSkipped && (
+                                <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                                  Args skipped
+                                </span>
+                              )}
+                              {action.votingWasSkipped && (
+                                <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                                  Votes skipped
+                                </span>
+                              )}
                             </div>
                             <p className="text-sm">{action.actionDescription}</p>
                           </div>

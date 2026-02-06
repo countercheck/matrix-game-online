@@ -20,4 +20,7 @@ router.get('/:gameId/history', authenticateToken, gameController.getGameHistory)
 router.get('/:gameId/rounds', authenticateToken, gameController.getRounds);
 router.post('/:gameId/actions', authenticateToken, gameController.proposeAction);
 
+// Host skip controls
+router.post('/:gameId/skip-proposals', authenticateToken, gameController.skipProposals);
+
 export default router;

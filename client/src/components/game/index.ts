@@ -8,3 +8,4 @@ export { NarrationForm } from './NarrationForm';
 export { RoundSummary } from './RoundSummary';
 export { GameHistory } from './GameHistory';
 export { RoundHistory } from './RoundHistory';
+export { HostControls } from './HostControls';

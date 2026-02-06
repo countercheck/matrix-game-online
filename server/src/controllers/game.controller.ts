@@ -232,3 +232,18 @@ export async function uploadGameImage(
   }
 }
 
+export async function skipProposals(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const gameId = req.params.gameId as string;
+    const userId = req.user!.id;
+    const result = await actionService.skipToNextAction(gameId, userId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+

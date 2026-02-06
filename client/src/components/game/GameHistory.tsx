@@ -21,6 +21,8 @@ interface HistoryAction {
   sequenceNumber: number;
   actionDescription: string;
   desiredOutcome: string;
+  argumentationWasSkipped?: boolean;
+  votingWasSkipped?: boolean;
   initiator: {
     playerName: string;
     user: { displayName: string };
@@ -30,6 +32,7 @@ interface HistoryAction {
     totalSuccessTokens: number;
     totalFailureTokens: number;
     voteCount: number;
+    skippedVotes?: number;
   };
   tokenDraw?: {
     resultValue: number;
@@ -207,11 +210,21 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-xs text-muted-foreground">
                         #{action.sequenceNumber}
                       </span>
                       <span className="text-sm font-medium">{action.initiator.playerName}</span>
+                      {action.argumentationWasSkipped && (
+                        <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                          Args skipped
+                        </span>
+                      )}
+                      {action.votingWasSkipped && (
+                        <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                          Votes skipped
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm">{action.actionDescription}</p>
                   </div>
@@ -242,7 +255,7 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
 
                 {/* Token Pool Summary */}
                 {action.voteTotals && (
-                  <div className="flex items-center gap-3 text-xs">
+                  <div className="flex items-center gap-3 text-xs flex-wrap">
                     <span className="text-muted-foreground">Token Pool:</span>
                     <span className="text-green-600 dark:text-green-400">
                       {action.voteTotals.totalSuccessTokens} Success
@@ -251,7 +264,7 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
                       {action.voteTotals.totalFailureTokens} Failure
                     </span>
                     <span className="text-muted-foreground">
-                      ({action.voteTotals.voteCount} votes)
+                      ({action.voteTotals.voteCount} votes{action.voteTotals.skippedVotes ? `, ${action.voteTotals.skippedVotes} auto-filled` : ''})
                     </span>
                   </div>
                 )}

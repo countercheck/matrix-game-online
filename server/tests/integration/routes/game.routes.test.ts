@@ -11,6 +11,7 @@ let currentUser: { id: string; email: string; displayName: string } | null;
 function createTestApp() {
   const app = express();
   app.use(express.json());
+  app.use(express.text({ type: ['text/yaml', 'text/plain', 'application/x-yaml'] }));
 
   // Mock auth middleware
   app.use((req: any, _res, next) => {
@@ -251,6 +252,129 @@ function createTestApp() {
     game.deletedAt = new Date();
 
     res.json({ success: true, data: { message: 'Game deleted successfully' } });
+  });
+
+  // Export game
+  app.get('/api/games/:gameId/export', (req: any, res) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED' } });
+    }
+
+    const game = games.get(req.params.gameId);
+    if (!game || game.deletedAt) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND' } });
+    }
+
+    const gamePlayers = players.get(req.params.gameId) || [];
+    const isMember = gamePlayers.some((p: any) => p.userId === req.user.id && p.isActive);
+
+    if (!isMember) {
+      return res.status(403).json({ success: false, error: { code: 'FORBIDDEN' } });
+    }
+
+    // Generate a simple YAML export
+    const yamlContent = `exported_at: ${new Date().toISOString()}
+game:
+  name: ${game.name}
+  description: ${game.description || 'null'}
+  status: ${game.status}
+  current_phase: ${game.currentPhase}
+  settings:
+    argument_limit: 3
+    argumentation_timeout_hours: 24
+    voting_timeout_hours: 24
+    narration_mode: initiator_only
+    personas_required: false
+personas: []
+players: []
+rounds: []
+`;
+
+    const safeName = game.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'game';
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `${safeName}-export-${date}.yaml`;
+
+    res.setHeader('Content-Type', 'text/yaml; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(yamlContent);
+  });
+
+  // Import game
+  app.post('/api/games/import', (req: any, res) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED' } });
+    }
+
+    const yamlContent = req.body;
+    if (!yamlContent || typeof yamlContent !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'Invalid YAML format' },
+      });
+    }
+
+    // Simple YAML parsing validation
+    try {
+      const lines = yamlContent.split('\n');
+      const hasGame = lines.some((line: string) => line.trim().startsWith('game:'));
+      
+      if (!hasGame) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid YAML: missing "game" section' },
+        });
+      }
+
+      // Check for invalid personas array
+      const personasMatch = yamlContent.match(/personas:\s*"[^"]*"/);
+      if (personasMatch) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid YAML: "personas" must be an array' },
+        });
+      }
+
+      // Check for invalid persona object
+      const personasSection = yamlContent.split('personas:')[1];
+      if (personasSection && personasSection.includes('- "')) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid YAML: persona at index 1 must be an object' },
+        });
+      }
+
+      // Extract game name from YAML
+      const nameMatch = yamlContent.match(/name:\s*(.+)/);
+      const name = nameMatch ? nameMatch[1].trim() : 'Imported Game';
+
+      // Create the imported game
+      const gameId = `game-${Date.now()}`;
+      const newGame = {
+        id: gameId,
+        name: `${name} (Copy)`,
+        description: null,
+        creatorId: req.user.id,
+        status: 'LOBBY',
+        currentPhase: 'WAITING',
+        playerCount: 1,
+      };
+
+      games.set(gameId, newGame);
+      players.set(gameId, [{
+        id: `player-${Date.now()}`,
+        userId: req.user.id,
+        playerName: req.user.displayName,
+        isHost: true,
+        isActive: true,
+      }]);
+
+      res.status(201).json({ success: true, data: newGame });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'Invalid YAML format' },
+      });
+    }
   });
 
   return app;
@@ -614,6 +738,154 @@ describe('Game Routes', () => {
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe('NOT_FOUND');
+    });
+  });
+
+  describe('GET /api/games/:gameId/export', () => {
+    it('should export game as YAML with correct content-type and content-disposition', async () => {
+      // Create game
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      const response = await request(app).get(`/api/games/${gameId}/export`);
+
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toContain('text/yaml');
+      expect(response.headers['content-disposition']).toContain('attachment');
+      expect(response.headers['content-disposition']).toContain('.yaml');
+      expect(response.text).toContain('exported_at:');
+      expect(response.text).toContain('game:');
+      expect(response.text).toContain('name: Test Game');
+    });
+
+    it('should require authentication', async () => {
+      currentUser = null;
+      const response = await request(app).get('/api/games/game-1/export');
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should return 404 for non-existent game', async () => {
+      const response = await request(app).get('/api/games/nonexistent/export');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should require membership to export', async () => {
+      // Create game as user 1
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Try to export as user 2 (not a member)
+      currentUser = { id: 'user-2', email: 'other@example.com', displayName: 'Other User' };
+      const response = await request(app).get(`/api/games/${gameId}/export`);
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('POST /api/games/import', () => {
+    it('should import a valid YAML file and create a new game', async () => {
+      const validYaml = `
+game:
+  name: Test Game
+  description: A test description
+  settings:
+    argument_limit: 3
+    argumentation_timeout_hours: 24
+    voting_timeout_hours: 24
+    narration_mode: initiator_only
+    personas_required: false
+personas:
+  - name: Hero
+    description: The protagonist
+    is_npc: false
+  - name: Villain
+    description: The antagonist
+    is_npc: true
+    npc_action_description: Cause chaos
+    npc_desired_outcome: World domination
+`;
+
+      const response = await request(app)
+        .post('/api/games/import')
+        .set('Content-Type', 'text/yaml')
+        .send(validYaml);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.name).toBe('Test Game (Copy)');
+      expect(response.body.data.status).toBe('LOBBY');
+    });
+
+    it('should require authentication', async () => {
+      currentUser = null;
+      const response = await request(app)
+        .post('/api/games/import')
+        .set('Content-Type', 'text/yaml')
+        .send('game:\n  name: Test');
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should reject invalid YAML', async () => {
+      const response = await request(app)
+        .post('/api/games/import')
+        .set('Content-Type', 'text/yaml')
+        .send('invalid: yaml: :');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.message).toContain('Invalid YAML');
+    });
+
+    it('should reject YAML missing game section', async () => {
+      const response = await request(app)
+        .post('/api/games/import')
+        .set('Content-Type', 'text/yaml')
+        .send('personas: []\n');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.message).toContain('missing "game" section');
+    });
+
+    it('should reject YAML with invalid personas array', async () => {
+      const invalidYaml = `
+game:
+  name: Test
+personas: "not an array"
+`;
+
+      const response = await request(app)
+        .post('/api/games/import')
+        .set('Content-Type', 'text/yaml')
+        .send(invalidYaml);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.message).toContain('personas" must be an array');
+    });
+
+    it('should reject YAML with invalid persona object', async () => {
+      const invalidYaml = `
+game:
+  name: Test
+personas:
+  - name: Valid
+  - "invalid object"
+`;
+
+      const response = await request(app)
+        .post('/api/games/import')
+        .set('Content-Type', 'text/yaml')
+        .send(invalidYaml);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.message).toContain('persona at index');
     });
   });
 });

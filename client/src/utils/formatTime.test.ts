@@ -68,28 +68,28 @@ describe('formatRelativeTime', () => {
   describe('edge cases', () => {
     it('should handle invalid date strings', () => {
       const result = formatRelativeTime('invalid-date');
-      // Invalid date should produce NaN for time calculations
-      // The result will be "NaN" in the output or handle gracefully
-      expect(result).toBeTruthy(); // Just ensure it doesn't crash
+      // Invalid date produces "Invalid Date" from toLocaleDateString
+      expect(result).toBe('Invalid Date');
     });
 
     it('should handle empty string', () => {
       const result = formatRelativeTime('');
-      expect(result).toBeTruthy(); // Should not crash
+      // Empty string produces "Invalid Date" from toLocaleDateString
+      expect(result).toBe('Invalid Date');
     });
 
     it('should handle future dates', () => {
       const futureDate = new Date('2024-01-15T13:00:00Z').toISOString();
       const result = formatRelativeTime(futureDate);
-      // Future dates will have negative time difference
-      // The implementation may show "just now" or negative values
-      expect(result).toBeTruthy();
+      // Future dates will have negative time difference, which is < 60 seconds
+      expect(result).toBe('just now');
     });
 
     it('should handle dates far in the future', () => {
       const farFuture = new Date('2025-01-15T12:00:00Z').toISOString();
       const result = formatRelativeTime(farFuture);
-      expect(result).toBeTruthy();
+      // Far future dates will have negative time difference, which is < 60 seconds
+      expect(result).toBe('just now');
     });
 
     it('should handle dates far in the past', () => {
@@ -160,19 +160,21 @@ describe('formatShortTimestamp', () => {
   describe('edge cases', () => {
     it('should handle invalid date strings', () => {
       const result = formatShortTimestamp('invalid-date');
-      expect(result).toBeTruthy(); // Should not crash
+      // Invalid date produces "Invalid Date" from toLocaleDateString
+      expect(result).toBe('Invalid Date');
     });
 
     it('should handle empty string', () => {
       const result = formatShortTimestamp('');
-      expect(result).toBeTruthy(); // Should not crash
+      // Empty string produces "Invalid Date" from toLocaleDateString
+      expect(result).toBe('Invalid Date');
     });
 
     it('should handle future dates', () => {
       const tomorrow = new Date('2024-01-16T12:00:00Z').toISOString();
       const result = formatShortTimestamp(tomorrow);
-      expect(result).toBeTruthy();
       expect(result).toMatch(/Jan/); // Future dates should show date
+      expect(result).toMatch(/\d{1,2}:\d{2}/); // Should include time
     });
 
     it('should handle midnight boundary', () => {
@@ -237,12 +239,14 @@ describe('formatFullTimestamp', () => {
   describe('edge cases', () => {
     it('should handle invalid date strings', () => {
       const result = formatFullTimestamp('invalid-date');
-      expect(result).toBeTruthy(); // Should not crash
+      // Invalid date produces "Invalid Date" from toLocaleDateString
+      expect(result).toBe('Invalid Date');
     });
 
     it('should handle empty string', () => {
       const result = formatFullTimestamp('');
-      expect(result).toBeTruthy(); // Should not crash
+      // Empty string produces "Invalid Date" from toLocaleDateString
+      expect(result).toBe('Invalid Date');
     });
 
     it('should handle dates far in the past', () => {

@@ -78,10 +78,12 @@ git checkout -b feature/your-feature-name
 git add <files>
 git commit -m "Description of change"
 
-# 3. Push branch and merge
+# 3. Push branch and create PR
 git push -u origin feature/your-feature-name
-gh pr create --fill && gh pr merge --merge
-# Or merge locally: git checkout main && git merge feature/your-feature-name
+gh pr create --fill
+
+# 4. WAIT FOR USER TO REVIEW AND APPROVE before merging
+# DO NOT auto-merge PRs - always wait for explicit user approval
 ```
 
 ### Branch Rules
@@ -89,6 +91,12 @@ gh pr create --fill && gh pr merge --merge
 - **Never commit directly to `main`** - Always create a feature branch first
 - Branch naming: `feature/`, `fix/`, `refactor/`, `docs/` prefixes
 - Keep branches short-lived and focused on a single change
+
+### Pull Request Rules
+
+- **NEVER auto-merge PRs** - Every PR requires review from a second pair of eyes
+- After creating a PR, wait for the user to review and explicitly approve the merge
+- Only merge after receiving explicit confirmation (e.g., "merge it", "looks good, merge")
 
 ### Commit Guidelines
 

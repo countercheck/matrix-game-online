@@ -164,7 +164,12 @@ export default function GameLobby() {
 
       <div>
         {!game.imageUrl && <h1 className="text-2xl font-bold">{game.name}</h1>}
-        {game.description && <p className="mt-2 text-muted-foreground">{game.description}</p>}
+        {game.description && (
+          <RichTextDisplay
+            content={game.description}
+            className="mt-2 text-muted-foreground [&_p]:my-1"
+          />
+        )}
       </div>
 
       <div className="p-4 border rounded-lg space-y-2">

@@ -174,7 +174,7 @@ export default function CreateGame() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            maxLength={100}
+            maxLength={150}
             className="w-full px-3 py-2 border rounded-md bg-background"
             placeholder="My Matrix Game"
           />
@@ -189,7 +189,7 @@ export default function CreateGame() {
             aria-labelledby="description-label"
             value={description}
             onChange={setDescription}
-            maxLength={1200}
+            maxLength={3600}
             rows={4}
             placeholder="Describe the scenario or setting for your game..."
           />
@@ -283,7 +283,7 @@ export default function CreateGame() {
                       type="text"
                       value={persona.name}
                       onChange={(e) => updatePersona(index, 'name', e.target.value)}
-                      maxLength={50}
+                      maxLength={100}
                       className="flex-1 px-2 py-1 border rounded-md bg-background text-sm"
                       placeholder="Persona name"
                     />
@@ -298,7 +298,7 @@ export default function CreateGame() {
                   <RichTextEditor
                     value={persona.description}
                     onChange={(value) => updatePersona(index, 'description', value)}
-                    maxLength={500}
+                    maxLength={1800}
                     rows={2}
                     placeholder="Description (optional)"
                   />
@@ -327,7 +327,7 @@ export default function CreateGame() {
                         <RichTextEditor
                           value={persona.npcActionDescription || ''}
                           onChange={(value) => updatePersona(index, 'npcActionDescription', value)}
-                          maxLength={500}
+                          maxLength={1800}
                           rows={2}
                           placeholder="e.g., The dragon attacks the village"
                         />
@@ -339,7 +339,7 @@ export default function CreateGame() {
                         <RichTextEditor
                           value={persona.npcDesiredOutcome || ''}
                           onChange={(value) => updatePersona(index, 'npcDesiredOutcome', value)}
-                          maxLength={500}
+                          maxLength={1200}
                           rows={2}
                           placeholder="e.g., The village suffers significant losses"
                         />

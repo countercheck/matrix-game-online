@@ -247,7 +247,7 @@ export function NarrationForm({ gameId, action, currentUserId }: NarrationFormPr
             <RichTextEditor
               value={content}
               onChange={setContent}
-              maxLength={1000}
+              maxLength={3600}
               rows={6}
               placeholder="Describe what happens as a result of your action..."
             />

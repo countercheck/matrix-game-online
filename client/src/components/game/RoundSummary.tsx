@@ -82,8 +82,8 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
       return;
     }
 
-    if (content.length > 2000) {
-      setError('Summary must be 2000 characters or less');
+    if (content.length > 7500) {
+      setError('Summary must be 7500 characters or less');
       return;
     }
 
@@ -264,16 +264,16 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
               onChange={(e) => setContent(e.target.value)}
               className="w-full h-48 px-4 py-3 border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               placeholder="As the dust settled from this round's events..."
-              maxLength={2000}
+              maxLength={7500}
             />
             <div className="flex justify-between items-center mt-1">
               <span className="text-xs text-muted-foreground">
                 Summarize the events, consequences, and how the world has changed.
               </span>
               <span
-                className={`text-xs ${content.length > 1900 ? 'text-orange-500' : 'text-muted-foreground'}`}
+                className={`text-xs ${content.length > 7000 ? 'text-orange-500' : 'text-muted-foreground'}`}
               >
-                {content.length}/2000
+                {content.length}/7500
               </span>
             </div>
           </div>

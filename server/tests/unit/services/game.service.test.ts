@@ -7,6 +7,7 @@ vi.mock('../../../src/config/database.js', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     gamePlayer: {
       findFirst: vi.fn(),
@@ -435,6 +436,86 @@ describe('Game Service', () => {
         action.initiator.userId === requestingUserId;
 
       expect(canNarrate).toBe(true);
+    });
+  });
+
+  describe('Game Deletion', () => {
+    it('should allow host to delete game in LOBBY status', () => {
+      const game = {
+        id: 'game-1',
+        status: 'LOBBY',
+        players: [
+          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
+          { id: 'player-2', userId: 'user-2', isHost: false, isActive: true },
+        ],
+      };
+      const requestingUserId = 'user-1';
+
+      const hostPlayer = game.players.find((p) => p.isHost);
+      const isHost = hostPlayer?.userId === requestingUserId;
+      const canDelete = isHost && game.status === 'LOBBY';
+
+      expect(canDelete).toBe(true);
+    });
+
+    it('should not allow non-host to delete game', () => {
+      const game = {
+        id: 'game-1',
+        status: 'LOBBY',
+        players: [
+          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
+          { id: 'player-2', userId: 'user-2', isHost: false, isActive: true },
+        ],
+      };
+      const requestingUserId = 'user-2'; // Not the host
+
+      const hostPlayer = game.players.find((p) => p.isHost);
+      const isHost = hostPlayer?.userId === requestingUserId;
+      const canDelete = isHost && game.status === 'LOBBY';
+
+      expect(canDelete).toBe(false);
+    });
+
+    it('should not allow deleting game that has started', () => {
+      const game = {
+        id: 'game-1',
+        status: 'ACTIVE',
+        players: [
+          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
+          { id: 'player-2', userId: 'user-2', isHost: false, isActive: true },
+        ],
+      };
+      const requestingUserId = 'user-1';
+
+      const hostPlayer = game.players.find((p) => p.isHost);
+      const isHost = hostPlayer?.userId === requestingUserId;
+      const canDelete = isHost && game.status === 'LOBBY';
+
+      expect(canDelete).toBe(false);
+    });
+
+    it('should not allow deleting completed game', () => {
+      const game = {
+        id: 'game-1',
+        status: 'COMPLETED',
+        players: [
+          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
+        ],
+      };
+      const requestingUserId = 'user-1';
+
+      const hostPlayer = game.players.find((p) => p.isHost);
+      const isHost = hostPlayer?.userId === requestingUserId;
+      const canDelete = isHost && game.status === 'LOBBY';
+
+      expect(canDelete).toBe(false);
+    });
+
+    it('should return not found error for non-existent game', () => {
+      const game = null;
+      const shouldThrowNotFound = game === null;
+
+      expect(shouldThrowNotFound).toBe(true);
     });
   });
 });

@@ -11,6 +11,14 @@ vi.mock('../../services/api', () => ({
   },
 }));
 
+// Mock formatRelativeTime
+vi.mock('../../utils/formatTime', () => ({
+  formatRelativeTime: vi.fn(() => {
+    // Return a predictable format for testing
+    return '5m ago';
+  }),
+}));
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -196,6 +204,45 @@ describe('ArgumentList', () => {
 
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith('/actions/test-action-id/arguments');
+    });
+  });
+
+  it('should display relative timestamps for arguments', async () => {
+    const mockArguments = [
+      {
+        id: 'arg-1',
+        argumentType: 'FOR',
+        content: 'Supporting argument',
+        sequence: 1,
+        createdAt: new Date().toISOString(),
+        player: {
+          id: 'player-1',
+          playerName: 'Alice',
+          user: { displayName: 'Alice Smith' },
+        },
+      },
+      {
+        id: 'arg-2',
+        argumentType: 'AGAINST',
+        content: 'Counter argument',
+        sequence: 2,
+        createdAt: new Date().toISOString(),
+        player: {
+          id: 'player-2',
+          playerName: 'Bob',
+          user: { displayName: 'Bob Jones' },
+        },
+      },
+    ];
+
+    mockGet.mockResolvedValue({ data: { data: mockArguments } });
+
+    render(<ArgumentList actionId="action-123" />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      // Check that relative timestamps are displayed (mocked to return '5m ago')
+      const timestamps = screen.getAllByText('5m ago');
+      expect(timestamps).toHaveLength(2);
     });
   });
 });

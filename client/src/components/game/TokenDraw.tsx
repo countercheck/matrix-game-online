@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui';
+import { formatRelativeTime } from '../../utils/formatTime';
 
 interface Action {
   id: string;
@@ -24,6 +25,7 @@ interface DrawResult {
   drawnFailure: number;
   resultValue: number;
   resultType: 'TRIUMPH' | 'SUCCESS_BUT' | 'FAILURE_BUT' | 'DISASTER';
+  drawnAt: string;
 }
 
 interface TokenDrawProps {
@@ -174,6 +176,11 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
               {existingResult.resultValue}
             </span>
           </p>
+          {existingResult.drawnAt && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Drawn {formatRelativeTime(existingResult.drawnAt)}
+            </p>
+          )}
         </div>
 
         <div className="text-center text-sm text-muted-foreground">

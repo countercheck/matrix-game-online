@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextEditor, RichTextDisplay } from '../ui';
+import { formatRelativeTime } from '../../utils/formatTime';
 
 interface Action {
   id: string;
@@ -187,7 +188,7 @@ export function NarrationForm({ gameId, action, currentUserId }: NarrationFormPr
         <div className="p-6 border rounded-lg">
           <h3 className="font-semibold mb-2">What Happened</h3>
           <p className="text-sm text-muted-foreground mb-3">
-            Narrated by {existingNarration.author.playerName}
+            Narrated by {existingNarration.author.playerName} · {formatRelativeTime(existingNarration.createdAt)}
           </p>
           <div className="p-4 bg-muted rounded-md">
             <RichTextDisplay content={existingNarration.content} />

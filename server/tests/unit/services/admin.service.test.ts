@@ -349,14 +349,18 @@ describe('Admin Service', () => {
         status: GameStatus.LOBBY,
         creatorId: 'user1',
         playerCount: 1,
+        deletedAt: null,
       } as any);
-      vi.mocked(db.game.delete).mockResolvedValue({} as any);
+      vi.mocked(db.game.update).mockResolvedValue({} as any);
       vi.mocked(db.adminAuditLog.create).mockResolvedValue({} as any);
 
       const result = await adminService.deleteGame('admin1', 'game1');
 
       expect(result.success).toBe(true);
-      expect(db.game.delete).toHaveBeenCalledWith({ where: { id: 'game1' } });
+      expect(db.game.update).toHaveBeenCalledWith({
+        where: { id: 'game1' },
+        data: { deletedAt: expect.any(Date) },
+      });
       expect(db.adminAuditLog.create).toHaveBeenCalled();
     });
 

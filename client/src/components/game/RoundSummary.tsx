@@ -268,9 +268,17 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
               maxLength={7500}
               rows={8}
               placeholder="As the dust settled from this round's events..."
+              maxLength={7500}
             />
-            <div className="text-xs text-muted-foreground mt-1">
-              Summarize the events, consequences, and how the world has changed.
+            <div className="flex justify-between items-center mt-1">
+              <span className="text-xs text-muted-foreground">
+                Summarize the events, consequences, and how the world has changed.
+              </span>
+              <span
+                className={`text-xs ${content.length > 7000 ? 'text-orange-500' : 'text-muted-foreground'}`}
+              >
+                {content.length}/7500
+              </span>
             </div>
           </div>
 

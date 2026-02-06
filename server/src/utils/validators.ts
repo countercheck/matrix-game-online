@@ -64,7 +64,7 @@ export const personaSchema = z.object({
 // Game schemas
 export const createGameSchema = z.object({
   name: z.string().min(1, 'Game name is required').max(150, 'Game name must be 150 characters or less'),
-  description: z.string().max(3600, 'Game description must be 3600 characters or less').optional(),
+  description: z.string().max(3600).optional(),
   settings: z.object({
     argumentLimit: z.number().int().min(1).max(10).default(3),
     argumentationTimeoutHours: z.number().int().min(1).max(72).default(24),

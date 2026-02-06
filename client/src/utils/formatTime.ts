@@ -3,8 +3,20 @@
  */
 export function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
+  
+  // Handle invalid dates
+  if (isNaN(date.getTime())) {
+    return 'Invalid date';
+  }
+  
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+  
+  // Handle future dates
+  if (diffMs < 0) {
+    return 'just now';
+  }
+  
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHour = Math.floor(diffMin / 60);
@@ -35,6 +47,12 @@ export function formatRelativeTime(dateString: string): string {
  */
 export function formatShortTimestamp(dateString: string): string {
   const date = new Date(dateString);
+  
+  // Handle invalid dates
+  if (isNaN(date.getTime())) {
+    return 'Invalid date';
+  }
+  
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
 
@@ -60,6 +78,12 @@ export function formatShortTimestamp(dateString: string): string {
  */
 export function formatFullTimestamp(dateString: string): string {
   const date = new Date(dateString);
+  
+  // Handle invalid dates
+  if (isNaN(date.getTime())) {
+    return 'Invalid date';
+  }
+  
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',

@@ -1,9 +1,13 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { formatRelativeTime, formatShortTimestamp, formatFullTimestamp } from './formatTime';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+  formatRelativeTime,
+  formatShortTimestamp,
+  formatFullTimestamp,
+} from './formatTime';
 
-describe('formatRelativeTime', () => {
+describe('formatTime utilities', () => {
   beforeEach(() => {
-    // Mock current time to ensure consistent test results
+    // Mock the current time to ensure consistent test results
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
   });

@@ -698,7 +698,8 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
       // Extract filename from URL
       const oldFilename = game.imageUrl.split('/').pop();
       if (oldFilename) {
-        const oldFilePath = path.join(process.cwd(), 'uploads', oldFilename);
+        const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
+        const oldFilePath = path.join(uploadsDir, oldFilename);
         await fs.unlink(oldFilePath);
       }
     } catch {

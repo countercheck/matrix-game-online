@@ -239,7 +239,8 @@ export async function uploadGameImage(
   } catch (error) {
     // Clean up uploaded file if there's an error
     if (req.file) {
-      const filePath = path.join(process.cwd(), 'uploads', req.file.filename);
+      const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
+      const filePath = path.join(uploadsDir, req.file.filename);
       try {
         await fs.unlink(filePath);
       } catch {

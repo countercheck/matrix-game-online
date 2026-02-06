@@ -94,15 +94,13 @@ export const updatePersonaSchema = z.object({
     .optional()
     .nullable(),
   npcActionDescription: z.string()
-    .trim()
-    .min(1, 'NPC action description is required')
     .max(1800, 'NPC action description must be 1800 characters or less')
+    .transform(val => val?.trim() || null)
     .optional()
     .nullable(),
   npcDesiredOutcome: z.string()
-    .trim()
-    .min(1, 'NPC desired outcome is required')
     .max(1200, 'NPC desired outcome must be 1200 characters or less')
+    .transform(val => val?.trim() || null)
     .optional()
     .nullable(),
 });

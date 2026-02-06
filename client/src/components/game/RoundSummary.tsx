@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextDisplay } from '../ui/RichTextDisplay';
 
 interface RoundSummaryProps {
   gameId: string;
@@ -227,10 +228,12 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
                   </div>
                   <p className="text-sm">{action.actionDescription}</p>
                   {action.narration && (
-                    <p className="text-xs text-muted-foreground mt-2 italic">
-                      "{action.narration.content.slice(0, 150)}
-                      {action.narration.content.length > 150 ? '...' : ''}"
-                    </p>
+                    <div className="text-xs text-muted-foreground mt-2 italic">
+                      <RichTextDisplay
+                        content={action.narration.content.slice(0, 150) + (action.narration.content.length > 150 ? '...' : '')}
+                        className="[&_p]:my-0"
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="text-right shrink-0">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextDisplay } from '../ui/RichTextDisplay';
 
 interface RoundHistoryProps {
   gameId: string;
@@ -208,9 +209,9 @@ export function RoundHistory({ gameId, currentRoundNumber }: RoundHistoryProps) 
                   </div>
                 </div>
                 {round.summary && !isExpanded && (
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                    {round.summary.content}
-                  </p>
+                  <div className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                    <RichTextDisplay content={round.summary.content} className="[&_p]:my-0" />
+                  </div>
                 )}
               </button>
 
@@ -221,7 +222,7 @@ export function RoundHistory({ gameId, currentRoundNumber }: RoundHistoryProps) 
                   {round.summary && (
                     <div className="p-4 bg-muted/30">
                       <h4 className="text-sm font-medium mb-2">Round Summary</h4>
-                      <p className="text-sm whitespace-pre-wrap">{round.summary.content}</p>
+                      <RichTextDisplay content={round.summary.content} className="text-sm [&_p]:my-1" />
                       <p className="text-xs text-muted-foreground mt-2">
                         Written on {formatDate(round.summary.createdAt)}
                       </p>

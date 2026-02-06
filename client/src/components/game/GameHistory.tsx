@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextDisplay } from '../ui/RichTextDisplay';
 
 interface GameHistoryProps {
   gameId: string;
@@ -292,7 +293,10 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
                               </span>
                               <span className="font-medium">{arg.player.playerName}</span>
                             </div>
-                            <p className="text-muted-foreground pl-1">{arg.content}</p>
+                            <RichTextDisplay
+                              content={arg.content}
+                              className="text-muted-foreground pl-1 [&_p]:my-0.5"
+                            />
                           </div>
                         ))}
                       </div>
@@ -302,7 +306,10 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
 
                 {action.narration && (
                   <div className="text-sm bg-muted/50 p-3 rounded-lg italic">
-                    "{action.narration.content}"
+                    <RichTextDisplay
+                      content={action.narration.content}
+                      className="[&_p]:my-1"
+                    />
                   </div>
                 )}
 

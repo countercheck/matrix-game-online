@@ -440,6 +440,34 @@ export default function GameLobby() {
           Waiting for the host to start the game...
         </p>
       )}
+
+      {/* Edit Game Modal */}
+      {game && (
+        <EditGameModal
+          isOpen={showEditGameModal}
+          onClose={() => setShowEditGameModal(false)}
+          onSave={async (data) => {
+            await updateGameMutation.mutateAsync(data);
+          }}
+          initialName={game.name}
+          initialDescription={game.description || ''}
+        />
+      )}
+
+      {/* Edit Persona Modal */}
+      {editingPersona && (
+        <EditPersonaModal
+          isOpen={!!editingPersona}
+          onClose={() => setEditingPersona(null)}
+          onSave={async (data) => {
+            await updatePersonaMutation.mutateAsync({
+              personaId: editingPersona.id,
+              data,
+            });
+          }}
+          persona={editingPersona}
+        />
+      )}
     </div>
   );
 }

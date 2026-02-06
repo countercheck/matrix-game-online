@@ -20,9 +20,12 @@ export function RichTextDisplay({ content, className = '', inline = false }: Ric
   }
 
   const Component = inline ? 'span' : 'div';
+  const baseClasses = inline 
+    ? className 
+    : `prose prose-sm dark:prose-invert max-w-none ${className}`;
 
   return (
-    <Component className={`prose prose-sm dark:prose-invert max-w-none ${className}`}>
+    <Component className={baseClasses}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </Component>
   );

@@ -6,6 +6,7 @@ import multer from 'multer';
 // Mock data store
 let games: Map<string, any>;
 let players: Map<string, any[]>;
+let personas: Map<string, any[]>;
 let currentUser: { id: string; email: string; displayName: string } | null;
 
 function createTestApp() {
@@ -253,6 +254,50 @@ function createTestApp() {
     res.json({ success: true, data: { message: 'Game deleted successfully' } });
   });
 
+  // Update persona
+  app.put('/api/games/:gameId/personas/:personaId', (req: any, res) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED' } });
+    }
+
+    const game = games.get(req.params.gameId);
+    if (!game || game.deletedAt) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Game not found' } });
+    }
+
+    const gamePlayers = players.get(req.params.gameId) || [];
+    const hostPlayer = gamePlayers.find((p: any) => p.isHost);
+
+    if (!hostPlayer || hostPlayer.userId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Only the host can edit personas' },
+      });
+    }
+
+    if (game.status !== 'LOBBY') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'Cannot edit personas after game has started' },
+      });
+    }
+
+    const gamePersonas = personas.get(req.params.gameId) || [];
+    const persona = gamePersonas.find((p: any) => p.id === req.params.personaId);
+
+    if (!persona) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Persona not found' } });
+    }
+
+    // Update persona
+    if (req.body.name !== undefined) persona.name = req.body.name;
+    if (req.body.description !== undefined) persona.description = req.body.description;
+    if (req.body.npcActionDescription !== undefined) persona.npcActionDescription = req.body.npcActionDescription;
+    if (req.body.npcDesiredOutcome !== undefined) persona.npcDesiredOutcome = req.body.npcDesiredOutcome;
+
+    res.json({ success: true, data: persona });
+  });
+
   return app;
 }
 
@@ -264,6 +309,7 @@ describe('Game Routes', () => {
   beforeEach(async () => {
     games = new Map();
     players = new Map();
+    personas = new Map();
     currentUser = { id: 'user-1', email: 'test@example.com', displayName: 'Test User' };
     app = createTestApp();
     
@@ -610,6 +656,150 @@ describe('Game Routes', () => {
 
       // Try to delete again
       const response = await request(app).delete(`/api/games/${gameId}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('NOT_FOUND');
+    });
+  });
+
+  describe('PUT /api/games/:gameId/personas/:personaId', () => {
+    it('should update persona description', async () => {
+      // Create game
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Create a persona for testing
+      const personaId = `persona-${Date.now()}`;
+      personas.set(gameId, [{
+        id: personaId,
+        name: 'Test Persona',
+        description: 'Original description',
+        isNpc: false,
+      }]);
+
+      // Update persona
+      const response = await request(app)
+        .put(`/api/games/${gameId}/personas/${personaId}`)
+        .send({ description: 'Updated description' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.description).toBe('Updated description');
+      expect(response.body.data.name).toBe('Test Persona'); // Name should remain unchanged
+    });
+
+    it('should update persona name and description', async () => {
+      // Create game
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Create a persona for testing
+      const personaId = `persona-${Date.now()}`;
+      personas.set(gameId, [{
+        id: personaId,
+        name: 'Test Persona',
+        description: 'Original description',
+        isNpc: false,
+      }]);
+
+      // Update persona name and description
+      const response = await request(app)
+        .put(`/api/games/${gameId}/personas/${personaId}`)
+        .send({ name: 'Updated Name', description: 'Updated description' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.name).toBe('Updated Name');
+      expect(response.body.data.description).toBe('Updated description');
+    });
+
+    it('should return 403 when non-host tries to update persona', async () => {
+      // Create game
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Create a persona for testing
+      const personaId = `persona-${Date.now()}`;
+      personas.set(gameId, [{
+        id: personaId,
+        name: 'Test Persona',
+        description: 'Original description',
+        isNpc: false,
+      }]);
+
+      // Add player 2
+      currentUser = { id: 'user-2', email: 'other@example.com', displayName: 'Other User' };
+      await request(app).post(`/api/games/${gameId}/join`).send({});
+
+      // Try to update persona as non-host
+      const response = await request(app)
+        .put(`/api/games/${gameId}/personas/${personaId}`)
+        .send({ description: 'Updated description' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('FORBIDDEN');
+    });
+
+    it('should return 400 when trying to update persona after game has started', async () => {
+      // Create game
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      // Create a persona for testing
+      const personaId = `persona-${Date.now()}`;
+      personas.set(gameId, [{
+        id: personaId,
+        name: 'Test Persona',
+        description: 'Original description',
+        isNpc: false,
+      }]);
+
+      // Add player 2
+      currentUser = { id: 'user-2', email: 'other@example.com', displayName: 'Other User' };
+      await request(app).post(`/api/games/${gameId}/join`).send({});
+
+      // Start game as host
+      currentUser = { id: 'user-1', email: 'test@example.com', displayName: 'Test User' };
+      await request(app).post(`/api/games/${gameId}/start`);
+
+      // Try to update persona
+      const response = await request(app)
+        .put(`/api/games/${gameId}/personas/${personaId}`)
+        .send({ description: 'Updated description' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('BAD_REQUEST');
+    });
+
+    it('should return 404 for non-existent persona', async () => {
+      // Create game
+      const createRes = await request(app)
+        .post('/api/games')
+        .send({ name: 'Test Game' });
+
+      const gameId = createRes.body.data.id;
+
+      personas.set(gameId, []); // Empty personas
+
+      // Try to update non-existent persona
+      const response = await request(app)
+        .put(`/api/games/${gameId}/personas/nonexistent-persona-id`)
+        .send({ description: 'Updated description' });
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);

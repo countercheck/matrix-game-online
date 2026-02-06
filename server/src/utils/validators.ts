@@ -84,6 +84,22 @@ export const selectPersonaSchema = z.object({
   personaId: z.string().uuid('Invalid persona ID').nullable(),
 });
 
+export const updatePersonaSchema = z.object({
+  name: z.string()
+    .min(1, 'Persona name is required')
+    .max(100, 'Persona name must be 100 characters or less')
+    .optional(),
+  description: z.string()
+    .max(1800, 'Persona description must be 1800 characters or less')
+    .optional(),
+  npcActionDescription: z.string()
+    .max(1800, 'NPC action description must be 1800 characters or less')
+    .optional(),
+  npcDesiredOutcome: z.string()
+    .max(1200, 'NPC desired outcome must be 1200 characters or less')
+    .optional(),
+});
+
 // Action schemas
 export const actionProposalSchema = z.object({
   actionDescription: z.string().min(1, 'Action description is required').max(1800, 'Action description must be 1800 characters or less'),
@@ -125,6 +141,7 @@ export type PersonaInput = z.infer<typeof personaSchema>;
 export type CreateGameInput = z.infer<typeof createGameSchema>;
 export type JoinGameInput = z.infer<typeof joinGameSchema>;
 export type SelectPersonaInput = z.infer<typeof selectPersonaSchema>;
+export type UpdatePersonaInput = z.infer<typeof updatePersonaSchema>;
 export type ActionProposalInput = z.infer<typeof actionProposalSchema>;
 export type ArgumentInput = z.infer<typeof argumentSchema>;
 export type VoteInput = z.infer<typeof voteSchema>;

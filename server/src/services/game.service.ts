@@ -409,6 +409,49 @@ export async function selectPersona(
   return updatedPlayer;
 }
 
+export async function updatePersona(
+  gameId: string,
+  personaId: string,
+  userId: string,
+  data: { name?: string; description?: string; npcActionDescription?: string; npcDesiredOutcome?: string }
+) {
+  await requireHost(gameId, userId);
+
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: { personas: true },
+  });
+
+  if (!game || game.deletedAt) {
+    throw new NotFoundError('Game not found');
+  }
+
+  if (game.status !== 'LOBBY') {
+    throw new BadRequestError('Cannot edit personas after game has started');
+  }
+
+  const persona = game.personas.find((p) => p.id === personaId);
+  if (!persona) {
+    throw new NotFoundError('Persona not found');
+  }
+
+  const updatedPersona = await db.persona.update({
+    where: { id: personaId },
+    data: {
+      name: data.name,
+      description: data.description,
+      npcActionDescription: data.npcActionDescription,
+      npcDesiredOutcome: data.npcDesiredOutcome,
+    },
+  });
+
+  await logGameEvent(gameId, userId, 'PERSONA_UPDATED', {
+    personaName: updatedPersona.name,
+  });
+
+  return updatedPersona;
+}
+
 export async function startGame(gameId: string, userId: string) {
   await requireHost(gameId, userId);
 

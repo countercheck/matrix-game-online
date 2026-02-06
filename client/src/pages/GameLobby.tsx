@@ -245,12 +245,16 @@ export default function GameLobby() {
             <div className="space-y-3">
               <div className="p-3 bg-primary/5 border border-primary/20 rounded-md">
                 <div className="font-medium">{currentPlayer.persona.name}</div>
-                {game.personas.find((p) => p.id === currentPlayer.persona?.id)?.description && (
-                  <RichTextDisplay
-                    content={game.personas.find((p) => p.id === currentPlayer.persona?.id)?.description || ''}
-                    className="text-sm text-muted-foreground mt-1 [&_p]:my-1"
-                  />
-                )}
+                {(() => {
+                  const currentPersona = game.personas.find((p) => p.id === currentPlayer.persona?.id);
+                  if (!currentPersona?.description) return null;
+                  return (
+                    <RichTextDisplay
+                      content={currentPersona.description}
+                      className="text-sm text-muted-foreground mt-1 [&_p]:my-1"
+                    />
+                  );
+                })()}
               </div>
               
               {/* Show available personas for direct swapping */}

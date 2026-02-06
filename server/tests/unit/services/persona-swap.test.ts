@@ -214,8 +214,9 @@ describe('Persona Swapping', () => {
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
       // Player tries to swap to persona claimed by another player
-      await expect(selectPersona(gameId, userId, persona2Id)).rejects.toThrow(ConflictError);
-      await expect(selectPersona(gameId, userId, persona2Id)).rejects.toThrow('This persona has already been claimed');
+      const swapPromise = selectPersona(gameId, userId, persona2Id);
+      await expect(swapPromise).rejects.toThrow(ConflictError);
+      await expect(swapPromise).rejects.toThrow('This persona has already been claimed');
     });
 
     it('should prevent persona swapping after game has started', async () => {
@@ -256,8 +257,9 @@ describe('Persona Swapping', () => {
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
       // Player tries to swap persona after game started
-      await expect(selectPersona(gameId, userId, persona2Id)).rejects.toThrow(BadRequestError);
-      await expect(selectPersona(gameId, userId, persona2Id)).rejects.toThrow('Cannot change persona after game has started');
+      const swapPromise = selectPersona(gameId, userId, persona2Id);
+      await expect(swapPromise).rejects.toThrow(BadRequestError);
+      await expect(swapPromise).rejects.toThrow('Cannot change persona after game has started');
     });
 
     it('should prevent selecting NPC persona', async () => {
@@ -291,8 +293,9 @@ describe('Persona Swapping', () => {
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
       // Player tries to select NPC persona
-      await expect(selectPersona(gameId, userId, npcPersonaId)).rejects.toThrow(BadRequestError);
-      await expect(selectPersona(gameId, userId, npcPersonaId)).rejects.toThrow('Cannot select an NPC persona');
+      const selectPromise = selectPersona(gameId, userId, npcPersonaId);
+      await expect(selectPromise).rejects.toThrow(BadRequestError);
+      await expect(selectPromise).rejects.toThrow('Cannot select an NPC persona');
     });
   });
 });

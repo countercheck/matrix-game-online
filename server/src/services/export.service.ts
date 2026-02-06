@@ -11,6 +11,30 @@ interface ExportResult {
 }
 
 /**
+ * Convert camelCase object keys to snake_case recursively
+ */
+function toSnakeCase(obj: unknown): unknown {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(toSnakeCase);
+  }
+  
+  if (typeof obj === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const snakeKey = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+      result[snakeKey] = toSnakeCase(value);
+    }
+    return result;
+  }
+  
+  return obj;
+}
+
+/**
  * Export the full game state as a YAML string.
  */
 export async function exportGameState(gameId: string, userId: string): Promise<ExportResult> {
@@ -28,7 +52,6 @@ export async function exportGameState(gameId: string, userId: string): Promise<E
         },
       },
       players: {
-        where: { isActive: true },
         orderBy: { joinOrder: 'asc' },
         include: {
           user: { select: { displayName: true } },
@@ -51,6 +74,7 @@ export async function exportGameState(gameId: string, userId: string): Promise<E
                 },
               },
               votes: {
+                orderBy: { castAt: 'asc' },
                 include: {
                   player: { select: { playerName: true } },
                 },
@@ -172,7 +196,7 @@ export async function exportGameState(gameId: string, userId: string): Promise<E
         ? {
             author: round.summary.author.playerName,
             content: round.summary.content,
-            outcomes: round.summary.outcomes || null,
+            outcomes: round.summary.outcomes ? toSnakeCase(round.summary.outcomes) : null,
           }
         : null,
     })),
@@ -181,10 +205,11 @@ export async function exportGameState(gameId: string, userId: string): Promise<E
   const yamlString = stringify(exportData, { lineWidth: 120 });
 
   // Build a safe filename from the game name
-  const safeName = game.name
+  const rawSafeName = game.name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+  const safeName = rawSafeName === '' ? 'game' : rawSafeName;
   const date = new Date().toISOString().split('T')[0];
   const filename = `${safeName}-export-${date}.yaml`;
 
@@ -215,7 +240,21 @@ export async function importGameFromYaml(yamlString: string, userId: string) {
 
   // Map snake_case YAML back to camelCase for createGameSchema
   const settingsData = (gameData.settings as Record<string, unknown>) || {};
-  const personasData = (parsed.personas as Array<Record<string, unknown>>) || [];
+  const personasRaw = parsed.personas;
+  
+  // Validate personas is an array
+  if (personasRaw !== undefined && !Array.isArray(personasRaw)) {
+    throw new BadRequestError('Invalid YAML: "personas" must be an array');
+  }
+  
+  const personasData = personasRaw || [];
+  
+  // Validate each persona is an object
+  for (let i = 0; i < personasData.length; i++) {
+    if (!personasData[i] || typeof personasData[i] !== 'object') {
+      throw new BadRequestError(`Invalid YAML: persona at index ${i} must be an object`);
+    }
+  }
 
   const input = {
     name: `${gameData.name || 'Imported Game'} (Copy)`,

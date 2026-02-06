@@ -4,21 +4,31 @@ import remarkGfm from 'remark-gfm';
 interface RichTextDisplayProps {
   content: string;
   className?: string;
+  inline?: boolean;
 }
 
 /**
  * Renders Markdown content from the RichTextEditor.
  * Uses react-markdown with GFM (GitHub Flavored Markdown) support.
  * Handles tables, strikethrough, task lists, and autolinks.
+ * 
+ * @param inline - If true, renders as a span instead of div for inline content.
+ *   Note: prose classes are intentionally excluded for inline rendering to avoid
+ *   block-level margins/padding. Callers should provide inline-specific styling via className.
  */
-export function RichTextDisplay({ content, className = '' }: RichTextDisplayProps) {
+export function RichTextDisplay({ content, className = '', inline = false }: RichTextDisplayProps) {
   if (!content) {
     return null;
   }
 
+  const Component = inline ? 'span' : 'div';
+  const baseClasses = inline 
+    ? className 
+    : `prose prose-sm dark:prose-invert max-w-none ${className}`;
+
   return (
-    <div className={`prose prose-sm dark:prose-invert max-w-none ${className}`}>
+    <Component className={baseClasses}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-    </div>
+    </Component>
   );
 }

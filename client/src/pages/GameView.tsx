@@ -15,6 +15,7 @@ import {
   HostControls,
 } from '../components/game';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
+import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 
 interface Persona {
   id: string;
@@ -429,18 +430,29 @@ export default function GameView() {
                   {expandedPersona === player.id && player.persona && (
                     <div className="mt-2 ml-4 p-3 bg-muted/30 rounded-lg text-xs space-y-2">
                       {player.persona.description && (
-                        <p className="text-muted-foreground">{player.persona.description}</p>
+                        <RichTextDisplay
+                          content={player.persona.description}
+                          className="text-muted-foreground [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1"
+                        />
                       )}
                       {player.persona.isNpc && player.persona.npcActionDescription && (
                         <div>
                           <span className="font-medium text-amber-700 dark:text-amber-300">Action: </span>
-                          <span className="text-muted-foreground">{player.persona.npcActionDescription}</span>
+                          <RichTextDisplay
+                            content={player.persona.npcActionDescription}
+                            className="text-muted-foreground [&_p]:inline [&_p]:my-0"
+                            inline
+                          />
                         </div>
                       )}
                       {player.persona.isNpc && player.persona.npcDesiredOutcome && (
                         <div>
                           <span className="font-medium text-amber-700 dark:text-amber-300">Goal: </span>
-                          <span className="text-muted-foreground">{player.persona.npcDesiredOutcome}</span>
+                          <RichTextDisplay
+                            content={player.persona.npcDesiredOutcome}
+                            className="text-muted-foreground [&_p]:inline [&_p]:my-0"
+                            inline
+                          />
                         </div>
                       )}
                     </div>

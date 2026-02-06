@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
+import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 
 interface Persona {
   id: string;
@@ -136,7 +137,10 @@ export default function JoinGame() {
                       <div>
                         <div className="font-medium">{persona.name}</div>
                         {persona.description && (
-                          <div className="text-sm text-muted-foreground">{persona.description}</div>
+                          <RichTextDisplay
+                            content={persona.description}
+                            className="text-sm text-muted-foreground [&_p]:my-1"
+                          />
                         )}
                       </div>
                     </div>

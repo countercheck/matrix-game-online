@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { Skeleton } from '../components/ui/Skeleton';
+import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 
 interface Persona {
   id: string;
@@ -221,9 +222,10 @@ export default function GameLobby() {
             <div className="p-3 bg-primary/5 border border-primary/20 rounded-md">
               <div className="font-medium">{currentPlayer.persona.name}</div>
               {game.personas.find((p) => p.id === currentPlayer.persona?.id)?.description && (
-                <div className="text-sm text-muted-foreground mt-1">
-                  {game.personas.find((p) => p.id === currentPlayer.persona?.id)?.description}
-                </div>
+                <RichTextDisplay
+                  content={game.personas.find((p) => p.id === currentPlayer.persona?.id)?.description || ''}
+                  className="text-sm text-muted-foreground mt-1 [&_p]:my-1"
+                />
               )}
               <button
                 onClick={() => selectPersonaMutation.mutate(null)}
@@ -247,7 +249,10 @@ export default function GameLobby() {
                   >
                     <div className="font-medium">{persona.name}</div>
                     {persona.description && (
-                      <div className="text-sm text-muted-foreground">{persona.description}</div>
+                      <RichTextDisplay
+                        content={persona.description}
+                        className="text-sm text-muted-foreground [&_p]:my-1"
+                      />
                     )}
                   </button>
                 ))

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { RichTextDisplay, RichTextEditor } from '../ui';
 
 interface RoundSummaryProps {
   gameId: string;
@@ -225,12 +226,14 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm">{action.actionDescription}</p>
+                  <RichTextDisplay content={action.actionDescription} className="text-sm" />
                   {action.narration && (
-                    <p className="text-xs text-muted-foreground mt-2 italic">
-                      "{action.narration.content.slice(0, 150)}
-                      {action.narration.content.length > 150 ? '...' : ''}"
-                    </p>
+                    <div className="text-xs text-muted-foreground mt-2 italic">
+                      <RichTextDisplay
+                        content={action.narration.content}
+                        className="line-clamp-3 [&_p]:my-0"
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="text-right shrink-0">
@@ -259,12 +262,12 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
 
         <div className="space-y-4">
           <div>
-            <textarea
+            <RichTextEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full h-48 px-4 py-3 border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="As the dust settled from this round's events..."
+              onChange={setContent}
               maxLength={7500}
+              rows={8}
+              placeholder="As the dust settled from this round's events..."
             />
             <div className="flex justify-between items-center mt-1">
               <span className="text-xs text-muted-foreground">

@@ -36,9 +36,10 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 
 // Serve static files from uploads directory (UPLOADS_DIR for Railway volume, fallback to local)
-const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
-app.use('/uploads', express.static(uploadsDir));
+export const getUploadsDir = (): string =>
+  process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
 
+app.use('/uploads', express.static(getUploadsDir()));
 // Rate limiting (skip in test environment)
 if (process.env.NODE_ENV !== 'test') {
   app.use('/api', generalRateLimiter);

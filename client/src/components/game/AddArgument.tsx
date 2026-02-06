@@ -139,7 +139,7 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
           id="argument-content"
           value={content}
           onChange={setContent}
-          maxLength={200}
+          maxLength={900}
           rows={3}
           placeholder={
             argumentType === 'FOR'

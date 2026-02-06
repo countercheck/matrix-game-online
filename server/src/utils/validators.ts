@@ -34,20 +34,19 @@ export const notificationPreferencesSchema = z.object({
 });
 
 // Persona schema
-// Note: Limits slightly increased to allow for markdown formatting (minimal overhead)
 export const personaSchema = z.object({
   name: z.string()
     .min(1, 'Persona name is required')
-    .max(50, 'Persona name must be 50 characters or less'),
+    .max(100, 'Persona name must be 100 characters or less'),
   description: z.string()
-    .max(600, 'Persona description must be 600 characters or less')
+    .max(1800, 'Persona description must be 1800 characters or less')
     .optional(),
   isNpc: z.boolean().default(false),
   npcActionDescription: z.string()
-    .max(600, 'NPC action description must be 600 characters or less')
+    .max(1800, 'NPC action description must be 1800 characters or less')
     .optional(),
   npcDesiredOutcome: z.string()
-    .max(400, 'NPC desired outcome must be 400 characters or less')
+    .max(1200, 'NPC desired outcome must be 1200 characters or less')
     .optional(),
 }).superRefine((data, ctx) => {
   if (data.isNpc) {
@@ -63,10 +62,9 @@ export const personaSchema = z.object({
 });
 
 // Game schemas
-// Note: Limits slightly increased to allow for markdown formatting (minimal overhead)
 export const createGameSchema = z.object({
-  name: z.string().min(1, 'Game name is required').max(100, 'Game name must be 100 characters or less'),
-  description: z.string().max(1200).optional(),
+  name: z.string().min(1, 'Game name is required').max(150, 'Game name must be 150 characters or less'),
+  description: z.string().max(3600).optional(),
   settings: z.object({
     argumentLimit: z.number().int().min(1).max(10).default(3),
     argumentationTimeoutHours: z.number().int().min(1).max(72).default(24),
@@ -87,33 +85,29 @@ export const selectPersonaSchema = z.object({
 });
 
 // Action schemas
-// Note: Limits slightly increased to allow for markdown formatting (minimal overhead)
 export const actionProposalSchema = z.object({
-  actionDescription: z.string().min(1, 'Action description is required').max(600, 'Action description must be 600 characters or less'),
-  desiredOutcome: z.string().min(1, 'Desired outcome is required').max(400, 'Desired outcome must be 400 characters or less'),
+  actionDescription: z.string().min(1, 'Action description is required').max(1800, 'Action description must be 1800 characters or less'),
+  desiredOutcome: z.string().min(1, 'Desired outcome is required').max(1200, 'Desired outcome must be 1200 characters or less'),
   initialArguments: z.array(
-    z.string().min(1).max(300, 'Each argument must be 300 characters or less')
+    z.string().min(1).max(900, 'Each argument must be 900 characters or less')
   ).min(1, 'At least one argument is required').max(3, 'Maximum 3 initial arguments'),
 });
 
-// Note: Limit slightly increased to allow for markdown formatting (minimal overhead)
 export const argumentSchema = z.object({
   argumentType: z.enum(['FOR', 'AGAINST', 'CLARIFICATION']),
-  content: z.string().min(1, 'Argument content is required').max(300, 'Argument must be 300 characters or less'),
+  content: z.string().min(1, 'Argument content is required').max(900, 'Argument must be 900 characters or less'),
 });
 
 export const voteSchema = z.object({
   voteType: z.enum(['LIKELY_SUCCESS', 'LIKELY_FAILURE', 'UNCERTAIN']),
 });
 
-// Note: Limit slightly increased to allow for markdown formatting (minimal overhead)
 export const narrationSchema = z.object({
-  content: z.string().min(1, 'Narration is required').max(1200, 'Narration must be 1200 characters or less'),
+  content: z.string().min(1, 'Narration is required').max(3600, 'Narration must be 3600 characters or less'),
 });
 
-// Note: Limit slightly increased to allow for markdown formatting (minimal overhead)
 export const roundSummarySchema = z.object({
-  content: z.string().min(1, 'Summary is required').max(2500, 'Summary must be 2500 characters or less'),
+  content: z.string().min(1, 'Summary is required').max(7500, 'Summary must be 7500 characters or less'),
   outcomes: z.object({
     totalTriumphs: z.number().int().min(0).optional(),
     totalDisasters: z.number().int().min(0).optional(),

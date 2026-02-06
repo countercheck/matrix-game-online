@@ -84,7 +84,7 @@ export default function GameLobby() {
   });
 
   const updateGameMutation = useMutation({
-    mutationFn: (data: { name: string; description: string }) =>
+    mutationFn: (data: { name: string; description: string | null }) =>
       api.put(`/games/${gameId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });

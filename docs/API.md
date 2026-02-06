@@ -306,6 +306,50 @@ When a persona is marked as `isNpc: true`, the system:
 
 **Note:** The NPC system user must be seeded in the database before games with NPC personas can be started. Run `pnpm db:seed` to create the NPC user.
 
+### PUT /games/:gameId/personas/:personaId
+Update a persona's details (host only, lobby status only).
+
+**Request Body:**
+```json
+{
+  "name": "Updated Persona Name",
+  "description": "Updated persona description in markdown",
+  "npcActionDescription": "Updated NPC action description (NPC personas only)",
+  "npcDesiredOutcome": "Updated NPC desired outcome (NPC personas only)"
+}
+```
+
+**Notes:**
+- All fields are optional - only include fields you want to update
+- `name` must be unique within the game (max 50 characters)
+- `description` max 1800 characters (supports markdown)
+- `npcActionDescription` and `npcDesiredOutcome` only apply to NPC personas
+- Send empty string or null to clear a description field
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "gameId": "uuid",
+    "name": "Updated Persona Name",
+    "description": "Updated persona description",
+    "isNpc": false,
+    "npcActionDescription": null,
+    "npcDesiredOutcome": null,
+    "sortOrder": 0,
+    "createdAt": "2024-01-15T10:00:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Game has already started (status is not LOBBY), or validation failed
+- `403 Forbidden` - Not the game host
+- `404 Not Found` - Game or persona not found
+- `409 Conflict` - Persona name already exists in this game
+
 ### POST /games/:gameId/leave
 Leave a game (lobby only).
 

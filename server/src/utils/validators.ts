@@ -103,7 +103,16 @@ export const updatePersonaSchema = z.object({
     .transform(val => val?.trim() || null)
     .optional()
     .nullable(),
-});
+}).refine(
+  (data) =>
+    data.name !== undefined ||
+    data.description !== undefined ||
+    data.npcActionDescription !== undefined ||
+    data.npcDesiredOutcome !== undefined,
+  {
+    message: 'At least one field must be provided to update persona',
+  }
+);
 
 // Action schemas
 export const actionProposalSchema = z.object({

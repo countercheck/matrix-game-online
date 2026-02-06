@@ -15,6 +15,15 @@ import {
 } from '../components/game';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 
+interface Persona {
+  id: string;
+  name: string;
+  description?: string | null;
+  isNpc?: boolean;
+  npcActionDescription?: string | null;
+  npcDesiredOutcome?: string | null;
+}
+
 interface Game {
   id: string;
   name: string;
@@ -51,7 +60,7 @@ interface Game {
     isNpc?: boolean;
     userId: string;
     user: { id: string; displayName: string };
-    persona?: { id: string; name: string } | null;
+    persona?: Persona | null;
   }>;
   myPlayer?: {
     id: string;
@@ -67,6 +76,7 @@ export default function GameView() {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const [showRoundHistory, setShowRoundHistory] = useState(false);
+  const [expandedPersona, setExpandedPersona] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
@@ -360,26 +370,72 @@ export default function GameView() {
             <h3 className="font-semibold mb-3">Players ({game.players.length})</h3>
             <ul className="space-y-2">
               {game.players.map((player) => (
-                <li
-                  key={player.id}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className={player.userId === currentUserId ? 'font-medium' : ''}>
-                    {player.playerName}
-                    {player.userId === currentUserId && ' (you)'}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {player.isNpc && (
-                      <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">
-                        NPC
-                      </span>
-                    )}
-                    {player.isHost && (
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                        Host
-                      </span>
-                    )}
+                <li key={player.id} className="text-sm">
+                  <div
+                    className={`flex items-center justify-between ${
+                      player.persona ? 'cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors' : ''
+                    }`}
+                    onClick={() => {
+                      if (player.persona) {
+                        setExpandedPersona(expandedPersona === player.id ? null : player.id);
+                      }
+                    }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className={`flex items-center gap-1 ${player.userId === currentUserId ? 'font-medium' : ''}`}>
+                        {player.persona && (
+                          <span
+                            className={`transition-transform text-xs text-muted-foreground ${
+                              expandedPersona === player.id ? 'rotate-90' : ''
+                            }`}
+                          >
+                            ▶
+                          </span>
+                        )}
+                        <span>
+                          {player.persona ? player.persona.name : player.playerName}
+                          {player.userId === currentUserId && ' (you)'}
+                        </span>
+                      </div>
+                      {player.persona && (
+                        <p className="text-xs text-muted-foreground pl-4">
+                          {player.playerName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {player.isNpc && (
+                        <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">
+                          NPC
+                        </span>
+                      )}
+                      {player.isHost && (
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                          Host
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {/* Expanded Persona Details */}
+                  {expandedPersona === player.id && player.persona && (
+                    <div className="mt-2 ml-4 p-3 bg-muted/30 rounded-lg text-xs space-y-2">
+                      {player.persona.description && (
+                        <p className="text-muted-foreground">{player.persona.description}</p>
+                      )}
+                      {player.persona.isNpc && player.persona.npcActionDescription && (
+                        <div>
+                          <span className="font-medium text-amber-700 dark:text-amber-300">Action: </span>
+                          <span className="text-muted-foreground">{player.persona.npcActionDescription}</span>
+                        </div>
+                      )}
+                      {player.persona.isNpc && player.persona.npcDesiredOutcome && (
+                        <div>
+                          <span className="font-medium text-amber-700 dark:text-amber-300">Goal: </span>
+                          <span className="text-muted-foreground">{player.persona.npcDesiredOutcome}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

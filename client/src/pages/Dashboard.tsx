@@ -45,7 +45,12 @@ export default function Dashboard() {
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'response' in err
-          ? (err as { response: { data?: { message?: string } } }).response?.data?.message || 'Import failed'
+          ? (() => {
+              const responseData = (err as {
+                response?: { data?: { error?: { message?: string }; message?: string } };
+              }).response?.data;
+              return responseData?.error?.message || responseData?.message || 'Import failed';
+            })()
           : 'Import failed';
       setImportError(message);
     } finally {

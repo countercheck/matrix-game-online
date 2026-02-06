@@ -284,7 +284,7 @@ describe('exportGameState', () => {
 
     expect(parsed.rounds[0].summary.author).toBe('Alice');
     expect(parsed.rounds[0].summary.content).toBe('Round 1 saw the beginning of diplomacy.');
-    expect(parsed.rounds[0].summary.outcomes.netMomentum).toBe(-1);
+    expect(parsed.rounds[0].summary.outcomes.net_momentum).toBe(-1);
   });
 
   it('should reject non-members', async () => {

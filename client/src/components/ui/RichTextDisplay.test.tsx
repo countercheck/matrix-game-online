@@ -97,7 +97,7 @@ describe('RichTextDisplay', () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it('should return null when content is whitespace only', () => {
+    it('should render when content is whitespace only', () => {
       const { container } = render(<RichTextDisplay content="   " />);
       
       // The component checks !content, so "   " is truthy and will render
@@ -175,6 +175,7 @@ describe('RichTextDisplay', () => {
       const { container } = render(<RichTextDisplay content="- [ ] Todo item\n- [x] Done item" />);
       const checkboxes = container.querySelectorAll('input[type="checkbox"]');
       
+      // Note: ReactMarkdown may render task lists differently, so we verify content is present
       expect(checkboxes.length).toBeGreaterThanOrEqual(1);
       expect(container.textContent).toContain('Todo item');
       expect(container.textContent).toContain('Done item');

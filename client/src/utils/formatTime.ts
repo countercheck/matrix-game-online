@@ -24,6 +24,18 @@ export function formatRelativeTime(dateString: string): string {
   }
 
   // For older dates, show the actual date
+  // Include year if the date is not in the current year
+  const currentYear = now.getFullYear();
+  const dateYear = date.getFullYear();
+  
+  if (dateYear !== currentYear) {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+  
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',

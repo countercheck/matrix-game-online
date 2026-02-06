@@ -226,7 +226,7 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm">{action.actionDescription}</p>
+                  <RichTextDisplay content={action.actionDescription} className="text-sm" />
                   {action.narration && (
                     <div className="text-xs text-muted-foreground mt-2 italic">
                       <RichTextDisplay

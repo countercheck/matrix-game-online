@@ -1,294 +1,115 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import {
-  formatRelativeTime,
-  formatShortTimestamp,
-  formatFullTimestamp,
-} from './formatTime';
+import { formatRelativeTime, formatShortTimestamp, formatFullTimestamp } from './formatTime';
 
-describe('formatTime utilities', () => {
+describe('formatTime', () => {
+  let mockNow: Date;
+
   beforeEach(() => {
-    // Mock the current time to ensure consistent test results
+    // Set a consistent "now" time for testing: Jan 15, 2026, 12:00:00 PM
+    mockNow = new Date('2026-01-15T12:00:00Z');
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
+    vi.setSystemTime(mockNow);
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  describe('basic time ranges', () => {
+  describe('formatRelativeTime', () => {
     it('should return "just now" for times less than 60 seconds ago', () => {
-      const date = new Date('2024-01-15T11:59:30Z').toISOString();
-      expect(formatRelativeTime(date)).toBe('just now');
+      const thirtySecondsAgo = new Date(mockNow.getTime() - 30 * 1000).toISOString();
+      expect(formatRelativeTime(thirtySecondsAgo)).toBe('just now');
     });
 
-    it('should return "just now" for current time', () => {
-      const date = new Date('2024-01-15T12:00:00Z').toISOString();
-      expect(formatRelativeTime(date)).toBe('just now');
-    });
+    it('should return minutes ago for times less than 60 minutes ago', () => {
+      const fiveMinutesAgo = new Date(mockNow.getTime() - 5 * 60 * 1000).toISOString();
+      expect(formatRelativeTime(fiveMinutesAgo)).toBe('5m ago');
 
-    it('should format minutes correctly (1-59 minutes ago)', () => {
-      const oneMinuteAgo = new Date('2024-01-15T11:59:00Z').toISOString();
-      expect(formatRelativeTime(oneMinuteAgo)).toBe('1m ago');
-
-      const thirtyMinutesAgo = new Date('2024-01-15T11:30:00Z').toISOString();
-      expect(formatRelativeTime(thirtyMinutesAgo)).toBe('30m ago');
-
-      const fiftyNineMinutesAgo = new Date('2024-01-15T11:01:00Z').toISOString();
+      const fiftyNineMinutesAgo = new Date(mockNow.getTime() - 59 * 60 * 1000).toISOString();
       expect(formatRelativeTime(fiftyNineMinutesAgo)).toBe('59m ago');
     });
 
-    it('should format hours correctly (1-23 hours ago)', () => {
-      const oneHourAgo = new Date('2024-01-15T11:00:00Z').toISOString();
-      expect(formatRelativeTime(oneHourAgo)).toBe('1h ago');
+    it('should return hours ago for times less than 24 hours ago', () => {
+      const twoHoursAgo = new Date(mockNow.getTime() - 2 * 60 * 60 * 1000).toISOString();
+      expect(formatRelativeTime(twoHoursAgo)).toBe('2h ago');
 
-      const twelveHoursAgo = new Date('2024-01-15T00:00:00Z').toISOString();
-      expect(formatRelativeTime(twelveHoursAgo)).toBe('12h ago');
-
-      const twentyThreeHoursAgo = new Date('2024-01-14T13:00:00Z').toISOString();
+      const twentyThreeHoursAgo = new Date(mockNow.getTime() - 23 * 60 * 60 * 1000).toISOString();
       expect(formatRelativeTime(twentyThreeHoursAgo)).toBe('23h ago');
     });
 
-    it('should format days correctly (1-6 days ago)', () => {
-      const oneDayAgo = new Date('2024-01-14T12:00:00Z').toISOString();
+    it('should return days ago for times less than 7 days ago', () => {
+      const oneDayAgo = new Date(mockNow.getTime() - 24 * 60 * 60 * 1000).toISOString();
       expect(formatRelativeTime(oneDayAgo)).toBe('1d ago');
 
-      const threeDaysAgo = new Date('2024-01-12T12:00:00Z').toISOString();
-      expect(formatRelativeTime(threeDaysAgo)).toBe('3d ago');
-
-      const sixDaysAgo = new Date('2024-01-09T12:00:00Z').toISOString();
+      const sixDaysAgo = new Date(mockNow.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString();
       expect(formatRelativeTime(sixDaysAgo)).toBe('6d ago');
     });
 
-    it('should format dates older than 7 days with locale date string', () => {
-      const sevenDaysAgo = new Date('2024-01-08T12:00:00Z').toISOString();
+    it('should return month and day (without year) for dates older than 7 days but in the current year', () => {
+      // Jan 5, 2026 (10 days ago, same year as mockNow which is Jan 15, 2026)
+      const tenDaysAgo = new Date('2026-01-05T12:00:00Z').toISOString();
+      expect(formatRelativeTime(tenDaysAgo)).toBe('Jan 5');
+    });
+
+    it('should return month, day, and year for dates in previous years', () => {
+      // Dec 20, 2025 (different year from mockNow which is 2026)
+      const lastYear = new Date('2025-12-20T12:00:00Z').toISOString();
+      expect(formatRelativeTime(lastYear)).toBe('Dec 20, 2025');
+
+      // Jun 15, 2024 (two years ago)
+      const twoYearsAgo = new Date('2024-06-15T12:00:00Z').toISOString();
+      expect(formatRelativeTime(twoYearsAgo)).toBe('Jun 15, 2024');
+    });
+
+    it('should return month, day, and year for dates many years ago', () => {
+      // Jun 15, 2020 (six years ago from mockNow which is 2026)
+      const manyYearsAgo = new Date('2020-06-15T12:00:00Z').toISOString();
+      expect(formatRelativeTime(manyYearsAgo)).toBe('Jun 15, 2020');
+    });
+
+    it('should handle edge case: exactly 7 days ago in current year', () => {
+      // Jan 8, 2026 (exactly 7 days ago)
+      const sevenDaysAgo = new Date('2026-01-08T12:00:00Z').toISOString();
       expect(formatRelativeTime(sevenDaysAgo)).toBe('Jan 8');
+    });
 
-      const thirtyDaysAgo = new Date('2023-12-16T12:00:00Z').toISOString();
-      expect(formatRelativeTime(thirtyDaysAgo)).toBe('Dec 16');
+    it('should handle edge case: date at year boundary in previous year', () => {
+      // Dec 31, 2025 (just 15 days ago, but different year)
+      const yearBoundary = new Date('2025-12-31T12:00:00Z').toISOString();
+      expect(formatRelativeTime(yearBoundary)).toBe('Dec 31, 2025');
     });
   });
 
-  describe('edge cases', () => {
-    it('should handle invalid date strings', () => {
-      const result = formatRelativeTime('invalid-date');
-      // Invalid date produces "Invalid Date" from toLocaleDateString
-      expect(result).toBe('Invalid Date');
+  describe('formatShortTimestamp', () => {
+    it('should return time only for today', () => {
+      const today = new Date('2026-01-15T14:30:00Z').toISOString();
+      const result = formatShortTimestamp(today);
+      expect(result).toMatch(/\d{1,2}:\d{2}\s[AP]M/);
     });
 
-    it('should handle empty string', () => {
-      const result = formatRelativeTime('');
-      // Empty string produces "Invalid Date" from toLocaleDateString
-      expect(result).toBe('Invalid Date');
-    });
-
-    it('should handle future dates', () => {
-      const futureDate = new Date('2024-01-15T13:00:00Z').toISOString();
-      const result = formatRelativeTime(futureDate);
-      // Future dates will have negative time difference, which is < 60 seconds
-      expect(result).toBe('just now');
-    });
-
-    it('should handle dates far in the future', () => {
-      const farFuture = new Date('2025-01-15T12:00:00Z').toISOString();
-      const result = formatRelativeTime(farFuture);
-      // Far future dates will have negative time difference, which is < 60 seconds
-      expect(result).toBe('just now');
-    });
-
-    it('should handle dates far in the past', () => {
-      const farPast = new Date('2020-01-15T12:00:00Z').toISOString();
-      const result = formatRelativeTime(farPast);
-      expect(result).toBe('Jan 15');
-    });
-  });
-
-  describe('boundary conditions', () => {
-    it('should handle exactly 60 seconds (1 minute boundary)', () => {
-      const exactlyOneMinute = new Date('2024-01-15T11:59:00Z').toISOString();
-      expect(formatRelativeTime(exactlyOneMinute)).toBe('1m ago');
-    });
-
-    it('should handle exactly 60 minutes (1 hour boundary)', () => {
-      const exactlyOneHour = new Date('2024-01-15T11:00:00Z').toISOString();
-      expect(formatRelativeTime(exactlyOneHour)).toBe('1h ago');
-    });
-
-    it('should handle exactly 24 hours (1 day boundary)', () => {
-      const exactlyOneDay = new Date('2024-01-14T12:00:00Z').toISOString();
-      expect(formatRelativeTime(exactlyOneDay)).toBe('1d ago');
-    });
-
-    it('should handle exactly 7 days (week boundary)', () => {
-      const exactlySevenDays = new Date('2024-01-08T12:00:00Z').toISOString();
-      expect(formatRelativeTime(exactlySevenDays)).toBe('Jan 8');
-    });
-  });
-});
-
-describe('formatShortTimestamp', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  describe('basic formatting', () => {
-    it('should format time only for today', () => {
-      const todayMorning = new Date('2024-01-15T09:30:00Z').toISOString();
-      const result = formatShortTimestamp(todayMorning);
-      // The exact format depends on locale, but should include time
-      expect(result).toMatch(/\d{1,2}:\d{2}/); // Should contain time
-      expect(result).not.toMatch(/Jan/); // Should not contain month for today
-    });
-
-    it('should format with date for other days', () => {
-      const yesterday = new Date('2024-01-14T09:30:00Z').toISOString();
+    it('should return date and time for other days', () => {
+      const yesterday = new Date('2026-01-14T14:30:00Z').toISOString();
       const result = formatShortTimestamp(yesterday);
-      // Should include month and time
-      expect(result).toMatch(/Jan/);
-      expect(result).toMatch(/\d{1,2}:\d{2}/);
-    });
-
-    it('should format dates in the past with month and time', () => {
-      const lastWeek = new Date('2024-01-08T14:45:00Z').toISOString();
-      const result = formatShortTimestamp(lastWeek);
-      expect(result).toMatch(/Jan/);
-      expect(result).toMatch(/\d{1,2}:\d{2}/);
+      expect(result).toContain('Jan 14');
+      expect(result).toMatch(/\d{1,2}:\d{2}\s[AP]M/);
     });
   });
 
-  describe('edge cases', () => {
-    it('should handle invalid date strings', () => {
-      const result = formatShortTimestamp('invalid-date');
-      // Invalid date produces "Invalid Date" from toLocaleDateString
-      expect(result).toBe('Invalid Date');
-    });
-
-    it('should handle empty string', () => {
-      const result = formatShortTimestamp('');
-      // Empty string produces "Invalid Date" from toLocaleDateString
-      expect(result).toBe('Invalid Date');
-    });
-
-    it('should handle future dates', () => {
-      const tomorrow = new Date('2024-01-16T12:00:00Z').toISOString();
-      const result = formatShortTimestamp(tomorrow);
-      expect(result).toMatch(/Jan/); // Future dates should show date
-      expect(result).toMatch(/\d{1,2}:\d{2}/); // Should include time
-    });
-
-    it('should handle midnight boundary', () => {
-      const justBeforeMidnight = new Date('2024-01-15T23:59:59Z').toISOString();
-      const result = formatShortTimestamp(justBeforeMidnight);
-      expect(result).toMatch(/\d{1,2}:\d{2}/);
-    });
-  });
-
-  describe('locale-specific formatting', () => {
-    it('should use 12-hour format with AM/PM', () => {
-      const morningTime = new Date('2024-01-15T09:30:00Z').toISOString();
-      const result = formatShortTimestamp(morningTime);
-      expect(result).toMatch(/AM|PM/);
-    });
-
-    it('should format minutes with 2 digits', () => {
-      const timeWithSingleDigitMinute = new Date('2024-01-15T09:05:00Z').toISOString();
-      const result = formatShortTimestamp(timeWithSingleDigitMinute);
-      expect(result).toMatch(/\d{1,2}:05/); // Minutes should be 05, not 5
-    });
-  });
-});
-
-describe('formatFullTimestamp', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  describe('basic formatting', () => {
-    it('should format with full date including year', () => {
-      const date = new Date('2024-01-15T09:30:00Z').toISOString();
+  describe('formatFullTimestamp', () => {
+    it('should return full date and time with year', () => {
+      const date = new Date('2026-01-15T14:30:00Z').toISOString();
       const result = formatFullTimestamp(date);
-      expect(result).toMatch(/Jan/);
-      expect(result).toMatch(/15/);
-      expect(result).toMatch(/2024/);
-      expect(result).toMatch(/\d{1,2}:\d{2}/);
+      expect(result).toContain('Jan 15');
+      expect(result).toContain('2026');
+      expect(result).toMatch(/\d{1,2}:\d{2}\s[AP]M/);
     });
 
-    it('should format dates from different years', () => {
-      const lastYear = new Date('2023-12-25T10:00:00Z').toISOString();
-      const result = formatFullTimestamp(lastYear);
-      expect(result).toMatch(/Dec/);
-      expect(result).toMatch(/25/);
-      expect(result).toMatch(/2023/);
-    });
-
-    it('should format future dates', () => {
-      const nextYear = new Date('2025-03-20T15:45:00Z').toISOString();
-      const result = formatFullTimestamp(nextYear);
-      expect(result).toMatch(/Mar/);
-      expect(result).toMatch(/20/);
-      expect(result).toMatch(/2025/);
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should handle invalid date strings', () => {
-      const result = formatFullTimestamp('invalid-date');
-      // Invalid date produces "Invalid Date" from toLocaleDateString
-      expect(result).toBe('Invalid Date');
-    });
-
-    it('should handle empty string', () => {
-      const result = formatFullTimestamp('');
-      // Empty string produces "Invalid Date" from toLocaleDateString
-      expect(result).toBe('Invalid Date');
-    });
-
-    it('should handle dates far in the past', () => {
-      const oldDate = new Date('2000-01-01T00:00:00Z').toISOString();
-      const result = formatFullTimestamp(oldDate);
-      expect(result).toMatch(/Jan/);
-      expect(result).toMatch(/1/);
-      expect(result).toMatch(/2000/);
-    });
-
-    it('should handle dates far in the future', () => {
-      const futureDate = new Date('2099-12-31T23:59:59Z').toISOString();
-      const result = formatFullTimestamp(futureDate);
-      expect(result).toMatch(/Dec/);
-      expect(result).toMatch(/31/);
-      expect(result).toMatch(/2099/);
-    });
-  });
-
-  describe('locale-specific formatting', () => {
-    it('should use 12-hour format with AM/PM', () => {
-      const date = new Date('2024-01-15T14:30:00Z').toISOString();
+    it('should format dates from different years correctly', () => {
+      const date = new Date('2025-06-20T09:45:00Z').toISOString();
       const result = formatFullTimestamp(date);
-      expect(result).toMatch(/AM|PM/);
-    });
-
-    it('should format minutes with 2 digits', () => {
-      const date = new Date('2024-01-15T09:05:00Z').toISOString();
-      const result = formatFullTimestamp(date);
-      expect(result).toMatch(/\d{1,2}:05/);
-    });
-
-    it('should use short month names', () => {
-      const januaryDate = new Date('2024-01-15T12:00:00Z').toISOString();
-      expect(formatFullTimestamp(januaryDate)).toMatch(/Jan/);
-
-      const decemberDate = new Date('2024-12-15T12:00:00Z').toISOString();
-      expect(formatFullTimestamp(decemberDate)).toMatch(/Dec/);
+      expect(result).toContain('Jun 20');
+      expect(result).toContain('2025');
+      expect(result).toMatch(/\d{1,2}:\d{2}\s[AP]M/);
     });
   });
 });

@@ -12,7 +12,9 @@ interface RichTextDisplayProps {
  * Uses react-markdown with GFM (GitHub Flavored Markdown) support.
  * Handles tables, strikethrough, task lists, and autolinks.
  * 
- * @param inline - If true, renders as a span instead of div for inline content
+ * @param inline - If true, renders as a span instead of div for inline content.
+ *   Note: prose classes are intentionally excluded for inline rendering to avoid
+ *   block-level margins/padding. Callers should provide inline-specific styling via className.
  */
 export function RichTextDisplay({ content, className = '', inline = false }: RichTextDisplayProps) {
   if (!content) {

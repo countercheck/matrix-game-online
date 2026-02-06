@@ -9,6 +9,7 @@ const router = Router();
 router.post('/', authenticateToken, gameController.createGame);
 router.get('/:gameId', authenticateToken, gameController.getGame);
 router.put('/:gameId', authenticateToken, gameController.updateGame);
+router.delete('/:gameId', authenticateToken, gameController.deleteGame);
 router.post('/:gameId/image', authenticateToken, uploadRateLimiter, upload.single('image'), gameController.uploadGameImage);
 router.post('/:gameId/join', authenticateToken, gameController.joinGame);
 router.post('/:gameId/select-persona', authenticateToken, gameController.selectPersona);

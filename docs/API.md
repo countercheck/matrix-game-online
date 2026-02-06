@@ -253,6 +253,24 @@ Get game details.
 ### PUT /games/:gameId
 Update game settings (host only, lobby status only).
 
+### DELETE /games/:gameId
+Delete a game (host only, lobby status only).
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Game deleted successfully"
+  }
+}
+```
+
+**Error Responses:**
+- `403 Forbidden` - Not the game host
+- `400 Bad Request` - Game has already started (status is not LOBBY)
+- `404 Not Found` - Game not found
+
 ### POST /games/:gameId/join
 Join a game.
 

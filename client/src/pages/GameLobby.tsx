@@ -41,6 +41,7 @@ export default function GameLobby() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
@@ -53,6 +54,13 @@ export default function GameLobby() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
       navigate(`/game/${gameId}/play`);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/games/${gameId}`),
+    onSuccess: () => {
+      navigate('/');
     },
   });
 
@@ -298,13 +306,46 @@ export default function GameLobby() {
       )}
 
       {isHost && (
-        <button
-          onClick={() => startMutation.mutate()}
-          disabled={!canStart || startMutation.isPending}
-          className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
-        >
-          {startMutation.isPending ? 'Starting...' : 'Start Game'}
-        </button>
+        <div className="space-y-3">
+          <button
+            onClick={() => startMutation.mutate()}
+            disabled={!canStart || startMutation.isPending}
+            className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+          >
+            {startMutation.isPending ? 'Starting...' : 'Start Game'}
+          </button>
+
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full py-2 px-4 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+            >
+              Delete Game
+            </button>
+          ) : (
+            <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5 space-y-3">
+              <p className="text-sm text-destructive font-medium">
+                Are you sure you want to delete this game? This cannot be undone.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => deleteMutation.mutate()}
+                  disabled={deleteMutation.isPending}
+                  className="flex-1 py-2 px-4 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleteMutation.isPending}
+                  className="flex-1 py-2 px-4 border rounded-md hover:bg-muted"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {!isHost && (

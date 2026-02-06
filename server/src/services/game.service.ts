@@ -317,6 +317,37 @@ export async function leaveGame(gameId: string, userId: string) {
   await logGameEvent(gameId, userId, 'PLAYER_LEFT', { playerName: player.playerName });
 }
 
+export async function deleteGame(gameId: string, userId: string) {
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: {
+      players: { where: { isActive: true } },
+    },
+  });
+
+  if (!game) {
+    throw new NotFoundError('Game not found');
+  }
+
+  // Only the host can delete the game
+  const hostPlayer = game.players.find((p) => p.isHost);
+  if (!hostPlayer || hostPlayer.userId !== userId) {
+    throw new ForbiddenError('Only the game host can delete this game');
+  }
+
+  // Can only delete games in LOBBY status
+  if (game.status !== 'LOBBY') {
+    throw new BadRequestError('Cannot delete a game that has already started');
+  }
+
+  // Delete the game (cascades to players, personas, etc. via Prisma schema)
+  await db.game.delete({
+    where: { id: gameId },
+  });
+
+  return { message: 'Game deleted successfully' };
+}
+
 export async function selectPersona(
   gameId: string,
   userId: string,

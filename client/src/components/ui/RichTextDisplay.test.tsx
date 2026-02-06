@@ -263,4 +263,43 @@ describe('RichTextDisplay', () => {
       expect(element).toHaveClass('custom');
     });
   });
+
+  describe('Link handling', () => {
+    it('should render links by default', () => {
+      const { container } = render(
+        <RichTextDisplay content="[link text](https://example.com)" />
+      );
+      const link = container.querySelector('a');
+      
+      expect(link).toBeInTheDocument();
+      expect(link?.textContent).toBe('link text');
+      expect(link?.getAttribute('href')).toBe('https://example.com');
+    });
+
+    it('should disable links when disableLinks prop is true', () => {
+      const { container } = render(
+        <RichTextDisplay content="[link text](https://example.com)" disableLinks />
+      );
+      const link = container.querySelector('a');
+      // The custom a component renders as a span, wrapped in the prose div
+      const spans = container.querySelectorAll('span');
+      
+      expect(link).not.toBeInTheDocument();
+      // Should have at least one span (the one replacing the link)
+      expect(spans.length).toBeGreaterThan(0);
+      // Find the span with the link text
+      const linkSpan = Array.from(spans).find(s => s.textContent === 'link text');
+      expect(linkSpan).toBeInTheDocument();
+    });
+
+    it('should disable autolinks when disableLinks prop is true', () => {
+      const { container } = render(
+        <RichTextDisplay content="https://example.com" disableLinks />
+      );
+      const link = container.querySelector('a');
+      
+      expect(link).not.toBeInTheDocument();
+      expect(container.textContent).toContain('https://example.com');
+    });
+  });
 });

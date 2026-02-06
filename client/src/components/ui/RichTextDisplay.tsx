@@ -5,6 +5,7 @@ interface RichTextDisplayProps {
   content: string;
   className?: string;
   inline?: boolean;
+  disableLinks?: boolean;
 }
 
 /**
@@ -15,8 +16,9 @@ interface RichTextDisplayProps {
  * @param inline - If true, renders as a span instead of div for inline content.
  *   Note: prose classes are intentionally excluded for inline rendering to avoid
  *   block-level margins/padding. Callers should provide inline-specific styling via className.
+ * @param disableLinks - If true, renders links as plain text to avoid nested anchor issues.
  */
-export function RichTextDisplay({ content, className = '', inline = false }: RichTextDisplayProps) {
+export function RichTextDisplay({ content, className = '', inline = false, disableLinks = false }: RichTextDisplayProps) {
   if (!content) {
     return null;
   }
@@ -28,7 +30,18 @@ export function RichTextDisplay({ content, className = '', inline = false }: Ric
 
   return (
     <Component className={baseClasses}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={disableLinks ? {
+          a: ({ children, ...props }) => {
+            // Remove invalid HTML attributes for span element
+            const { ...rest } = props;
+            return <span {...rest}>{children}</span>;
+          },
+        } : undefined}
+      >
+        {content}
+      </ReactMarkdown>
     </Component>
   );
 }

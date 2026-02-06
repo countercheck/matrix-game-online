@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { SkeletonGameCard } from '../components/ui/Skeleton';
+import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 
 interface Game {
   id: string;
@@ -124,9 +125,11 @@ export default function Dashboard() {
                   </div>
 
                   {game.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {game.description}
-                    </p>
+                    <RichTextDisplay
+                      content={game.description}
+                      className="text-sm mt-1 line-clamp-2 [&_p]:my-0 [&_p]:text-muted-foreground [&_h2]:text-muted-foreground [&_h3]:text-muted-foreground [&_li]:text-muted-foreground [&_blockquote]:text-muted-foreground"
+                      disableLinks
+                    />
                   )}
 
                   <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">

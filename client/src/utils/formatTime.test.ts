@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { formatRelativeTime, formatShortTimestamp, formatFullTimestamp } from './formatTime';
+import {
+  formatRelativeTime,
+  formatShortTimestamp,
+  formatFullTimestamp,
+} from './formatTime';
 
-describe('formatRelativeTime', () => {
+describe('formatTime utilities', () => {
   beforeEach(() => {
     // Mock the current time to ensure consistent test results
     vi.useFakeTimers();

@@ -515,13 +515,43 @@ export async function getGameHistory(gameId: string, userId: string) {
           },
         },
       },
+      arguments: {
+        include: {
+          player: {
+            select: { playerName: true },
+          },
+        },
+        orderBy: { sequence: 'asc' },
+      },
+      votes: {
+        select: {
+          voteType: true,
+          successTokens: true,
+          failureTokens: true,
+        },
+      },
       tokenDraw: true,
       narration: true,
     },
     orderBy: { sequenceNumber: 'asc' },
   });
 
-  return actions;
+  // Calculate vote totals for each action
+  return actions.map((action) => {
+    const voteTotals = action.votes.reduce(
+      (acc, vote) => ({
+        totalSuccessTokens: acc.totalSuccessTokens + vote.successTokens,
+        totalFailureTokens: acc.totalFailureTokens + vote.failureTokens,
+        voteCount: acc.voteCount + 1,
+      }),
+      { totalSuccessTokens: 1, totalFailureTokens: 1, voteCount: 0 } // Base pool of 1+1
+    );
+
+    return {
+      ...action,
+      voteTotals,
+    };
+  });
 }
 
 export async function getRounds(gameId: string, userId: string) {

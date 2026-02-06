@@ -7,6 +7,15 @@ interface GameHistoryProps {
   compact?: boolean;
 }
 
+interface HistoryArgument {
+  id: string;
+  argumentType: 'INITIATOR_FOR' | 'FOR' | 'AGAINST' | 'CLARIFICATION';
+  content: string;
+  player: {
+    playerName: string;
+  };
+}
+
 interface HistoryAction {
   id: string;
   sequenceNumber: number;
@@ -15,6 +24,12 @@ interface HistoryAction {
   initiator: {
     playerName: string;
     user: { displayName: string };
+  };
+  arguments?: HistoryArgument[];
+  voteTotals?: {
+    totalSuccessTokens: number;
+    totalFailureTokens: number;
+    voteCount: number;
   };
   tokenDraw?: {
     resultValue: number;
@@ -29,6 +44,7 @@ interface HistoryAction {
 
 export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
   const [expandedAction, setExpandedAction] = useState<string | null>(null);
+  const [expandedArguments, setExpandedArguments] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
 
   const { data, isLoading } = useQuery<{ data: HistoryAction[] }>({
@@ -101,6 +117,35 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
         return 'Disaster';
       default:
         return 'Unknown';
+    }
+  };
+
+  const getArgumentTypeColor = (type: string) => {
+    switch (type) {
+      case 'INITIATOR_FOR':
+      case 'FOR':
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200';
+      case 'AGAINST':
+        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200';
+      case 'CLARIFICATION':
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getArgumentTypeLabel = (type: string) => {
+    switch (type) {
+      case 'INITIATOR_FOR':
+        return 'Initial';
+      case 'FOR':
+        return 'For';
+      case 'AGAINST':
+        return 'Against';
+      case 'CLARIFICATION':
+        return 'Info';
+      default:
+        return type;
     }
   };
 
@@ -192,6 +237,66 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
                   <div className="text-xs">
                     <span className="text-muted-foreground">Desired: </span>
                     {action.desiredOutcome}
+                  </div>
+                )}
+
+                {/* Token Pool Summary */}
+                {action.voteTotals && (
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-muted-foreground">Token Pool:</span>
+                    <span className="text-green-600 dark:text-green-400">
+                      {action.voteTotals.totalSuccessTokens} Success
+                    </span>
+                    <span className="text-red-600 dark:text-red-400">
+                      {action.voteTotals.totalFailureTokens} Failure
+                    </span>
+                    <span className="text-muted-foreground">
+                      ({action.voteTotals.voteCount} votes)
+                    </span>
+                  </div>
+                )}
+
+                {/* Arguments Section - Collapsible */}
+                {action.arguments && action.arguments.length > 0 && (
+                  <div className="border-t pt-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedArguments(
+                          expandedArguments === action.id ? null : action.id
+                        );
+                      }}
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+                    >
+                      <span
+                        className={`transition-transform ${
+                          expandedArguments === action.id ? 'rotate-90' : ''
+                        }`}
+                      >
+                        ▶
+                      </span>
+                      <span>Arguments ({action.arguments.length})</span>
+                    </button>
+
+                    {expandedArguments === action.id && (
+                      <div className="mt-2 space-y-2 pl-4">
+                        {action.arguments.map((arg) => (
+                          <div key={arg.id} className="text-xs">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${getArgumentTypeColor(
+                                  arg.argumentType
+                                )}`}
+                              >
+                                {getArgumentTypeLabel(arg.argumentType)}
+                              </span>
+                              <span className="font-medium">{arg.player.playerName}</span>
+                            </div>
+                            <p className="text-muted-foreground pl-1">{arg.content}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 

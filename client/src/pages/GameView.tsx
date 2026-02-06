@@ -431,7 +431,8 @@ export default function GameView() {
                           <span className="font-medium text-amber-700 dark:text-amber-300">Action: </span>
                           <RichTextDisplay
                             content={player.persona.npcActionDescription}
-                            className="inline text-muted-foreground [&_p]:inline [&_p]:my-0"
+                            className="text-muted-foreground [&_p]:inline [&_p]:my-0"
+                            inline
                           />
                         </div>
                       )}
@@ -440,7 +441,8 @@ export default function GameView() {
                           <span className="font-medium text-amber-700 dark:text-amber-300">Goal: </span>
                           <RichTextDisplay
                             content={player.persona.npcDesiredOutcome}
-                            className="inline text-muted-foreground [&_p]:inline [&_p]:my-0"
+                            className="text-muted-foreground [&_p]:inline [&_p]:my-0"
+                            inline
                           />
                         </div>
                       )}

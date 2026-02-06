@@ -7,7 +7,13 @@ import { upload } from '../config/multer.js';
 const router = Router();
 
 // Import must be before /:gameId to avoid matching "import" as a gameId
-router.post('/import', authenticateToken, text({ type: ['text/yaml', 'text/plain', 'application/x-yaml'] }), gameController.importGame);
+router.post(
+  '/import',
+  authenticateToken,
+  uploadRateLimiter,
+  text({ type: ['text/yaml', 'text/plain', 'application/x-yaml'], limit: '5mb' }),
+  gameController.importGame
+);
 router.post('/', authenticateToken, gameController.createGame);
 router.get('/:gameId', authenticateToken, gameController.getGame);
 router.put('/:gameId', authenticateToken, gameController.updateGame);

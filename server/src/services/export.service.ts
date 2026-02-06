@@ -38,8 +38,6 @@ function toSnakeCase(obj: unknown): unknown {
  * Export the full game state as a YAML string.
  */
 export async function exportGameState(gameId: string, userId: string): Promise<ExportResult> {
-  await requireMember(gameId, userId);
-
   const game = await db.game.findUnique({
     where: { id: gameId },
     include: {
@@ -106,6 +104,8 @@ export async function exportGameState(gameId: string, userId: string): Promise<E
   if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
+
+  await requireMember(gameId, userId);
 
   const settings = (game.settings as Record<string, unknown>) || {};
 
@@ -240,20 +240,21 @@ export async function importGameFromYaml(yamlString: string, userId: string) {
 
   // Map snake_case YAML back to camelCase for createGameSchema
   const settingsData = (gameData.settings as Record<string, unknown>) || {};
-  const personasRaw = parsed.personas;
-  
-  // Validate personas is an array
-  if (personasRaw !== undefined && !Array.isArray(personasRaw)) {
-    throw new BadRequestError('Invalid YAML: "personas" must be an array');
-  }
-  
-  const personasData = personasRaw || [];
-  
-  // Validate each persona is an object
-  for (let i = 0; i < personasData.length; i++) {
-    if (personasData[i] === null || Array.isArray(personasData[i]) || typeof personasData[i] !== 'object') {
-      throw new BadRequestError(`Invalid YAML: persona at index ${i} must be an object`);
+  const personasRaw = (parsed as { personas?: unknown }).personas;
+
+  let personasData: Record<string, unknown>[] = [];
+
+  if (personasRaw !== undefined) {
+    if (!Array.isArray(personasRaw)) {
+      throw new BadRequestError('Invalid YAML: "personas" must be an array');
     }
+
+    personasData = personasRaw.map((persona, index) => {
+      if (persona === null || Array.isArray(persona) || typeof persona !== 'object') {
+        throw new BadRequestError(`Invalid YAML: persona at index ${index} must be an object`);
+      }
+      return persona as Record<string, unknown>;
+    });
   }
 
   const input = {

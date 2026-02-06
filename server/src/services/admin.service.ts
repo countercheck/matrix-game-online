@@ -50,8 +50,8 @@ export async function getDashboardStats() {
   ] = await Promise.all([
     db.user.count(),
     db.user.count({ where: { isBanned: true } }),
-    db.game.count({ where: { status: { in: [GameStatus.LOBBY, GameStatus.ACTIVE] } } }),
-    db.game.count({ where: { status: GameStatus.COMPLETED } }),
+    db.game.count({ where: { status: { in: [GameStatus.LOBBY, GameStatus.ACTIVE] }, deletedAt: null } }),
+    db.game.count({ where: { status: GameStatus.COMPLETED, deletedAt: null } }),
     db.user.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
@@ -64,6 +64,7 @@ export async function getDashboardStats() {
       },
     }),
     db.game.findMany({
+      where: { deletedAt: null },
       take: 5,
       orderBy: { createdAt: 'desc' },
       select: {
@@ -378,7 +379,9 @@ export async function listGames(query: ListGamesQuery) {
   const { page, limit, status, creatorId, search, sortBy, sortOrder } = query;
   const skip = (page - 1) * limit;
 
-  const where: Prisma.GameWhereInput = {};
+  const where: Prisma.GameWhereInput = {
+    deletedAt: null,
+  };
 
   if (status) {
     where.status = status;
@@ -476,7 +479,7 @@ export async function getGameDetails(gameId: string) {
     },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
@@ -492,16 +495,18 @@ export async function deleteGame(adminId: string, gameId: string, ipAddress?: st
       status: true,
       creatorId: true,
       playerCount: true,
+      deletedAt: true,
     },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
-  // Delete the game (cascades to related records)
-  await db.game.delete({
+  // Soft delete the game by setting deletedAt timestamp
+  await db.game.update({
     where: { id: gameId },
+    data: { deletedAt: new Date() },
   });
 
   await logAdminAction({
@@ -524,10 +529,10 @@ export async function deleteGame(adminId: string, gameId: string, ipAddress?: st
 export async function pauseGame(adminId: string, gameId: string, ipAddress?: string) {
   const game = await db.game.findUnique({
     where: { id: gameId },
-    select: { id: true, name: true, status: true },
+    select: { id: true, name: true, status: true, deletedAt: true },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 
@@ -563,10 +568,10 @@ export async function pauseGame(adminId: string, gameId: string, ipAddress?: str
 export async function resumeGame(adminId: string, gameId: string, ipAddress?: string) {
   const game = await db.game.findUnique({
     where: { id: gameId },
-    select: { id: true, name: true, status: true },
+    select: { id: true, name: true, status: true, deletedAt: true },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 

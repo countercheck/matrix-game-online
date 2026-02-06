@@ -230,8 +230,8 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
                   {action.narration && (
                     <div className="text-xs text-muted-foreground mt-2 italic">
                       <RichTextDisplay
-                        content={action.narration.content.slice(0, 150) + (action.narration.content.length > 150 ? '...' : '')}
-                        className="[&_p]:my-0"
+                        content={action.narration.content}
+                        className="line-clamp-3 [&_p]:my-0"
                       />
                     </div>
                   )}

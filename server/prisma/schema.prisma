@@ -50,6 +50,7 @@ model Game {
   updatedAt       DateTime     @updatedAt @map("updated_at")
   startedAt       DateTime?    @map("started_at")
   completedAt     DateTime?    @map("completed_at")
+  deletedAt       DateTime?    @map("deleted_at")
 
   // Relations
   creator        User          @relation("GameCreator", fields: [creatorId], references: [id], onDelete: Restrict)
@@ -64,6 +65,7 @@ model Game {
   @@index([creatorId])
   @@index([status, currentPhase])
   @@index([createdAt])
+  @@index([deletedAt])
   @@map("games")
 }
 

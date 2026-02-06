@@ -220,7 +220,7 @@ async function createNextRound(gameId: string, roundNumber: number) {
     },
   });
 
-  if (!game) {
+  if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
   }
 

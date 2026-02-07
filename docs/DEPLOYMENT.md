@@ -123,6 +123,7 @@ git push origin v1.0.0
 | `EMAIL_ENABLED` | `true` | Enable/disable emails |
 | `ENABLE_TIMEOUT_WORKER` | `true` | Enable automatic phase timeouts |
 | `TIMEOUT_CHECK_INTERVAL_MS` | `60000` | Timeout check frequency |
+| `UPLOADS_DIR` | `./uploads` | Directory for uploaded files (use mounted volume path for persistent storage) |
 
 ### Generating a Secure JWT Secret
 
@@ -285,6 +286,15 @@ The project is configured with Railway config files:
    EMAIL_PASS=your-sendgrid-api-key
    EMAIL_FROM=noreply@yourdomain.com
    ```
+   
+   **For persistent file uploads (recommended for production):**
+   - Create a Railway volume in your project (Volumes tab → New Volume)
+   - Mount the volume to your server service (e.g., mount path: `/app/uploads`)
+   - Add the following environment variable:
+   ```
+   UPLOADS_DIR=/app/uploads
+   ```
+   This ensures uploaded game images persist across deployments and restarts.
 
 5. **Deploy the frontend (Client service)**
    - Click "New" → "GitHub Repo" (same repo)

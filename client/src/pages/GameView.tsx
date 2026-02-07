@@ -490,6 +490,7 @@ export default function GameView() {
                 const match = disposition.match(/filename="(.+)"/);
                 // Sanitize filename from game name: remove invalid chars, limit length
                 const sanitizedName = (game.name || 'game')
+                  // eslint-disable-next-line no-control-regex
                   .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
                   .substring(0, 100);
                 const filename = match?.[1] || `${sanitizedName}-export.yaml`;

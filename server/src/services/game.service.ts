@@ -1,10 +1,11 @@
 import { db } from '../config/database.js';
 import { GamePhase, Prisma } from '@prisma/client';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
-import type { CreateGameInput } from '../utils/validators.js';
+import type { CreateGameInput, UpdatePersonaInput } from '../utils/validators.js';
 import { notifyGameStarted } from './notification.service.js';
 import fs from 'fs/promises';
 import path from 'path';
+import { getUploadsDir } from '../config/uploads.js';
 
 const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
 
@@ -189,7 +190,20 @@ export async function getGame(gameId: string, userId: string) {
 export async function updateGame(gameId: string, userId: string, data: Partial<CreateGameInput>) {
   await requireHost(gameId, userId);
 
-  const game = await db.game.update({
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    select: { id: true, status: true, deletedAt: true },
+  });
+
+  if (!game || game.deletedAt) {
+    throw new NotFoundError('Game not found');
+  }
+
+  if (game.status !== 'LOBBY') {
+    throw new BadRequestError('Cannot edit game after it has started');
+  }
+
+  const updatedGame = await db.game.update({
     where: { id: gameId },
     data: {
       name: data.name,
@@ -198,7 +212,7 @@ export async function updateGame(gameId: string, userId: string, data: Partial<C
     },
   });
 
-  return game;
+  return updatedGame;
 }
 
 export async function joinGame(
@@ -407,6 +421,61 @@ export async function selectPersona(
   });
 
   return updatedPlayer;
+}
+
+export async function updatePersona(
+  gameId: string,
+  personaId: string,
+  userId: string,
+  data: UpdatePersonaInput
+) {
+  await requireHost(gameId, userId);
+
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: { personas: true },
+  });
+
+  if (!game || game.deletedAt) {
+    throw new NotFoundError('Game not found');
+  }
+
+  if (game.status !== 'LOBBY') {
+    throw new BadRequestError('Cannot edit personas after game has started');
+  }
+
+  const persona = game.personas.find((p) => p.id === personaId);
+  if (!persona) {
+    throw new NotFoundError('Persona not found');
+  }
+
+  try {
+    const updatedPersona = await db.persona.update({
+      where: { id: personaId },
+      data: {
+        name: data.name,
+        description: data.description,
+        npcActionDescription: data.npcActionDescription,
+        npcDesiredOutcome: data.npcDesiredOutcome,
+      },
+    });
+
+    await logGameEvent(gameId, userId, 'PERSONA_UPDATED', {
+      personaName: updatedPersona.name,
+    });
+
+    return updatedPersona;
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002') {
+        throw new ConflictError('Persona name must be unique within the game');
+      }
+      if (err.code === 'P2000') {
+        throw new BadRequestError('Persona fields exceed allowed length');
+      }
+    }
+    throw err;
+  }
 }
 
 export async function startGame(gameId: string, userId: string) {
@@ -630,8 +699,11 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
       // Extract filename from URL
       const oldFilename = game.imageUrl.split('/').pop();
       if (oldFilename) {
-        const oldFilePath = path.join(process.cwd(), 'uploads', oldFilename);
-        await fs.unlink(oldFilePath);
+        const uploadsDirResolved = path.resolve(getUploadsDir());
+        const oldFilePath = path.resolve(uploadsDirResolved, oldFilename);
+        if (oldFilePath.startsWith(uploadsDirResolved + path.sep)) {
+          await fs.unlink(oldFilePath);
+        }
       }
     } catch {
       // Ignore errors if old file doesn't exist or can't be deleted

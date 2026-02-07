@@ -5,12 +5,16 @@ import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { Skeleton } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
+import { EditGameModal } from '../components/game/EditGameModal';
+import { EditPersonaModal } from '../components/game/EditPersonaModal';
 
 interface Persona {
   id: string;
   name: string;
   description: string | null;
   isNpc?: boolean;
+  npcActionDescription?: string | null;
+  npcDesiredOutcome?: string | null;
   claimedBy: { id: string; playerName: string } | null;
 }
 
@@ -44,6 +48,8 @@ export default function GameLobby() {
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [showEditGameModal, setShowEditGameModal] = useState(false);
+  const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
@@ -72,6 +78,30 @@ export default function GameLobby() {
   const selectPersonaMutation = useMutation({
     mutationFn: (personaId: string | null) =>
       api.post(`/games/${gameId}/select-persona`, { personaId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+    },
+  });
+
+  const updateGameMutation = useMutation({
+    mutationFn: (data: { name: string; description: string | null }) =>
+      api.put(`/games/${gameId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+    },
+  });
+
+  const updatePersonaMutation = useMutation({
+    mutationFn: ({ personaId, data }: { 
+      personaId: string; 
+      data: { 
+        name?: string; 
+        description?: string | null;
+        npcActionDescription?: string | null;
+        npcDesiredOutcome?: string | null;
+      } 
+    }) =>
+      api.put(`/games/${gameId}/personas/${personaId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
     },
@@ -181,7 +211,31 @@ export default function GameLobby() {
       )}
 
       <div>
-        {!game.imageUrl && <h1 className="text-2xl font-bold">{game.name}</h1>}
+        {!game.imageUrl && (
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">{game.name}</h1>
+            {isHost && (
+              <button
+                onClick={() => setShowEditGameModal(true)}
+                className="px-3 py-1.5 text-sm border rounded-md hover:bg-muted"
+                title="Edit game details"
+              >
+                ✏️ Edit
+              </button>
+            )}
+          </div>
+        )}
+        {game.imageUrl && isHost && (
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={() => setShowEditGameModal(true)}
+              className="px-3 py-1.5 text-sm border rounded-md hover:bg-muted"
+              title="Edit game details"
+            >
+              ✏️ Edit
+            </button>
+          </div>
+        )}
         {game.description && (
           <RichTextDisplay
             content={game.description}
@@ -311,13 +365,25 @@ export default function GameLobby() {
                       </span>
                     )}
                   </span>
-                  {persona.isNpc ? (
-                    <span className="text-xs text-amber-600 dark:text-amber-400">Auto-controlled</span>
-                  ) : persona.claimedBy ? (
-                    <span className="text-xs">{persona.claimedBy.playerName}</span>
-                  ) : (
-                    <span className="text-xs text-green-600 dark:text-green-400">Available</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {persona.isNpc ? (
+                      <span className="text-xs text-amber-600 dark:text-amber-400">Auto-controlled</span>
+                    ) : persona.claimedBy ? (
+                      <span className="text-xs">{persona.claimedBy.playerName}</span>
+                    ) : (
+                      <span className="text-xs text-green-600 dark:text-green-400">Available</span>
+                    )}
+                    {isHost && (
+                      <button
+                        onClick={() => setEditingPersona(persona)}
+                        className="ml-2 px-2 py-0.5 text-xs border rounded hover:bg-muted"
+                        title="Edit persona"
+                        aria-label={`Edit persona ${persona.name}`}
+                      >
+                        ✏️
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -393,6 +459,34 @@ export default function GameLobby() {
         <p className="text-center text-muted-foreground">
           Waiting for the host to start the game...
         </p>
+      )}
+
+      {/* Edit Game Modal */}
+      {game && (
+        <EditGameModal
+          isOpen={showEditGameModal}
+          onClose={() => setShowEditGameModal(false)}
+          onSave={async (data) => {
+            await updateGameMutation.mutateAsync(data);
+          }}
+          initialName={game.name}
+          initialDescription={game.description || ''}
+        />
+      )}
+
+      {/* Edit Persona Modal */}
+      {editingPersona && (
+        <EditPersonaModal
+          isOpen={!!editingPersona}
+          onClose={() => setEditingPersona(null)}
+          onSave={async (data) => {
+            await updatePersonaMutation.mutateAsync({
+              personaId: editingPersona.id,
+              data,
+            });
+          }}
+          persona={editingPersona}
+        />
       )}
     </div>
   );

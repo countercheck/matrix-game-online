@@ -38,7 +38,7 @@ describe('UPLOADS_DIR Integration Tests', () => {
     // Clean up temporary uploads directory
     try {
       await fs.rm(tempUploadsDir, { recursive: true, force: true });
-    } catch (_) {
+    } catch {
       // Ignore cleanup errors
     }
   });

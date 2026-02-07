@@ -1,105 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock logger
-vi.mock('../../../src/utils/logger.js', () => ({
-  logger: {
+const { mockLogger } = vi.hoisted(() => {
+  const mockLogger = {
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
     debug: vi.fn(),
-  },
+  };
+  return { mockLogger };
+});
+
+vi.mock('../../../src/utils/logger.js', () => ({
+  logger: mockLogger,
 }));
 
 describe('Email Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-  });
-
-  describe('Module exports', () => {
-    it('should export initializeEmailService function', async () => {
-      const { initializeEmailService } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof initializeEmailService).toBe('function');
-    });
-
-    it('should export sendEmail function', async () => {
-      const { sendEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendEmail).toBe('function');
-    });
-
-    it('should export sendGameInviteEmail function', async () => {
-      const { sendGameInviteEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendGameInviteEmail).toBe('function');
-    });
-
-    it('should export sendGameStartedEmail function', async () => {
-      const { sendGameStartedEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendGameStartedEmail).toBe('function');
-    });
-
-    it('should export sendActionProposedEmail function', async () => {
-      const { sendActionProposedEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendActionProposedEmail).toBe('function');
-    });
-
-    it('should export sendVotingStartedEmail function', async () => {
-      const { sendVotingStartedEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendVotingStartedEmail).toBe('function');
-    });
-
-    it('should export sendResolutionReadyEmail function', async () => {
-      const { sendResolutionReadyEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendResolutionReadyEmail).toBe('function');
-    });
-
-    it('should export sendNarrationNeededEmail function', async () => {
-      const { sendNarrationNeededEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendNarrationNeededEmail).toBe('function');
-    });
-
-    it('should export sendRoundSummaryNeededEmail function', async () => {
-      const { sendRoundSummaryNeededEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendRoundSummaryNeededEmail).toBe('function');
-    });
-
-    it('should export sendNewRoundEmail function', async () => {
-      const { sendNewRoundEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendNewRoundEmail).toBe('function');
-    });
-
-    it('should export sendTimeoutWarningEmail function', async () => {
-      const { sendTimeoutWarningEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendTimeoutWarningEmail).toBe('function');
-    });
-
-    it('should export sendTimeoutOccurredEmail function', async () => {
-      const { sendTimeoutOccurredEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
-      expect(typeof sendTimeoutOccurredEmail).toBe('function');
-    });
   });
 
   describe('sendEmail when disabled', () => {
@@ -121,6 +39,27 @@ describe('Email Service', () => {
 
       process.env.EMAIL_ENABLED = originalEnv;
     });
+
+    it('should log a debug message when email is disabled', async () => {
+      const originalEnv = process.env.EMAIL_ENABLED;
+      process.env.EMAIL_ENABLED = 'false';
+
+      const { sendEmail } = await import(
+        '../../../src/services/email.service.js'
+      );
+
+      await sendEmail({
+        to: 'test@example.com',
+        subject: 'Test Subject',
+        text: 'Test message',
+      });
+
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        expect.stringContaining('Test Subject')
+      );
+
+      process.env.EMAIL_ENABLED = originalEnv;
+    });
   });
 
   describe('sendEmail without transporter', () => {
@@ -132,7 +71,6 @@ describe('Email Service', () => {
         '../../../src/services/email.service.js'
       );
 
-      // Without calling initializeEmailService, transporter is null
       const result = await sendEmail({
         to: 'test@example.com',
         subject: 'Test',
@@ -140,6 +78,73 @@ describe('Email Service', () => {
       });
 
       expect(result).toBe(false);
+
+      process.env.EMAIL_ENABLED = originalEnv;
+    });
+
+    it('should log a warning when transporter is not initialized', async () => {
+      const originalEnv = process.env.EMAIL_ENABLED;
+      process.env.EMAIL_ENABLED = 'true';
+
+      const { sendEmail } = await import(
+        '../../../src/services/email.service.js'
+      );
+
+      await sendEmail({
+        to: 'test@example.com',
+        subject: 'Test',
+        text: 'Test message',
+      });
+
+      expect(mockLogger.warn).toHaveBeenCalledWith('Email transporter not initialized');
+
+      process.env.EMAIL_ENABLED = originalEnv;
+    });
+  });
+
+  describe('initializeEmailService when disabled', () => {
+    it('should log that email is disabled and return without creating transporter', async () => {
+      const originalEnv = process.env.EMAIL_ENABLED;
+      process.env.EMAIL_ENABLED = 'false';
+
+      const { initializeEmailService, sendEmail } = await import(
+        '../../../src/services/email.service.js'
+      );
+
+      await initializeEmailService();
+
+      expect(mockLogger.info).toHaveBeenCalledWith('Email service disabled');
+
+      // Sending should still return false
+      const result = await sendEmail({
+        to: 'test@example.com',
+        subject: 'Test',
+        text: 'Test',
+      });
+      expect(result).toBe(false);
+
+      process.env.EMAIL_ENABLED = originalEnv;
+    });
+  });
+
+  describe('email template functions', () => {
+    it('should return false from template functions when email is disabled', async () => {
+      const originalEnv = process.env.EMAIL_ENABLED;
+      process.env.EMAIL_ENABLED = 'false';
+
+      const { sendGameInviteEmail, sendGameStartedEmail } = await import(
+        '../../../src/services/email.service.js'
+      );
+
+      const inviteResult = await sendGameInviteEmail(
+        'test@example.com', 'Test Game', 'Host', 'game-1'
+      );
+      expect(inviteResult).toBe(false);
+
+      const startResult = await sendGameStartedEmail(
+        'test@example.com', 'Test Game', 'game-1'
+      );
+      expect(startResult).toBe(false);
 
       process.env.EMAIL_ENABLED = originalEnv;
     });

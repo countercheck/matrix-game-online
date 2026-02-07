@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the database
-vi.mock('../../../src/config/database.js', () => ({
-  db: {
+const { mockDb } = vi.hoisted(() => {
+  const mockDb = {
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -10,10 +9,29 @@ vi.mock('../../../src/config/database.js', () => ({
     gamePlayer: {
       findMany: vi.fn(),
     },
+  };
+  return { mockDb };
+});
+
+vi.mock('../../../src/config/database.js', () => ({
+  db: mockDb,
+}));
+
+vi.mock('../../../src/middleware/errorHandler.js', () => ({
+  NotFoundError: class NotFoundError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'NotFoundError';
+    }
   },
 }));
 
-import { db } from '../../../src/config/database.js';
+import {
+  getProfile,
+  updateProfile,
+  getUserGames,
+  updateNotificationPreferences,
+} from '../../../src/services/user.service.js';
 
 describe('User Service', () => {
   beforeEach(() => {
@@ -32,13 +50,12 @@ describe('User Service', () => {
         lastLogin: new Date('2024-01-15'),
       };
 
-      vi.mocked(db.user.findUnique).mockResolvedValue({
-        ...mockUser,
-        passwordHash: 'hashed',
-        updatedAt: new Date(),
-      });
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
 
-      const result = await db.user.findUnique({
+      const result = await getProfile('user-123');
+
+      expect(result).toEqual(mockUser);
+      expect(mockDb.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'user-123' },
         select: {
           id: true,
@@ -50,81 +67,41 @@ describe('User Service', () => {
           lastLogin: true,
         },
       });
-
-      expect(result).toBeDefined();
-      expect(result?.id).toBe('user-123');
-      expect(result?.email).toBe('test@example.com');
-      expect(db.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-        select: expect.objectContaining({
-          id: true,
-          email: true,
-          displayName: true,
-        }),
-      });
     });
 
-    it('should return null when user does not exist', async () => {
-      vi.mocked(db.user.findUnique).mockResolvedValue(null);
+    it('should throw NotFoundError when user does not exist', async () => {
+      mockDb.user.findUnique.mockResolvedValue(null);
 
-      const result = await db.user.findUnique({
-        where: { id: 'nonexistent' },
-      });
-
-      expect(result).toBeNull();
+      await expect(getProfile('nonexistent')).rejects.toThrow('User not found');
     });
 
-    it('should not return password hash in profile', async () => {
-      const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        avatarUrl: null,
-        notificationPreferences: {},
-        createdAt: new Date(),
-        lastLogin: null,
-      };
+    it('should not include password hash in the select', async () => {
+      mockDb.user.findUnique.mockResolvedValue({ id: 'user-123' });
 
-      vi.mocked(db.user.findUnique).mockResolvedValue(mockUser as any);
+      await getProfile('user-123');
 
-      const result = await db.user.findUnique({
-        where: { id: 'user-123' },
-        select: {
-          id: true,
-          email: true,
-          displayName: true,
-          avatarUrl: true,
-          notificationPreferences: true,
-          createdAt: true,
-          lastLogin: true,
-        },
-      });
-
-      expect(result).not.toHaveProperty('passwordHash');
+      const selectArg = mockDb.user.findUnique.mock.calls[0][0].select;
+      expect(selectArg).not.toHaveProperty('passwordHash');
     });
   });
 
   describe('updateProfile', () => {
     it('should update display name', async () => {
-      const mockUpdatedUser = {
+      const mockUpdated = {
         id: 'user-123',
         email: 'test@example.com',
         displayName: 'New Name',
         avatarUrl: null,
         notificationPreferences: {},
       };
+      mockDb.user.update.mockResolvedValue(mockUpdated);
 
-      vi.mocked(db.user.update).mockResolvedValue({
-        ...mockUpdatedUser,
-        passwordHash: 'hashed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: null,
-      });
+      const result = await updateProfile('user-123', { displayName: 'New Name' });
 
-      const result = await db.user.update({
+      expect(result.displayName).toBe('New Name');
+      expect(mockDb.user.update).toHaveBeenCalledWith({
         where: { id: 'user-123' },
-        data: { displayName: 'New Name' },
+        data: { displayName: 'New Name', avatarUrl: undefined },
         select: {
           id: true,
           email: true,
@@ -133,92 +110,46 @@ describe('User Service', () => {
           notificationPreferences: true,
         },
       });
-
-      expect(result.displayName).toBe('New Name');
-      expect(db.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 'user-123' },
-          data: { displayName: 'New Name' },
-        })
-      );
     });
 
     it('should update avatar URL', async () => {
-      const mockUpdatedUser = {
+      mockDb.user.update.mockResolvedValue({
         id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        avatarUrl: 'https://example.com/new-avatar.jpg',
-        notificationPreferences: {},
-      };
-
-      vi.mocked(db.user.update).mockResolvedValue({
-        ...mockUpdatedUser,
-        passwordHash: 'hashed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: null,
+        avatarUrl: 'https://example.com/new.jpg',
       });
 
-      const result = await db.user.update({
-        where: { id: 'user-123' },
-        data: { avatarUrl: 'https://example.com/new-avatar.jpg' },
+      const result = await updateProfile('user-123', {
+        avatarUrl: 'https://example.com/new.jpg',
       });
 
-      expect(result.avatarUrl).toBe('https://example.com/new-avatar.jpg');
+      expect(result.avatarUrl).toBe('https://example.com/new.jpg');
     });
 
     it('should allow setting avatar URL to null', async () => {
-      const mockUpdatedUser = {
-        id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        avatarUrl: null,
-        notificationPreferences: {},
-      };
+      mockDb.user.update.mockResolvedValue({ id: 'user-123', avatarUrl: null });
 
-      vi.mocked(db.user.update).mockResolvedValue({
-        ...mockUpdatedUser,
-        passwordHash: 'hashed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: null,
-      });
-
-      const result = await db.user.update({
-        where: { id: 'user-123' },
-        data: { avatarUrl: null },
-      });
+      const result = await updateProfile('user-123', { avatarUrl: null });
 
       expect(result.avatarUrl).toBeNull();
     });
 
-    it('should update both display name and avatar URL', async () => {
-      vi.mocked(db.user.update).mockResolvedValue({
+    it('should update both fields at once', async () => {
+      mockDb.user.update.mockResolvedValue({
         id: 'user-123',
-        email: 'test@example.com',
         displayName: 'New Name',
-        avatarUrl: 'https://example.com/avatar.jpg',
-        notificationPreferences: {},
-        passwordHash: 'hashed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: null,
+        avatarUrl: 'https://example.com/new.jpg',
       });
 
-      await db.user.update({
-        where: { id: 'user-123' },
-        data: {
-          displayName: 'New Name',
-          avatarUrl: 'https://example.com/avatar.jpg',
-        },
+      await updateProfile('user-123', {
+        displayName: 'New Name',
+        avatarUrl: 'https://example.com/new.jpg',
       });
 
-      expect(db.user.update).toHaveBeenCalledWith(
+      expect(mockDb.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: {
             displayName: 'New Name',
-            avatarUrl: 'https://example.com/avatar.jpg',
+            avatarUrl: 'https://example.com/new.jpg',
           },
         })
       );
@@ -227,261 +158,116 @@ describe('User Service', () => {
 
   describe('getUserGames', () => {
     it('should return empty array when user has no games', async () => {
-      vi.mocked(db.gamePlayer.findMany).mockResolvedValue([]);
+      mockDb.gamePlayer.findMany.mockResolvedValue([]);
 
-      const result = await db.gamePlayer.findMany({
-        where: { userId: 'user-123', isActive: true },
-      });
+      const result = await getUserGames('user-123');
 
       expect(result).toEqual([]);
     });
 
-    it('should return user games with correct structure', async () => {
-      const mockGamePlayers = [
-        {
-          id: 'gp-1',
-          gameId: 'game-1',
-          userId: 'user-123',
-          playerName: 'Player One',
-          isHost: true,
-          isActive: true,
-          joinOrder: 1,
-          createdAt: new Date(),
-          hasProposedThisRound: false,
-          game: {
-            id: 'game-1',
-            name: 'Test Game',
-            description: 'A test game',
-            status: 'ACTIVE',
-            currentPhase: 'PROPOSAL',
-            currentRound: { roundNumber: 2 },
-            currentAction: null,
-            updatedAt: new Date(),
-            _count: { players: 3 },
-          },
-        },
-      ];
+    it('should query active memberships ordered by updatedAt desc', async () => {
+      mockDb.gamePlayer.findMany.mockResolvedValue([]);
 
-      vi.mocked(db.gamePlayer.findMany).mockResolvedValue(mockGamePlayers as any);
+      await getUserGames('user-123');
 
-      const result = await db.gamePlayer.findMany({
-        where: { userId: 'user-123', isActive: true },
-        include: {
-          game: {
-            include: {
-              currentRound: true,
-              currentAction: true,
-              _count: { select: { players: { where: { isActive: true } } } },
-            },
-          },
-        },
-      });
-
-      expect(result).toHaveLength(1);
-      expect(result[0].game.name).toBe('Test Game');
-      expect(result[0].isHost).toBe(true);
-    });
-
-    it('should only return active game memberships', async () => {
-      vi.mocked(db.gamePlayer.findMany).mockResolvedValue([]);
-
-      await db.gamePlayer.findMany({
-        where: { userId: 'user-123', isActive: true },
-      });
-
-      expect(db.gamePlayer.findMany).toHaveBeenCalledWith(
+      expect(mockDb.gamePlayer.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: 'user-123', isActive: true },
-        })
-      );
-    });
-
-    it('should sort games by updatedAt descending', async () => {
-      await db.gamePlayer.findMany({
-        where: { userId: 'user-123', isActive: true },
-        orderBy: { game: { updatedAt: 'desc' } },
-      });
-
-      expect(db.gamePlayer.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
           orderBy: { game: { updatedAt: 'desc' } },
         })
       );
     });
+
+    it('should map game players to simplified game objects', async () => {
+      mockDb.gamePlayer.findMany.mockResolvedValue([
+        {
+          id: 'gp-1',
+          playerName: 'Player One',
+          isHost: true,
+          game: {
+            id: 'game-1',
+            name: 'Test Game',
+            description: 'A test',
+            status: 'ACTIVE',
+            currentPhase: 'PROPOSAL',
+            currentRound: { roundNumber: 2 },
+            currentAction: null,
+            updatedAt: new Date('2024-01-15'),
+            _count: { players: 3 },
+          },
+        },
+      ]);
+
+      const result = await getUserGames('user-123');
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: 'game-1',
+        name: 'Test Game',
+        description: 'A test',
+        status: 'ACTIVE',
+        currentPhase: 'PROPOSAL',
+        playerCount: 3,
+        playerName: 'Player One',
+        isHost: true,
+        currentRound: 2,
+        updatedAt: new Date('2024-01-15'),
+      });
+    });
   });
 
   describe('updateNotificationPreferences', () => {
-    it('should update email notification preference', async () => {
-      const existingPrefs = { email: true, inApp: true, frequency: 'immediate' };
-      const newPrefs = { email: false };
+    it('should throw NotFoundError when user does not exist', async () => {
+      mockDb.user.findUnique.mockResolvedValue(null);
 
-      vi.mocked(db.user.findUnique).mockResolvedValue({
-        id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        passwordHash: 'hashed',
-        avatarUrl: null,
-        notificationPreferences: existingPrefs,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: null,
+      await expect(
+        updateNotificationPreferences('nonexistent', { emailEnabled: false })
+      ).rejects.toThrow('User not found');
+    });
+
+    it('should merge new preferences with existing ones', async () => {
+      mockDb.user.findUnique.mockResolvedValue({
+        notificationPreferences: { emailEnabled: true, gameStarted: true },
       });
+      mockDb.user.update.mockResolvedValue({});
 
-      vi.mocked(db.user.update).mockResolvedValue({
-        id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        passwordHash: 'hashed',
-        avatarUrl: null,
-        notificationPreferences: { ...existingPrefs, ...newPrefs },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: null,
-      });
+      await updateNotificationPreferences('user-123', { emailEnabled: false });
 
-      // First fetch existing preferences
-      const user = await db.user.findUnique({
+      expect(mockDb.user.update).toHaveBeenCalledWith({
         where: { id: 'user-123' },
-        select: { notificationPreferences: true },
-      });
-
-      expect(user?.notificationPreferences).toEqual(existingPrefs);
-
-      // Then merge and update
-      const mergedPrefs = { ...existingPrefs, ...newPrefs };
-      await db.user.update({
-        where: { id: 'user-123' },
-        data: { notificationPreferences: mergedPrefs },
-      });
-
-      expect(db.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: {
-            notificationPreferences: {
-              email: false,
-              inApp: true,
-              frequency: 'immediate',
-            },
+        data: {
+          notificationPreferences: {
+            emailEnabled: false,
+            gameStarted: true,
           },
-        })
-      );
-    });
-
-    it('should update frequency preference', async () => {
-      vi.mocked(db.user.findUnique).mockResolvedValue({
-        id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        passwordHash: 'hashed',
-        avatarUrl: null,
-        notificationPreferences: { frequency: 'immediate' },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: null,
-      });
-
-      const user = await db.user.findUnique({
-        where: { id: 'user-123' },
-        select: { notificationPreferences: true },
-      });
-
-      const currentPrefs = user?.notificationPreferences as Record<string, unknown>;
-      const updatedPrefs = { ...currentPrefs, frequency: 'daily' };
-
-      expect(updatedPrefs.frequency).toBe('daily');
-    });
-
-    it('should preserve existing preferences when updating partial data', async () => {
-      const existingPrefs = {
-        email: true,
-        inApp: true,
-        frequency: 'immediate',
-      };
-
-      vi.mocked(db.user.findUnique).mockResolvedValue({
-        id: 'user-123',
-        notificationPreferences: existingPrefs,
-      } as any);
-
-      const user = await db.user.findUnique({
-        where: { id: 'user-123' },
-        select: { notificationPreferences: true },
-      });
-
-      const currentPrefs = (user?.notificationPreferences as Record<string, unknown>) || {};
-      const newPartialPrefs = { inApp: false };
-      const mergedPrefs = { ...currentPrefs, ...newPartialPrefs };
-
-      expect(mergedPrefs).toEqual({
-        email: true,
-        inApp: false,
-        frequency: 'immediate',
+        },
       });
     });
 
-    it('should handle empty existing preferences', async () => {
-      vi.mocked(db.user.findUnique).mockResolvedValue({
-        id: 'user-123',
+    it('should handle null existing preferences', async () => {
+      mockDb.user.findUnique.mockResolvedValue({
         notificationPreferences: null,
-      } as any);
+      });
+      mockDb.user.update.mockResolvedValue({});
 
-      const user = await db.user.findUnique({
-        where: { id: 'user-123' },
-        select: { notificationPreferences: true },
+      const result = await updateNotificationPreferences('user-123', {
+        emailEnabled: true,
       });
 
-      const currentPrefs = (user?.notificationPreferences as Record<string, unknown>) || {};
-      const newPrefs = { email: true, frequency: 'daily' };
-      const mergedPrefs = { ...currentPrefs, ...newPrefs };
+      expect(result).toEqual({ emailEnabled: true });
+    });
 
-      expect(mergedPrefs).toEqual({
-        email: true,
-        frequency: 'daily',
+    it('should return the merged preferences', async () => {
+      mockDb.user.findUnique.mockResolvedValue({
+        notificationPreferences: { emailEnabled: true },
       });
-    });
-  });
+      mockDb.user.update.mockResolvedValue({});
 
-  describe('Profile Validation', () => {
-    it('should validate display name length (1-50 chars)', () => {
-      const validateDisplayName = (name: string) =>
-        name.length >= 1 && name.length <= 50;
+      const result = await updateNotificationPreferences('user-123', {
+        gameStarted: false,
+      });
 
-      expect(validateDisplayName('A')).toBe(true);
-      expect(validateDisplayName('Valid Name')).toBe(true);
-      expect(validateDisplayName('A'.repeat(50))).toBe(true);
-      expect(validateDisplayName('')).toBe(false);
-      expect(validateDisplayName('A'.repeat(51))).toBe(false);
-    });
-
-    it('should validate avatar URL format', () => {
-      const validateAvatarUrl = (url: string | null) => {
-        if (url === null) return true;
-        try {
-          new URL(url);
-          return url.length <= 500;
-        } catch {
-          return false;
-        }
-      };
-
-      expect(validateAvatarUrl(null)).toBe(true);
-      expect(validateAvatarUrl('https://example.com/avatar.jpg')).toBe(true);
-      expect(validateAvatarUrl('http://example.com/avatar.png')).toBe(true);
-      expect(validateAvatarUrl('not-a-url')).toBe(false);
-      expect(validateAvatarUrl('https://example.com/' + 'a'.repeat(500))).toBe(false);
-    });
-
-    it('should validate notification frequency values', () => {
-      const validFrequencies = ['immediate', 'daily', 'none'];
-
-      const validateFrequency = (freq: string) =>
-        validFrequencies.includes(freq);
-
-      expect(validateFrequency('immediate')).toBe(true);
-      expect(validateFrequency('daily')).toBe(true);
-      expect(validateFrequency('none')).toBe(true);
-      expect(validateFrequency('weekly')).toBe(false);
-      expect(validateFrequency('')).toBe(false);
+      expect(result).toEqual({ emailEnabled: true, gameStarted: false });
     });
   });
 });

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createTestApp } from './test-app.js';
-import { testDb, cleanDatabase } from './setup.js';
+import { testDb } from './setup.js';
 
 const app = createTestApp();
 
@@ -19,7 +19,6 @@ describe('Complete Game Flow E2E Tests', () => {
 
       expect(hostResponse.status).toBe(201);
       const hostToken = hostResponse.body.data.token;
-      const hostId = hostResponse.body.data.user.id;
 
       // Step 2: Register player users
       const player1Response = await request(app)

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as gameService from '../services/game.service.js';
 import * as actionService from '../services/action.service.js';
+import * as exportService from '../services/export.service.js';
 import {
   createGameSchema,
   actionProposalSchema,
@@ -261,6 +262,47 @@ export async function skipProposals(
     const userId = req.user!.id;
     const result = await actionService.skipToNextAction(gameId, userId);
     res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function exportGame(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const gameId = req.params.gameId as string;
+    const userId = req.user!.id;
+    const { yaml, filename } = await exportService.exportGameState(gameId, userId);
+    res.setHeader('Content-Type', 'text/yaml');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(yaml);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function importGame(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const userId = req.user!.id;
+
+    let yamlString: string;
+    if (typeof req.body === 'string') {
+      yamlString = req.body;
+    } else if (req.body?.yaml) {
+      yamlString = req.body.yaml;
+    } else {
+      throw new BadRequestError('Request body must contain YAML content (as raw text or { yaml: "..." })');
+    }
+
+    const game = await exportService.importGameFromYaml(yamlString, userId);
+    res.status(201).json({ success: true, data: game });
   } catch (error) {
     next(error);
   }

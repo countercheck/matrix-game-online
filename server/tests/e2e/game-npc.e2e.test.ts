@@ -10,7 +10,7 @@ describe('Game with NPC Persona E2E Tests', () => {
   let user1Token: string;
   let user2Token: string;
   let user1Id: string;
-  let _user2Id: string;
+  // user2Id captured for potential future assertions
   let npcUserId: string;
 
   beforeEach(async () => {
@@ -41,7 +41,7 @@ describe('Game with NPC Persona E2E Tests', () => {
         displayName: 'Player Two',
       });
     user2Token = user2Response.body.data.token;
-    _user2Id = user2Response.body.data.user.id;
+    // user2Id not needed yet but user2 must be registered for the game
   });
 
   describe('Game Creation with NPC Persona', () => {

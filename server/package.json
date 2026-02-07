@@ -28,6 +28,7 @@
     "create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
+    "tsx": "^4.7.1",
     "@prisma/client": "^6.19.2",
     "@types/multer": "^2.0.0",
     "bcryptjs": "^2.4.3",
@@ -39,7 +40,6 @@
     "multer": "^2.0.2",
     "nodemailer": "^7.0.13",
     "prisma": "^6.19.2",
-    "tsx": "^4.7.1",
     "winston": "^3.12.0",
     "yaml": "^2.8.2",
     "zod": "^3.22.4"

@@ -15,10 +15,13 @@ export function sanitizeFilename(filename: string, maxLength = 100): string {
 export function extractFilenameFromHeader(contentDisposition: string): string | null {
   if (!contentDisposition) return null;
   
-  // Match: filename="value" or filename=value
-  const matches = contentDisposition.match(/filename[^;=\n]*=(["']?)([^"'\n]*)\1/);
-  if (matches && matches[2]) {
-    return matches[2].trim();
+  // Match: filename="value" or filename=value, stopping unquoted values at ';' or newline
+  const matches = contentDisposition.match(/filename[^;=\n]*=\s*(?:"([^"\n]*)"|([^;\n]*))/i);
+  if (matches) {
+    const value = matches[1] ?? matches[2];
+    if (value) {
+      return value.trim();
+    }
   }
   
   return null;
@@ -36,11 +39,12 @@ export function downloadBlob(
   const link = document.createElement('a');
   link.href = url;
   
-  // Extract filename from header or use sanitized default
+  // Extract filename from header or use default, then sanitize for safety
   const headerFilename = contentDisposition 
     ? extractFilenameFromHeader(contentDisposition) 
     : null;
-  const filename = headerFilename || sanitizeFilename(defaultFilename);
+  const filenameSource = headerFilename ?? defaultFilename;
+  const filename = sanitizeFilename(filenameSource);
   
   link.download = filename;
   link.style.display = 'none';

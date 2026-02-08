@@ -70,7 +70,11 @@ export default function Dashboard() {
       
       // Use Content-Type from response or fallback to common YAML MIME type
       const contentType = response.headers['content-type'] || 'application/x-yaml';
-      const blob = new Blob([response.data], { type: contentType });
+      const responseBlob = response.data as Blob;
+      const blob =
+        responseBlob.type === contentType
+          ? responseBlob
+          : responseBlob.slice(0, responseBlob.size, contentType);
       const contentDisposition = response.headers['content-disposition'];
       
       downloadBlob(blob, `${gameName}-export.yaml`, contentDisposition);

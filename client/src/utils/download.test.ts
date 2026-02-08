@@ -35,11 +35,6 @@ describe('extractFilenameFromHeader', () => {
     expect(result).toBe('my-game.yaml');
   });
 
-  it('should extract filename with single quotes', () => {
-    const result = extractFilenameFromHeader("attachment; filename='my-game.yaml'");
-    expect(result).toBe('my-game.yaml');
-  });
-
   it('should return null for empty header', () => {
     const result = extractFilenameFromHeader('');
     expect(result).toBeNull();
@@ -54,16 +49,39 @@ describe('extractFilenameFromHeader', () => {
     const result = extractFilenameFromHeader('filename=" my-game.yaml "');
     expect(result).toBe('my-game.yaml');
   });
+
+  it('should handle unquoted filename with semicolon separator', () => {
+    const result = extractFilenameFromHeader('attachment; filename=foo.yaml; size=123');
+    expect(result).toBe('foo.yaml');
+  });
+
+  it('should handle unquoted filename at end of header', () => {
+    const result = extractFilenameFromHeader('attachment; filename=my-game.yaml');
+    expect(result).toBe('my-game.yaml');
+  });
 });
 
 describe('downloadBlob', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let appendChildSpy: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let removeChildSpy: any;
+
   beforeEach(() => {
     vi.useFakeTimers();
-    // Mock DOM methods
-    document.body.appendChild = vi.fn();
-    document.body.removeChild = vi.fn();
-    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
-    global.URL.revokeObjectURL = vi.fn();
+    // Use spies instead of direct assignment
+    appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
+    removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
+    
+    // Mock URL methods on globalThis
+    if (!globalThis.URL.createObjectURL) {
+      globalThis.URL.createObjectURL = vi.fn();
+    }
+    if (!globalThis.URL.revokeObjectURL) {
+      globalThis.URL.revokeObjectURL = vi.fn();
+    }
+    vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -75,8 +93,8 @@ describe('downloadBlob', () => {
     const blob = new Blob(['test'], { type: 'text/yaml' });
     downloadBlob(blob, 'my-game-export.yaml');
 
-    expect(document.body.appendChild).toHaveBeenCalled();
-    const link = (document.body.appendChild as ReturnType<typeof vi.fn>).mock.calls[0][0] as HTMLAnchorElement;
+    expect(appendChildSpy).toHaveBeenCalled();
+    const link = appendChildSpy.mock.calls[0][0] as HTMLAnchorElement;
     expect(link.download).toBe('my-game-export.yaml');
     expect(link.href).toBe('blob:mock-url');
   });
@@ -85,15 +103,23 @@ describe('downloadBlob', () => {
     const blob = new Blob(['test'], { type: 'text/yaml' });
     downloadBlob(blob, 'default.yaml', 'attachment; filename="server-name.yaml"');
 
-    const link = (document.body.appendChild as ReturnType<typeof vi.fn>).mock.calls[0][0] as HTMLAnchorElement;
+    const link = appendChildSpy.mock.calls[0][0] as HTMLAnchorElement;
     expect(link.download).toBe('server-name.yaml');
+  });
+
+  it('should sanitize filename from Content-Disposition header', () => {
+    const blob = new Blob(['test'], { type: 'text/yaml' });
+    downloadBlob(blob, 'default.yaml', 'attachment; filename="my<bad>:name.yaml"');
+
+    const link = appendChildSpy.mock.calls[0][0] as HTMLAnchorElement;
+    expect(link.download).toBe('mybadname.yaml');
   });
 
   it('should sanitize default filename with invalid characters', () => {
     const blob = new Blob(['test'], { type: 'text/yaml' });
     downloadBlob(blob, 'my<game>:file*.yaml');
 
-    const link = (document.body.appendChild as ReturnType<typeof vi.fn>).mock.calls[0][0] as HTMLAnchorElement;
+    const link = appendChildSpy.mock.calls[0][0] as HTMLAnchorElement;
     expect(link.download).toBe('mygamefile.yaml');
   });
 
@@ -101,9 +127,9 @@ describe('downloadBlob', () => {
     const blob = new Blob(['test'], { type: 'text/yaml' });
     const clickSpy = vi.fn();
     
-    // Spy on document.body.appendChild to capture the link
-    const appendChildSpy = vi.spyOn(document.body, 'appendChild');
-    appendChildSpy.mockImplementation((node) => {
+    // Temporarily override the spy to add click spy
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    appendChildSpy.mockImplementationOnce((node: any) => {
       if (node instanceof HTMLAnchorElement) {
         node.click = clickSpy;
       }
@@ -112,8 +138,6 @@ describe('downloadBlob', () => {
 
     downloadBlob(blob, 'test.yaml');
     expect(clickSpy).toHaveBeenCalled();
-    
-    appendChildSpy.mockRestore();
   });
 
   it('should cleanup after 100ms timeout', () => {
@@ -121,14 +145,14 @@ describe('downloadBlob', () => {
     downloadBlob(blob, 'test.yaml');
 
     // Should not cleanup immediately
-    expect(document.body.removeChild).not.toHaveBeenCalled();
-    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    expect(removeChildSpy).not.toHaveBeenCalled();
+    expect(globalThis.URL.revokeObjectURL).not.toHaveBeenCalled();
 
     // Fast-forward time
     vi.advanceTimersByTime(100);
 
     // Should cleanup after timeout
-    expect(document.body.removeChild).toHaveBeenCalled();
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    expect(removeChildSpy).toHaveBeenCalled();
+    expect(globalThis.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
   });
 });

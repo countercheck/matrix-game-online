@@ -80,9 +80,15 @@ export default function Dashboard() {
       const contentDisposition = response.headers['content-disposition'];
       let filename = `${gameName}-export.yaml`;
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
+        // Try to extract filename, handling both quoted and unquoted values
+        // Matches: filename="value" or filename=value or filename*=UTF-8''value
+        const matches = contentDisposition.match(/filename[^;=\n]*=((['"])([^\2]*?)\2|([^;\n]*))/);
+        if (matches) {
+          // Use captured group 3 (quoted) or 4 (unquoted)
+          const extractedFilename = matches[3] || matches[4];
+          if (extractedFilename) {
+            filename = extractedFilename.trim();
+          }
         }
       }
       
@@ -148,7 +154,7 @@ export default function Dashboard() {
       {exportError && (
         <div role="alert" className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive">
           {exportError}
-          <button onClick={() => setExportError(null)} className="ml-2 underline text-xs">Dismiss</button>
+          <button onClick={() => setExportError(null)} className="ml-2 underline text-xs" aria-label="Dismiss export error message">Dismiss</button>
         </div>
       )}
 
@@ -273,7 +279,7 @@ export default function Dashboard() {
                 <div className="px-4 pb-3 pt-1 border-t">
                   <button
                     onClick={(e) => handleExport(game.id, game.name, e)}
-                    className="text-xs text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:underline"
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 rounded"
                     aria-label={`Export ${game.name} as YAML`}
                   >
                     Export YAML

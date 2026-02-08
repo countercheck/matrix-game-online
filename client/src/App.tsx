@@ -5,6 +5,8 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import GameLobby from './pages/GameLobby';
 import GameView from './pages/GameView';
@@ -64,6 +66,22 @@ function App() {
         element={
           <PublicRoute>
             <Register />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPassword />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPassword />
           </PublicRoute>
         }
       />

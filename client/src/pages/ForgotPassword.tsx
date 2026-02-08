@@ -1,26 +1,26 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { Link } from 'react-router-dom';
+import { api } from '../services/api';
 
-export default function Login() {
+export default function ForgotPassword() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
+    setMessage('');
 
     try {
-      await login(email, password);
-      setError('');
-      navigate('/');
+      const response = await api.post('/auth/forgot-password', { email });
+      setMessage(response.data.data.message);
+      setEmail('');
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Login failed');
+      setError(axiosError.response?.data?.error?.message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);
     }
@@ -30,19 +30,32 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Mosaic Matrix Game</h1>
-          <p className="text-muted-foreground mt-2">Sign in to your account</p>
+          <h1 className="text-2xl font-bold">Forgot Password</h1>
+          <p className="text-muted-foreground mt-2">
+            Enter your email to receive a password reset link
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4" aria-label="Sign in form">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-label="Forgot password form">
           {error && (
             <div
-              id="login-error"
+              id="forgot-error"
               role="alert"
               aria-live="polite"
               className="p-3 text-sm text-destructive bg-destructive/10 rounded-md"
             >
               {error}
+            </div>
+          )}
+
+          {message && (
+            <div
+              id="forgot-success"
+              role="alert"
+              aria-live="polite"
+              className="p-3 text-sm text-green-700 bg-green-50 rounded-md"
+            >
+              {message}
             </div>
           )}
 
@@ -56,35 +69,12 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              aria-describedby={error ? 'login-error' : undefined}
+              aria-describedby={error ? 'forgot-error' : undefined}
               aria-invalid={!!error}
               className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="you@example.com"
               autoComplete="email"
             />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              aria-describedby={error ? 'login-error' : undefined}
-              aria-invalid={!!error}
-              className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="********"
-              autoComplete="current-password"
-            />
-            <div className="text-right">
-              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                Forgot password?
-              </Link>
-            </div>
           </div>
 
           <button
@@ -93,16 +83,24 @@ export default function Login() {
             aria-disabled={isLoading}
             className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-primary hover:underline">
-            Register
-          </Link>
-        </p>
+        <div className="text-center text-sm space-y-2">
+          <p className="text-muted-foreground">
+            Remember your password?{' '}
+            <Link to="/login" className="text-primary hover:underline">
+              Sign in
+            </Link>
+          </p>
+          <p className="text-muted-foreground">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-primary hover:underline">
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

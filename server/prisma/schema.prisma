@@ -18,6 +18,8 @@ model User {
   bannedAt                DateTime?    @map("banned_at")
   bannedReason            String?      @map("banned_reason") @db.VarChar(500)
   notificationPreferences Json         @default("{}") @map("notification_preferences")
+  resetToken              String?      @map("reset_token")
+  resetTokenExpiry        DateTime?    @map("reset_token_expiry")
   createdAt               DateTime     @default(now()) @map("created_at")
   updatedAt               DateTime     @updatedAt @map("updated_at")
   lastLogin               DateTime?    @map("last_login")

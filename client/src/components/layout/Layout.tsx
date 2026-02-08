@@ -75,6 +75,12 @@ export default function Layout() {
             >
               Profile
             </Link>
+            <Link
+              to="/help"
+              className="text-sm hover:underline px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              Help
+            </Link>
             <span className="text-sm text-muted-foreground" aria-label={`Logged in as ${user?.displayName}`}>
               {user?.displayName}
             </span>
@@ -110,6 +116,13 @@ export default function Layout() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Profile
+            </Link>
+            <Link
+              to="/help"
+              className="block text-sm hover:underline py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Help
             </Link>
             <div className="text-sm text-muted-foreground py-2">
               {user?.displayName}

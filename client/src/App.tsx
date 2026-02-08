@@ -10,6 +10,7 @@ import GameLobby from './pages/GameLobby';
 import GameView from './pages/GameView';
 import CreateGame from './pages/CreateGame';
 import JoinGame from './pages/JoinGame';
+import Help from './pages/Help';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -82,6 +83,7 @@ function App() {
         <Route path="join/:gameId" element={<JoinGame />} />
         <Route path="game/:gameId/lobby" element={<GameLobby />} />
         <Route path="game/:gameId/play" element={<GameView />} />
+        <Route path="help" element={<Help />} />
       </Route>
     </Routes>
   );

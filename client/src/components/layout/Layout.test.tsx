@@ -90,4 +90,12 @@ describe('Layout Component', () => {
     const profileLink = screen.getByRole('link', { name: /profile/i });
     expect(profileLink).toHaveAttribute('href', '/profile');
   });
+
+  it('should have correct link to help', () => {
+    render(<Layout />);
+
+    const helpLinks = screen.getAllByRole('link', { name: /help/i });
+    const linkWithCorrectHref = helpLinks.find(link => link.getAttribute('href') === '/help');
+    expect(linkWithCorrectHref).toBeTruthy();
+  });
 });

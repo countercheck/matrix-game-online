@@ -221,4 +221,30 @@ describe('Dashboard Page', () => {
       expect(screen.getByText(/failed to load games/i)).toBeInTheDocument();
     });
   });
+
+  it('should render export button for each game', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id: 'game-1',
+            name: 'Test Game 1',
+            status: 'ACTIVE',
+            currentPhase: 'PROPOSAL',
+            playerCount: 3,
+            playerName: 'Player 1',
+            isHost: true,
+            updatedAt: '2024-01-01T00:00:00Z',
+          },
+        ],
+      },
+    });
+
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Game 1')).toBeInTheDocument();
+      expect(screen.getByLabelText(/export test game 1 as yaml/i)).toBeInTheDocument();
+    });
+  });
 });

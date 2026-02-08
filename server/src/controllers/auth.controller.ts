@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/auth.service.js';
-import { registerSchema, loginSchema } from '../utils/validators.js';
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../utils/validators.js';
 
 export async function register(
   req: Request,
@@ -52,6 +52,34 @@ export async function refreshToken(
   try {
     const { refreshToken } = req.body;
     const result = await authService.refreshToken(refreshToken);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const data = forgotPasswordSchema.parse(req.body);
+    const result = await authService.requestPasswordReset(data);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const data = resetPasswordSchema.parse(req.body);
+    const result = await authService.resetPassword(data);
     res.json({ success: true, data: result });
   } catch (error) {
     next(error);

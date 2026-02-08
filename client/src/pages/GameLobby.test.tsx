@@ -312,4 +312,36 @@ describe('GameLobby Page', () => {
       expect(proseElement).not.toBeInTheDocument();
     });
   });
+
+  it('should allow markdown elements to use default prose styling', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        data: {
+          id: 'game-123',
+          name: 'Test Game',
+          description: '## Heading\n\nParagraph with [link](https://example.com)',
+          status: 'LOBBY',
+          players: [
+            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
+          ],
+        },
+      },
+    });
+
+    const { container } = render(<GameLobby />);
+
+    await waitFor(() => {
+      const proseElement = container.querySelector('.prose');
+      expect(proseElement).toBeInTheDocument();
+      
+      // Verify the wrapper className doesn't override non-paragraph markdown elements
+      // The bug was that [&_h2]:text-muted-foreground etc. were neutralizing distinct styling
+      const className = proseElement?.className || '';
+      expect(className).not.toContain('[&_h2]:text-muted-foreground');
+      expect(className).not.toContain('[&_h3]:text-muted-foreground');
+      expect(className).not.toContain('[&_a]:text-muted-foreground');
+      expect(className).not.toContain('[&_li]:text-muted-foreground');
+      expect(className).not.toContain('[&_blockquote]:text-muted-foreground');
+    });
+  });
 });

@@ -239,7 +239,7 @@ export default function GameLobby() {
         {game.description && (
           <RichTextDisplay
             content={game.description}
-            className="mt-2 [&_p]:my-1 [&_p]:text-muted-foreground [&_h2]:text-muted-foreground [&_h3]:text-muted-foreground [&_a]:text-muted-foreground [&_li]:text-muted-foreground [&_blockquote]:text-muted-foreground"
+            className="mt-2 [&_p]:my-1 [&_p]:text-muted-foreground"
           />
         )}
       </div>

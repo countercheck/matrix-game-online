@@ -24,6 +24,7 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery<{ data: Game[] }>({
     queryKey: ['userGames'],
@@ -62,13 +63,15 @@ export default function Dashboard() {
   const handleExport = async (gameId: string, gameName: string, e: React.MouseEvent) => {
     e.preventDefault(); // Prevent Link navigation
     e.stopPropagation();
+    setExportError(null);
     try {
       const response = await api.get(`/games/${gameId}/export`, {
         responseType: 'blob',
       });
       
-      // Create a download link
-      const blob = new Blob([response.data], { type: 'text/yaml' });
+      // Use Content-Type from response or fallback to common YAML MIME type
+      const contentType = response.headers['content-type'] || 'application/x-yaml';
+      const blob = new Blob([response.data], { type: contentType });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -77,7 +80,7 @@ export default function Dashboard() {
       const contentDisposition = response.headers['content-disposition'];
       let filename = `${gameName}-export.yaml`;
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
         if (filenameMatch) {
           filename = filenameMatch[1];
         }
@@ -89,8 +92,16 @@ export default function Dashboard() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err: unknown) {
-      console.error('Export failed:', err);
-      // Could add error state here if needed
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (() => {
+              const responseData = (err as {
+                response?: { data?: { error?: { message?: string }; message?: string } };
+              }).response?.data;
+              return responseData?.error?.message || responseData?.message || 'Export failed';
+            })()
+          : 'Export failed';
+      setExportError(message);
     }
   };
 
@@ -131,6 +142,13 @@ export default function Dashboard() {
         <div role="alert" className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive">
           {importError}
           <button onClick={() => setImportError(null)} className="ml-2 underline text-xs">Dismiss</button>
+        </div>
+      )}
+
+      {exportError && (
+        <div role="alert" className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive">
+          {exportError}
+          <button onClick={() => setExportError(null)} className="ml-2 underline text-xs">Dismiss</button>
         </div>
       )}
 

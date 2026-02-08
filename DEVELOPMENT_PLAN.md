@@ -991,7 +991,7 @@
 - [*] Add rich text editor for narration
 - [*] Support image uploads
 - [*] Add emoji support
-- [*] Support Markdown formatting
+- [✓] Support Markdown formatting
 
 ### Advanced Features
 - [*] AI-assisted suggestions

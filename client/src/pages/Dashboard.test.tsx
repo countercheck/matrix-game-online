@@ -232,6 +232,44 @@ describe('Dashboard Page', () => {
     });
   });
 
+  it('should allow markdown elements in game descriptions to use default prose styling', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id: 'game-1',
+            name: 'Test Game',
+            description: '## Quest\n\nFind the [ancient artifact](https://example.com)',
+            status: 'LOBBY',
+            currentPhase: 'WAITING',
+            playerCount: 2,
+            playerName: 'Player 1',
+            isHost: true,
+            updatedAt: '2024-01-01T00:00:00Z',
+          },
+        ],
+      },
+    });
+
+    const { container } = render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Game')).toBeInTheDocument();
+    });
+
+    // Find the RichTextDisplay wrapper within the game card
+    const proseElement = container.querySelector('.prose');
+    expect(proseElement).toBeInTheDocument();
+    
+    // Verify the wrapper className doesn't override non-paragraph markdown elements
+    // The bug was that [&_h2]:text-muted-foreground etc. were neutralizing distinct styling
+    const className = proseElement?.className || '';
+    expect(className).not.toContain('[&_h2]:text-muted-foreground');
+    expect(className).not.toContain('[&_h3]:text-muted-foreground');
+    expect(className).not.toContain('[&_li]:text-muted-foreground');
+    expect(className).not.toContain('[&_blockquote]:text-muted-foreground');
+  });
+
   it('should render export button for each game', async () => {
     mockGet.mockResolvedValue({
       data: {

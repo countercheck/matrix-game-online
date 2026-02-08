@@ -211,19 +211,36 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold truncate">{game.name}</h3>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
-                          game.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100'
-                            : game.status === 'LOBBY'
-                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-100'
-                        }`}
-                        aria-label={`Status: ${game.status}`}
-                      >
-                        {game.status}
+                    <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold truncate">{game.name}</h3>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
+                        game.status === 'ACTIVE'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100'
+                          : game.status === 'LOBBY'
+                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-100'
+                      }`}
+                      aria-label={`Status: ${game.status}`}
+                    >
+                      {game.status}
+                    </span>
+                  </div>
+
+                  {game.description && (
+                    <RichTextDisplay
+                      content={game.description}
+                      className="text-sm mt-1 line-clamp-2 [&_p]:my-0 [&_p]:text-muted-foreground"
+                      disableLinks
+                    />
+                  )}
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
+                    <span>{game.playerCount} players</span>
+                    {game.currentRound && <span>Round {game.currentRound}</span>}
+                    {game.isHost && (
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                        Host
                       </span>
                     </div>
 

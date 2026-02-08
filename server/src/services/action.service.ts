@@ -3,7 +3,7 @@ import { db } from '../config/database.js';
 import { ResultType, GamePhase } from '@prisma/client';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
 import { requireMember, logGameEvent, transitionPhase } from './game.service.js';
-import type { ActionProposalInput, ArgumentInput, VoteInput, NarrationInput } from '../utils/validators.js';
+import type { ActionProposalInput, ArgumentInput, VoteInput, NarrationInput, UpdateActionInput, UpdateArgumentInput, UpdateNarrationInput } from '../utils/validators.js';
 import {
   notifyActionProposed,
   notifyVotingStarted,
@@ -1086,4 +1086,94 @@ export async function skipToNextAction(gameId: string, userId: string) {
   }
 
   throw new BadRequestError('Cannot skip - game is not waiting for proposals');
+}
+
+/**
+ * Host can edit an action's description and/or desired outcome
+ */
+export async function updateAction(actionId: string, userId: string, data: UpdateActionInput) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    select: { id: true, gameId: true },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  await requireHost(action.gameId, userId);
+
+  const updatedAction = await db.action.update({
+    where: { id: actionId },
+    data: {
+      ...(data.actionDescription !== undefined && { actionDescription: data.actionDescription }),
+      ...(data.desiredOutcome !== undefined && { desiredOutcome: data.desiredOutcome }),
+    },
+  });
+
+  await logGameEvent(action.gameId, userId, 'ACTION_EDITED', {
+    actionId,
+    fieldsUpdated: Object.keys(data).filter(k => data[k as keyof typeof data] !== undefined),
+  });
+
+  return updatedAction;
+}
+
+/**
+ * Host can edit an argument's content
+ */
+export async function updateArgument(argumentId: string, userId: string, data: UpdateArgumentInput) {
+  const argument = await db.argument.findUnique({
+    where: { id: argumentId },
+    include: {
+      action: { select: { id: true, gameId: true } },
+    },
+  });
+
+  if (!argument) {
+    throw new NotFoundError('Argument not found');
+  }
+
+  await requireHost(argument.action.gameId, userId);
+
+  const updatedArgument = await db.argument.update({
+    where: { id: argumentId },
+    data: { content: data.content },
+  });
+
+  await logGameEvent(argument.action.gameId, userId, 'ARGUMENT_EDITED', {
+    argumentId,
+    actionId: argument.action.id,
+  });
+
+  return updatedArgument;
+}
+
+/**
+ * Host can edit a narration's content
+ */
+export async function updateNarration(actionId: string, userId: string, data: UpdateNarrationInput) {
+  const narration = await db.narration.findUnique({
+    where: { actionId },
+    include: {
+      action: { select: { id: true, gameId: true } },
+    },
+  });
+
+  if (!narration) {
+    throw new NotFoundError('Narration not found');
+  }
+
+  await requireHost(narration.action.gameId, userId);
+
+  const updatedNarration = await db.narration.update({
+    where: { actionId },
+    data: { content: data.content },
+  });
+
+  await logGameEvent(narration.action.gameId, userId, 'NARRATION_EDITED', {
+    actionId,
+  });
+
+  return updatedNarration;
 }

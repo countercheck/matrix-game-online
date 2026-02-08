@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as actionService from '../services/action.service.js';
-import { argumentSchema, voteSchema, narrationSchema } from '../utils/validators.js';
+import { argumentSchema, voteSchema, narrationSchema, updateActionSchema, updateArgumentSchema, updateNarrationSchema } from '../utils/validators.js';
 
 export async function getAction(
   req: Request,
@@ -180,6 +180,54 @@ export async function skipVoting(
     const userId = req.user!.id;
     const result = await actionService.skipVoting(actionId, userId);
     res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateAction(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const actionId = req.params.actionId as string;
+    const userId = req.user!.id;
+    const data = updateActionSchema.parse(req.body);
+    const action = await actionService.updateAction(actionId, userId, data);
+    res.json({ success: true, data: action });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateArgument(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const argumentId = req.params.argumentId as string;
+    const userId = req.user!.id;
+    const data = updateArgumentSchema.parse(req.body);
+    const argument = await actionService.updateArgument(argumentId, userId, data);
+    res.json({ success: true, data: argument });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateNarration(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const actionId = req.params.actionId as string;
+    const userId = req.user!.id;
+    const data = updateNarrationSchema.parse(req.body);
+    const narration = await actionService.updateNarration(actionId, userId, data);
+    res.json({ success: true, data: narration });
   } catch (error) {
     next(error);
   }

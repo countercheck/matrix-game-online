@@ -199,10 +199,6 @@ export async function updateGame(gameId: string, userId: string, data: Partial<C
     throw new NotFoundError('Game not found');
   }
 
-  if (game.status !== 'LOBBY') {
-    throw new BadRequestError('Cannot edit game after it has started');
-  }
-
   const updatedGame = await db.game.update({
     where: { id: gameId },
     data: {
@@ -210,6 +206,10 @@ export async function updateGame(gameId: string, userId: string, data: Partial<C
       description: data.description,
       settings: data.settings,
     },
+  });
+
+  await logGameEvent(gameId, userId, 'GAME_EDITED', {
+    fieldsUpdated: Object.keys(data).filter(k => data[k as keyof typeof data] !== undefined),
   });
 
   return updatedGame;
@@ -438,10 +438,6 @@ export async function updatePersona(
 
   if (!game || game.deletedAt) {
     throw new NotFoundError('Game not found');
-  }
-
-  if (game.status !== 'LOBBY') {
-    throw new BadRequestError('Cannot edit personas after game has started');
   }
 
   const persona = game.personas.find((p) => p.id === personaId);

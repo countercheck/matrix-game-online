@@ -1,7 +1,7 @@
 import { db } from '../config/database.js';
-import { BadRequestError, NotFoundError } from '../middleware/errorHandler.js';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../middleware/errorHandler.js';
 import { requireMember, logGameEvent } from './game.service.js';
-import type { RoundSummaryInput } from '../utils/validators.js';
+import type { RoundSummaryInput, UpdateRoundSummaryInput } from '../utils/validators.js';
 import { notifyNewRound } from './notification.service.js';
 
 export async function getRound(roundId: string, userId: string) {
@@ -210,6 +210,47 @@ export async function getRoundSummary(roundId: string, userId: string) {
   }
 
   return summary;
+}
+
+/**
+ * Host can edit an existing round summary's content
+ */
+export async function updateRoundSummary(
+  roundId: string,
+  userId: string,
+  data: UpdateRoundSummaryInput
+) {
+  const round = await db.round.findUnique({
+    where: { id: roundId },
+    include: { summary: true },
+  });
+
+  if (!round) {
+    throw new NotFoundError('Round not found');
+  }
+
+  if (!round.summary) {
+    throw new NotFoundError('Round summary not found');
+  }
+
+  const hostPlayer = await db.gamePlayer.findFirst({
+    where: { gameId: round.gameId, userId, isActive: true, isHost: true },
+  });
+
+  if (!hostPlayer) {
+    throw new ForbiddenError('Only the game host can perform this action');
+  }
+
+  const updatedSummary = await db.roundSummary.update({
+    where: { roundId },
+    data: { content: data.content },
+  });
+
+  await logGameEvent(round.gameId, userId, 'ROUND_SUMMARY_EDITED', {
+    roundId,
+  });
+
+  return updatedSummary;
 }
 
 async function createNextRound(gameId: string, roundNumber: number) {

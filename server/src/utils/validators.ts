@@ -146,6 +146,27 @@ export const roundSummarySchema = z.object({
   }).optional(),
 });
 
+// Host edit schemas
+export const updateActionSchema = z.object({
+  actionDescription: z.string().min(1, 'Action description is required').max(1800, 'Action description must be 1800 characters or less').optional(),
+  desiredOutcome: z.string().min(1, 'Desired outcome is required').max(1200, 'Desired outcome must be 1200 characters or less').optional(),
+}).refine(
+  (data) => data.actionDescription !== undefined || data.desiredOutcome !== undefined,
+  { message: 'At least one field must be provided' }
+);
+
+export const updateArgumentSchema = z.object({
+  content: z.string().min(1, 'Argument content is required').max(900, 'Argument must be 900 characters or less'),
+});
+
+export const updateNarrationSchema = z.object({
+  content: z.string().min(1, 'Narration is required').max(3600, 'Narration must be 3600 characters or less'),
+});
+
+export const updateRoundSummarySchema = z.object({
+  content: z.string().min(1, 'Summary is required').max(7500, 'Summary must be 7500 characters or less'),
+});
+
 // Type exports
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -161,3 +182,7 @@ export type ArgumentInput = z.infer<typeof argumentSchema>;
 export type VoteInput = z.infer<typeof voteSchema>;
 export type NarrationInput = z.infer<typeof narrationSchema>;
 export type RoundSummaryInput = z.infer<typeof roundSummarySchema>;
+export type UpdateActionInput = z.infer<typeof updateActionSchema>;
+export type UpdateArgumentInput = z.infer<typeof updateArgumentSchema>;
+export type UpdateNarrationInput = z.infer<typeof updateNarrationSchema>;
+export type UpdateRoundSummaryInput = z.infer<typeof updateRoundSummarySchema>;

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as roundService from '../services/round.service.js';
-import { roundSummarySchema } from '../utils/validators.js';
+import { roundSummarySchema, updateRoundSummarySchema } from '../utils/validators.js';
 
 export async function getRound(
   req: Request,
@@ -42,6 +42,22 @@ export async function getRoundSummary(
     const roundId = req.params.roundId as string;
     const userId = req.user!.id;
     const summary = await roundService.getRoundSummary(roundId, userId);
+    res.json({ success: true, data: summary });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateRoundSummary(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const roundId = req.params.roundId as string;
+    const userId = req.user!.id;
+    const data = updateRoundSummarySchema.parse(req.body);
+    const summary = await roundService.updateRoundSummary(roundId, userId, data);
     res.json({ success: true, data: summary });
   } catch (error) {
     next(error);

@@ -83,6 +83,51 @@ Refresh an expiring token.
 }
 ```
 
+### POST /auth/forgot-password
+Request a password reset email. Returns success even if email doesn't exist (prevents email enumeration).
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "If that email exists, a password reset link has been sent."
+  }
+}
+```
+
+### POST /auth/reset-password
+Reset password using a valid reset token from email.
+
+**Request Body:**
+```json
+{
+  "token": "reset-token-from-email",
+  "newPassword": "NewSecurePassword123"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Password has been reset successfully"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Invalid or expired token
+- `400 Bad Request` - Password doesn't meet requirements (min 8 chars, uppercase, lowercase, number)
+
 ---
 
 ## Users

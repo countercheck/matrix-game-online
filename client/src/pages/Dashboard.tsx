@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { SkeletonGameCard } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
+import { downloadBlob } from '../utils/download';
 
 interface Game {
   id: string;
@@ -60,9 +61,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleExport = async (gameId: string, gameName: string, e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent Link navigation
-    e.stopPropagation();
+  const handleExport = async (gameId: string, gameName: string) => {
     setExportError(null);
     try {
       const response = await api.get(`/games/${gameId}/export`, {
@@ -72,31 +71,9 @@ export default function Dashboard() {
       // Use Content-Type from response or fallback to common YAML MIME type
       const contentType = response.headers['content-type'] || 'application/x-yaml';
       const blob = new Blob([response.data], { type: contentType });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      // Extract filename from Content-Disposition header or use default
       const contentDisposition = response.headers['content-disposition'];
-      let filename = `${gameName}-export.yaml`;
-      if (contentDisposition) {
-        // Try to extract filename, handling both quoted and unquoted values
-        // Matches: filename="value" or filename=value or filename*=UTF-8''value
-        const matches = contentDisposition.match(/filename[^;=\n]*=((['"])([^\2]*?)\2|([^;\n]*))/);
-        if (matches) {
-          // Use captured group 3 (quoted) or 4 (unquoted)
-          const extractedFilename = matches[3] || matches[4];
-          if (extractedFilename) {
-            filename = extractedFilename.trim();
-          }
-        }
-      }
       
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      downloadBlob(blob, `${gameName}-export.yaml`, contentDisposition);
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'response' in err
@@ -278,7 +255,7 @@ export default function Dashboard() {
                 </Link>
                 <div className="px-4 pb-3 pt-1 border-t">
                   <button
-                    onClick={(e) => handleExport(game.id, game.name, e)}
+                    onClick={() => handleExport(game.id, game.name)}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 rounded"
                     aria-label={`Export ${game.name} as YAML`}
                   >

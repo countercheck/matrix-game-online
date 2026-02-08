@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { downloadBlob } from '../utils/download';
 import {
   ActionProposal,
   ArgumentationPhase,
@@ -487,25 +488,7 @@ export default function GameView() {
               try {
                 const res = await api.get(`/games/${game.id}/export`, { responseType: 'blob' });
                 const disposition = res.headers['content-disposition'] || '';
-                const match = disposition.match(/filename="(.+)"/);
-                // Sanitize filename from game name: remove invalid chars, limit length
-                const sanitizedName = (game.name || 'game')
-                  // eslint-disable-next-line no-control-regex
-                  .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
-                  .substring(0, 100);
-                const filename = match?.[1] || `${sanitizedName}-export.yaml`;
-                const url = URL.createObjectURL(res.data);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                a.click();
-                // Delay cleanup to ensure download starts in all browsers
-                setTimeout(() => {
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
-                }, 100);
+                downloadBlob(res.data, `${game.name}-export.yaml`, disposition);
               } catch {
                 // silent fail — network errors are shown by the interceptor
               }

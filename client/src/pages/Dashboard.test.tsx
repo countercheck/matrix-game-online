@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { render } from '../test/test-utils';
 import Dashboard from './Dashboard';
+import userEvent from '@testing-library/user-event';
 
 // Mock useAuth
 vi.mock('../hooks/useAuth', () => ({
@@ -13,10 +14,19 @@ vi.mock('../hooks/useAuth', () => ({
 
 // Mock API
 const mockGet = vi.fn();
+const mockPost = vi.fn();
 vi.mock('../services/api', () => ({
   api: {
-    get: (url: string) => mockGet(url),
+    get: (url: string, config?: unknown) => mockGet(url, config),
+    post: (url: string, data?: unknown, config?: unknown) => mockPost(url, data, config),
   },
+}));
+
+// Mock download utility
+const mockDownloadBlob = vi.fn();
+vi.mock('../utils/download', () => ({
+  downloadBlob: (blob: Blob, filename: string, contentDisposition?: string) => 
+    mockDownloadBlob(blob, filename, contentDisposition),
 }));
 
 describe('Dashboard Page', () => {
@@ -245,6 +255,156 @@ describe('Dashboard Page', () => {
     await waitFor(() => {
       expect(screen.getByText('Test Game 1')).toBeInTheDocument();
       expect(screen.getByLabelText(/export test game 1 as yaml/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should call export API with correct parameters when export button is clicked', async () => {
+    const user = userEvent.setup();
+    
+    mockGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id: 'game-1',
+            name: 'Test Game 1',
+            status: 'ACTIVE',
+            currentPhase: 'PROPOSAL',
+            playerCount: 3,
+            playerName: 'Player 1',
+            isHost: true,
+            updatedAt: '2024-01-01T00:00:00Z',
+          },
+        ],
+      },
+    });
+
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Game 1')).toBeInTheDocument();
+    });
+
+    // Mock export API call
+    const mockBlob = new Blob(['test yaml content'], { type: 'text/yaml' });
+    mockGet.mockResolvedValueOnce({
+      data: mockBlob,
+      headers: {
+        'content-type': 'text/yaml',
+        'content-disposition': 'attachment; filename="test-game-1-export.yaml"',
+      },
+    });
+
+    const exportButton = screen.getByLabelText(/export test game 1 as yaml/i);
+    await user.click(exportButton);
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith('/games/game-1/export', {
+        responseType: 'blob',
+      });
+      expect(mockDownloadBlob).toHaveBeenCalledWith(
+        expect.any(Blob),
+        'Test Game 1-export.yaml',
+        'attachment; filename="test-game-1-export.yaml"'
+      );
+    });
+  });
+
+  it('should display error message when export fails', async () => {
+    const user = userEvent.setup();
+    
+    mockGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id: 'game-1',
+            name: 'Test Game 1',
+            status: 'ACTIVE',
+            currentPhase: 'PROPOSAL',
+            playerCount: 3,
+            playerName: 'Player 1',
+            isHost: true,
+            updatedAt: '2024-01-01T00:00:00Z',
+          },
+        ],
+      },
+    });
+
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Game 1')).toBeInTheDocument();
+    });
+
+    // Mock export API failure
+    mockGet.mockRejectedValueOnce({
+      response: {
+        data: {
+          error: {
+            message: 'Failed to export game',
+          },
+        },
+      },
+    });
+
+    const exportButton = screen.getByLabelText(/export test game 1 as yaml/i);
+    await user.click(exportButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to export game')).toBeInTheDocument();
+      expect(screen.getByLabelText('Dismiss export error message')).toBeInTheDocument();
+    });
+  });
+
+  it('should dismiss export error when dismiss button is clicked', async () => {
+    const user = userEvent.setup();
+    
+    mockGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id: 'game-1',
+            name: 'Test Game 1',
+            status: 'ACTIVE',
+            currentPhase: 'PROPOSAL',
+            playerCount: 3,
+            playerName: 'Player 1',
+            isHost: true,
+            updatedAt: '2024-01-01T00:00:00Z',
+          },
+        ],
+      },
+    });
+
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Game 1')).toBeInTheDocument();
+    });
+
+    // Mock export API failure
+    mockGet.mockRejectedValueOnce({
+      response: {
+        data: {
+          error: {
+            message: 'Failed to export game',
+          },
+        },
+      },
+    });
+
+    const exportButton = screen.getByLabelText(/export test game 1 as yaml/i);
+    await user.click(exportButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to export game')).toBeInTheDocument();
+    });
+
+    // Click dismiss button
+    const dismissButton = screen.getByLabelText('Dismiss export error message');
+    await user.click(dismissButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Failed to export game')).not.toBeInTheDocument();
     });
   });
 });

@@ -15,6 +15,11 @@ router.get('/:actionId/draw', authenticateToken, actionController.getDrawResult)
 router.post('/:actionId/narration', authenticateToken, actionController.submitNarration);
 router.get('/:actionId/narration', authenticateToken, actionController.getNarration);
 
+// Host edit controls
+router.put('/:actionId', authenticateToken, actionController.updateAction);
+router.put('/:actionId/arguments/:argumentId', authenticateToken, actionController.updateArgument);
+router.put('/:actionId/narration', authenticateToken, actionController.updateNarration);
+
 // Host skip controls
 router.post('/:actionId/skip-argumentation', authenticateToken, actionController.skipArgumentation);
 router.post('/:actionId/skip-voting', authenticateToken, actionController.skipVoting);

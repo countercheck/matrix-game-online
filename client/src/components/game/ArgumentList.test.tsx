@@ -245,4 +245,50 @@ describe('ArgumentList', () => {
       expect(timestamps).toHaveLength(2);
     });
   });
+
+  it('should show edit buttons when isHost is true', async () => {
+    const mockArguments = [
+      {
+        id: 'arg-1',
+        argumentType: 'FOR',
+        content: 'Test content',
+        sequence: 1,
+        createdAt: new Date().toISOString(),
+        player: { id: 'p1', playerName: 'Alice', user: { displayName: 'Alice' } },
+      },
+    ];
+
+    mockGet.mockResolvedValue({ data: { data: mockArguments } });
+
+    render(<ArgumentList actionId="action-123" gameId="game-1" isHost={true} />, {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTitle('Edit argument (host)')).toBeInTheDocument();
+    });
+  });
+
+  it('should not show edit buttons when isHost is false', async () => {
+    const mockArguments = [
+      {
+        id: 'arg-1',
+        argumentType: 'FOR',
+        content: 'Test content',
+        sequence: 1,
+        createdAt: new Date().toISOString(),
+        player: { id: 'p1', playerName: 'Alice', user: { displayName: 'Alice' } },
+      },
+    ];
+
+    mockGet.mockResolvedValue({ data: { data: mockArguments } });
+
+    render(<ArgumentList actionId="action-123" />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('Test content')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTitle('Edit argument (host)')).not.toBeInTheDocument();
+  });
 });

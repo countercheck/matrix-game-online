@@ -15,8 +15,9 @@ export function sanitizeFilename(filename: string, maxLength = 100): string {
 export function extractFilenameFromHeader(contentDisposition: string): string | null {
   if (!contentDisposition) return null;
   
-  // Match: filename="value" or filename=value, stopping unquoted values at ';' or newline
-  const matches = contentDisposition.match(/filename[^;=\n]*=\s*(?:"([^"\n]*)"|([^;\n]*))/i);
+  // Match: filename="value" or filename=value, stopping unquoted values at ';' or newline.
+  // Intentionally ignore RFC 5987 filename* parameters, which use a different encoding scheme.
+  const matches = contentDisposition.match(/filename(?!\*)[^;=\n]*=\s*(?:"([^"\n]*)"|([^;\n]*))/i);
   if (matches) {
     const value = matches[1] ?? matches[2];
     if (value) {

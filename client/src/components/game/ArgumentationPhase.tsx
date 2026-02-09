@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { ArgumentList } from './ArgumentList';
 import { AddArgument } from './AddArgument';
+import { EditActionModal } from './EditActionModal';
 
 interface Action {
   id: string;
@@ -18,6 +19,7 @@ interface ArgumentationPhaseProps {
   action: Action;
   remainingArguments: number;
   hasCompletedArgumentation: boolean;
+  isHost?: boolean;
 }
 
 interface CompleteResponse {
@@ -33,12 +35,22 @@ export function ArgumentationPhase({
   action,
   remainingArguments,
   hasCompletedArgumentation,
+  isHost = false,
 }: ArgumentationPhaseProps) {
   const queryClient = useQueryClient();
+  const [showEditAction, setShowEditAction] = useState(false);
   const [waitingStatus, setWaitingStatus] = useState<{
     waitingFor?: string[];
     playersRemaining?: number;
   } | null>(null);
+
+  const editActionMutation = useMutation({
+    mutationFn: (data: { actionDescription?: string; desiredOutcome?: string }) =>
+      api.put(`/actions/${action.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+    },
+  });
 
   const completeMutation = useMutation({
     mutationFn: () => api.post(`/actions/${action.id}/complete-argumentation`),
@@ -57,7 +69,18 @@ export function ArgumentationPhase({
     <div className="space-y-6">
       {/* Action being discussed */}
       <div className="p-6 border rounded-lg">
-        <h2 className="text-lg font-semibold mb-4">Action Under Discussion</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Action Under Discussion</h2>
+          {isHost && (
+            <button
+              onClick={() => setShowEditAction(true)}
+              className="text-xs text-primary hover:underline"
+              title="Edit action (host)"
+            >
+              Edit
+            </button>
+          )}
+        </div>
         <div className="p-4 bg-muted rounded-md">
           <p className="font-medium">{action.actionDescription}</p>
           <p className="text-sm text-muted-foreground mt-2">
@@ -69,9 +92,20 @@ export function ArgumentationPhase({
         </div>
       </div>
 
+      {/* Edit Action Modal */}
+      {showEditAction && (
+        <EditActionModal
+          isOpen={showEditAction}
+          onClose={() => setShowEditAction(false)}
+          onSave={async (data) => { await editActionMutation.mutateAsync(data); }}
+          initialActionDescription={action.actionDescription}
+          initialDesiredOutcome={action.desiredOutcome}
+        />
+      )}
+
       {/* Arguments list */}
       <div className="p-6 border rounded-lg">
-        <ArgumentList actionId={action.id} />
+        <ArgumentList actionId={action.id} gameId={gameId} isHost={isHost} />
       </div>
 
       {/* Add argument form */}

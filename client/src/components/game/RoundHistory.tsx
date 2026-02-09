@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui/RichTextDisplay';
+import { EditRoundSummaryModal } from './EditRoundSummaryModal';
 
 interface RoundHistoryProps {
   gameId: string;
   currentRoundNumber?: number;
+  isHost?: boolean;
 }
 
 interface RoundAction {
@@ -47,8 +49,18 @@ interface Round {
   summary?: RoundSummaryData;
 }
 
-export function RoundHistory({ gameId, currentRoundNumber }: RoundHistoryProps) {
+export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: RoundHistoryProps) {
+  const queryClient = useQueryClient();
   const [expandedRound, setExpandedRound] = useState<string | null>(null);
+  const [editingSummary, setEditingSummary] = useState<{ roundId: string; content: string } | null>(null);
+
+  const editSummaryMutation = useMutation({
+    mutationFn: ({ roundId, content }: { roundId: string; content: string }) =>
+      api.put(`/rounds/${roundId}/summary`, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game-rounds', gameId] });
+    },
+  });
 
   const { data, isLoading } = useQuery<{ data: Round[] }>({
     queryKey: ['game-rounds', gameId],
@@ -223,7 +235,21 @@ export function RoundHistory({ gameId, currentRoundNumber }: RoundHistoryProps) 
                   {/* Summary */}
                   {round.summary && (
                     <div className="p-4 bg-muted/30">
-                      <h4 className="text-sm font-medium mb-2">Round Summary</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium">Round Summary</h4>
+                        {isHost && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingSummary({ roundId: round.id, content: round.summary!.content });
+                            }}
+                            className="text-xs text-primary hover:underline"
+                            title="Edit round summary (host)"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
                       <RichTextDisplay content={round.summary.content} className="text-sm [&_p]:my-1" />
                       <p className="text-xs text-muted-foreground mt-2">
                         Written on {formatDate(round.summary.createdAt)}
@@ -322,6 +348,18 @@ export function RoundHistory({ gameId, currentRoundNumber }: RoundHistoryProps) 
           );
         })}
       </div>
+
+      {/* Edit Round Summary Modal */}
+      {editingSummary && (
+        <EditRoundSummaryModal
+          isOpen={!!editingSummary}
+          onClose={() => setEditingSummary(null)}
+          onSave={async ({ content }) => {
+            await editSummaryMutation.mutateAsync({ roundId: editingSummary.roundId, content });
+          }}
+          initialContent={editingSummary.content}
+        />
+      )}
     </div>
   );
 }

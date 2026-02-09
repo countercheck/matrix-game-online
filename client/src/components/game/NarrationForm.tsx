@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextEditor, RichTextDisplay } from '../ui';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { EditNarrationModal } from './EditNarrationModal';
 
 interface Action {
   id: string;
@@ -36,6 +37,7 @@ interface NarrationFormProps {
   gameId: string;
   action: Action;
   currentUserId: string;
+  isHost?: boolean;
 }
 
 const resultLabels: Record<string, { label: string; guidance: string; colorKey: 'triumph' | 'successBut' | 'failureBut' | 'disaster' }> = {
@@ -100,10 +102,20 @@ const getResultStyles = (colorKey: 'triumph' | 'successBut' | 'failureBut' | 'di
   return styles[colorKey];
 };
 
-export function NarrationForm({ gameId, action, currentUserId }: NarrationFormProps) {
+export function NarrationForm({ gameId, action, currentUserId, isHost = false }: NarrationFormProps) {
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
+  const [showEditNarration, setShowEditNarration] = useState(false);
+
+  const editNarrationMutation = useMutation({
+    mutationFn: (data: { content: string }) =>
+      api.put(`/actions/${action.id}/narration`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['narration', action.id] });
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+    },
+  });
 
   const isInitiator = action.initiator.userId === currentUserId;
 
@@ -186,7 +198,18 @@ export function NarrationForm({ gameId, action, currentUserId }: NarrationFormPr
 
         {/* Narration display */}
         <div className="p-6 border rounded-lg">
-          <h3 className="font-semibold mb-2">What Happened</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold">What Happened</h3>
+            {isHost && (
+              <button
+                onClick={() => setShowEditNarration(true)}
+                className="text-xs text-primary hover:underline"
+                title="Edit narration (host)"
+              >
+                Edit
+              </button>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground mb-3">
             Narrated by {existingNarration.author.playerName} · {formatRelativeTime(existingNarration.createdAt)}
           </p>
@@ -198,6 +221,16 @@ export function NarrationForm({ gameId, action, currentUserId }: NarrationFormPr
         <div className="text-center text-sm text-muted-foreground">
           Action complete! Returning to proposal phase...
         </div>
+
+        {/* Edit Narration Modal */}
+        {showEditNarration && (
+          <EditNarrationModal
+            isOpen={showEditNarration}
+            onClose={() => setShowEditNarration(false)}
+            onSave={async (data) => { await editNarrationMutation.mutateAsync(data); }}
+            initialContent={existingNarration.content}
+          />
+        )}
       </div>
     );
   }

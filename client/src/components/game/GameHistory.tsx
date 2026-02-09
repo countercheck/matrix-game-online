@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui/RichTextDisplay';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { EditActionModal } from './EditActionModal';
+import { EditArgumentModal } from './EditArgumentModal';
+import { EditNarrationModal } from './EditNarrationModal';
 
 interface GameHistoryProps {
   gameId: string;
   compact?: boolean;
+  isHost?: boolean;
 }
 
 interface HistoryArgument {
@@ -51,10 +55,39 @@ interface HistoryAction {
   };
 }
 
-export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
+export function GameHistory({ gameId, compact = false, isHost = false }: GameHistoryProps) {
+  const queryClient = useQueryClient();
   const [expandedAction, setExpandedAction] = useState<string | null>(null);
   const [expandedArguments, setExpandedArguments] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [editingAction, setEditingAction] = useState<HistoryAction | null>(null);
+  const [editingArgument, setEditingArgument] = useState<{ actionId: string; argument: HistoryArgument } | null>(null);
+  const [editingNarration, setEditingNarration] = useState<{ actionId: string; content: string } | null>(null);
+
+  const editActionMutation = useMutation({
+    mutationFn: ({ actionId, data }: { actionId: string; data: { actionDescription?: string; desiredOutcome?: string } }) =>
+      api.put(`/actions/${actionId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game-history', gameId] });
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+    },
+  });
+
+  const editArgumentMutation = useMutation({
+    mutationFn: ({ actionId, argumentId, content }: { actionId: string; argumentId: string; content: string }) =>
+      api.put(`/actions/${actionId}/arguments/${argumentId}`, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game-history', gameId] });
+    },
+  });
+
+  const editNarrationMutation = useMutation({
+    mutationFn: ({ actionId, content }: { actionId: string; content: string }) =>
+      api.put(`/actions/${actionId}/narration`, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game-history', gameId] });
+    },
+  });
 
   const { data, isLoading } = useQuery<{ data: HistoryAction[] }>({
     queryKey: ['game-history', gameId],
@@ -221,6 +254,18 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
                         #{action.sequenceNumber}
                       </span>
                       <span className="text-sm font-medium">{action.initiator.playerName}</span>
+                      {isHost && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingAction(action);
+                          }}
+                          className="text-xs text-primary hover:underline"
+                          title="Edit action (host)"
+                        >
+                          Edit
+                        </button>
+                      )}
                       {action.argumentationWasSkipped && (
                         <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
                           Args skipped
@@ -313,6 +358,18 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
                               <span className="text-muted-foreground">
                                 {formatRelativeTime(arg.createdAt)}
                               </span>
+                              {isHost && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingArgument({ actionId: action.id, argument: arg });
+                                  }}
+                                  className="text-primary hover:underline"
+                                  title="Edit argument (host)"
+                                >
+                                  Edit
+                                </button>
+                              )}
                             </div>
                             <RichTextDisplay
                               content={arg.content}
@@ -327,6 +384,20 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
 
                 {action.narration && (
                   <div className="text-sm bg-muted/50 p-3 rounded-lg">
+                    {isHost && (
+                      <div className="flex justify-end mb-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingNarration({ actionId: action.id, content: action.narration!.content });
+                          }}
+                          className="text-xs text-primary hover:underline"
+                          title="Edit narration (host)"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
                     <RichTextDisplay
                       content={action.narration.content}
                       className="italic [&_p]:my-1"
@@ -356,6 +427,54 @@ export function GameHistory({ gameId, compact = false }: GameHistoryProps) {
 
       {!compact && actions.length === 0 && (
         <p className="text-center text-muted-foreground py-8">No completed actions yet.</p>
+      )}
+
+      {/* Edit Action Modal */}
+      {editingAction && (
+        <EditActionModal
+          isOpen={!!editingAction}
+          onClose={() => setEditingAction(null)}
+          onSave={async (data) => {
+            await editActionMutation.mutateAsync({ actionId: editingAction.id, data });
+          }}
+          initialActionDescription={editingAction.actionDescription}
+          initialDesiredOutcome={editingAction.desiredOutcome}
+        />
+      )}
+
+      {/* Edit Argument Modal */}
+      {editingArgument && (
+        <EditArgumentModal
+          isOpen={!!editingArgument}
+          onClose={() => setEditingArgument(null)}
+          onSave={async ({ content }) => {
+            await editArgumentMutation.mutateAsync({
+              actionId: editingArgument.actionId,
+              argumentId: editingArgument.argument.id,
+              content,
+            });
+          }}
+          initialContent={editingArgument.argument.content}
+          argumentType={
+            editingArgument.argument.argumentType === 'INITIATOR_FOR' || editingArgument.argument.argumentType === 'FOR'
+              ? 'FOR'
+              : editingArgument.argument.argumentType === 'AGAINST'
+              ? 'AGAINST'
+              : undefined
+          }
+        />
+      )}
+
+      {/* Edit Narration Modal */}
+      {editingNarration && (
+        <EditNarrationModal
+          isOpen={!!editingNarration}
+          onClose={() => setEditingNarration(null)}
+          onSave={async ({ content }) => {
+            await editNarrationMutation.mutateAsync({ actionId: editingNarration.actionId, content });
+          }}
+          initialContent={editingNarration.content}
+        />
       )}
     </div>
   );

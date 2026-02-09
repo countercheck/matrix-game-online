@@ -2,7 +2,7 @@
 ## Actionable Task Checklist
 
 **Version:** 1.2
-**Last Updated:** February 5, 2026
+**Last Updated:** February 9, 2026
 **Estimated Total Time:** 8-12 weeks (1-2 developers)
 
 ---
@@ -937,6 +937,35 @@
 ### Testing
 - [✓] Write unit tests for admin service (26 tests)
 - [✓] Write unit tests for admin middleware (12 tests)
+
+---
+
+## Host Edit Permissions ✓
+**Estimated Time:** 1-2 days
+
+### Backend
+- [✓] Remove LOBBY-only restriction from game and persona editing
+- [✓] Add PUT /actions/:actionId endpoint for host to edit action proposals
+- [✓] Add PUT /actions/:actionId/arguments/:argumentId endpoint for host to edit arguments
+- [✓] Add PUT /actions/:actionId/narration endpoint for host to edit narrations
+- [✓] Add PUT /rounds/:roundId/summary endpoint for host to edit round summaries
+- [✓] Add Zod validation schemas for all edit endpoints
+- [✓] Add GameEvent audit logging for all edit operations
+- [✓] Write unit tests for all new service functions (13 tests)
+
+### Frontend
+- [✓] Create EditActionModal component
+- [✓] Create EditArgumentModal component
+- [✓] Create EditNarrationModal component
+- [✓] Create EditRoundSummaryModal component
+- [✓] Add host edit buttons to ArgumentationPhase (edit action)
+- [✓] Add host edit buttons to ArgumentList (edit individual arguments)
+- [✓] Add host edit buttons to NarrationForm (edit narration)
+- [✓] Add host edit buttons to RoundHistory (edit round summaries)
+- [✓] Add host edit buttons to GameHistory (edit actions, arguments, narrations)
+- [✓] Pass isHost prop from GameView to all child components
+- [✓] Write frontend tests for edit modals (19 tests)
+- [✓] Write tests for isHost edit button visibility (2 tests)
 
 ---
 

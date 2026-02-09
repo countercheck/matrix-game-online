@@ -162,6 +162,7 @@ export default function GameView() {
             action={game.currentAction}
             remainingArguments={myPlayer?.remainingArguments ?? game.settings.argumentLimit}
             hasCompletedArgumentation={myPlayer?.hasCompletedArgumentation || false}
+            isHost={myPlayer?.isHost}
           />
         );
 
@@ -204,6 +205,7 @@ export default function GameView() {
             gameId={game.id}
             action={game.currentAction}
             currentUserId={currentUserId}
+            isHost={myPlayer?.isHost}
           />
         );
 
@@ -479,7 +481,7 @@ export default function GameView() {
           )}
 
           {/* Game History */}
-          <GameHistory gameId={game.id} compact />
+          <GameHistory gameId={game.id} compact isHost={myPlayer?.isHost} />
 
           {/* Export */}
           <button
@@ -554,6 +556,7 @@ export default function GameView() {
               <RoundHistory
                 gameId={game.id}
                 currentRoundNumber={game.currentRound?.roundNumber}
+                isHost={myPlayer?.isHost}
               />
             </div>
           </div>

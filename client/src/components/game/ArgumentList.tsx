@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { EditArgumentModal } from './EditArgumentModal';
 
 interface Argument {
   id: string;
@@ -18,13 +20,29 @@ interface Argument {
 
 interface ArgumentListProps {
   actionId: string;
+  gameId?: string;
+  isHost?: boolean;
 }
 
-export function ArgumentList({ actionId }: ArgumentListProps) {
+export function ArgumentList({ actionId, gameId, isHost = false }: ArgumentListProps) {
+  const queryClient = useQueryClient();
+  const [editingArgument, setEditingArgument] = useState<Argument | null>(null);
+
   const { data, isLoading, error } = useQuery<{ data: Argument[] }>({
     queryKey: ['arguments', actionId],
     queryFn: () => api.get(`/actions/${actionId}/arguments`).then((res) => res.data),
     refetchInterval: 5000,
+  });
+
+  const editArgumentMutation = useMutation({
+    mutationFn: ({ argumentId, content }: { argumentId: string; content: string }) =>
+      api.put(`/actions/${actionId}/arguments/${argumentId}`, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['arguments', actionId] });
+      if (gameId) {
+        queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+      }
+    },
   });
 
   const args = data?.data || [];
@@ -101,18 +119,48 @@ export function ArgumentList({ actionId }: ArgumentListProps) {
                     {formatRelativeTime(arg.createdAt)}
                   </span>
                 </div>
-                <span
-                  className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${styles.badge}`}
-                >
-                  {styles.icon}
-                  {styles.label}
-                </span>
+                <div className="flex items-center gap-2">
+                  {isHost && (
+                    <button
+                      onClick={() => setEditingArgument(arg)}
+                      className="text-xs text-primary hover:underline"
+                      title="Edit argument (host)"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <span
+                    className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${styles.badge}`}
+                  >
+                    {styles.icon}
+                    {styles.label}
+                  </span>
+                </div>
               </div>
               <RichTextDisplay content={arg.content} className="text-sm" />
             </div>
           );
         })}
       </div>
+
+      {/* Edit Argument Modal */}
+      {editingArgument && (
+        <EditArgumentModal
+          isOpen={!!editingArgument}
+          onClose={() => setEditingArgument(null)}
+          onSave={async ({ content }) => {
+            await editArgumentMutation.mutateAsync({ argumentId: editingArgument.id, content });
+          }}
+          initialContent={editingArgument.content}
+          argumentType={
+            editingArgument.argumentType === 'INITIATOR_FOR' || editingArgument.argumentType === 'FOR'
+              ? 'FOR'
+              : editingArgument.argumentType === 'AGAINST'
+              ? 'AGAINST'
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }

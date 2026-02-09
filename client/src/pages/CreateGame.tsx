@@ -153,6 +153,8 @@ export default function CreateGame() {
     createMutation.mutate(data);
   };
 
+  const isSubmitDisabled = createMutation.isPending || !name.trim();
+
   return (
     <div className="max-w-md mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Create New Game</h1>
@@ -384,8 +386,8 @@ export default function CreateGame() {
           </button>
           <button
             type="submit"
-            disabled={createMutation.isPending || !name.trim()}
-            aria-disabled={createMutation.isPending || !name.trim()}
+            disabled={isSubmitDisabled}
+            aria-disabled={isSubmitDisabled}
             className="flex-1 py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             {createMutation.isPending ? 'Creating...' : 'Create Game'}

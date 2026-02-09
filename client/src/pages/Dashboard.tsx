@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { SkeletonGameCard } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
+import { downloadBlob } from '../utils/download';
 
 interface Game {
   id: string;
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery<{ data: Game[] }>({
     queryKey: ['userGames'],
@@ -56,6 +58,37 @@ export default function Dashboard() {
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleExport = async (gameId: string, gameName: string) => {
+    setExportError(null);
+    try {
+      const response = await api.get(`/games/${gameId}/export`, {
+        responseType: 'blob',
+      });
+      
+      // Use Content-Type from response or fallback to common YAML MIME type
+      const contentType = response.headers['content-type'] || 'application/x-yaml';
+      const responseBlob = response.data as Blob;
+      const blob =
+        responseBlob.type === contentType
+          ? responseBlob
+          : responseBlob.slice(0, responseBlob.size, contentType);
+      const contentDisposition = response.headers['content-disposition'];
+      
+      downloadBlob(blob, `${gameName}-export.yaml`, contentDisposition);
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (() => {
+              const responseData = (err as {
+                response?: { data?: { error?: { message?: string }; message?: string } };
+              }).response?.data;
+              return responseData?.error?.message || responseData?.message || 'Export failed';
+            })()
+          : 'Export failed';
+      setExportError(message);
     }
   };
 
@@ -96,6 +129,13 @@ export default function Dashboard() {
         <div role="alert" className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive">
           {importError}
           <button onClick={() => setImportError(null)} className="ml-2 underline text-xs">Dismiss</button>
+        </div>
+      )}
+
+      {exportError && (
+        <div role="alert" className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive">
+          {exportError}
+          <button onClick={() => setExportError(null)} className="ml-2 underline text-xs" aria-label="Dismiss export error message">Dismiss</button>
         </div>
       )}
 
@@ -146,27 +186,30 @@ export default function Dashboard() {
                  game.imageUrl.startsWith('/uploads/'));
               
               return (
-                <Link
+                <div
                   key={game.id}
-                  to={
-                    game.status === 'LOBBY'
-                      ? `/game/${game.id}/lobby`
-                      : `/game/${game.id}/play`
-                  }
-                  className="block p-4 border rounded-lg hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-                  aria-label={`${game.name} - ${game.status} - ${game.playerCount} players${game.isHost ? ' - You are the host' : ''}`}
+                  className="border rounded-lg hover:border-primary transition-colors"
                 >
-                  <article>
-                    {/* Game Image */}
-                    {isValidImageUrl && (
-                      <div className="mb-3 -mx-4 -mt-4">
-                        <img
-                          src={game.imageUrl}
-                          alt={game.name}
-                          className="w-full h-32 object-cover rounded-t-lg"
-                        />
-                      </div>
-                    )}
+                  <Link
+                    to={
+                      game.status === 'LOBBY'
+                        ? `/game/${game.id}/lobby`
+                        : `/game/${game.id}/play`
+                    }
+                    className="block p-4 focus:outline-none focus:ring-2 focus:ring-primary rounded-t-lg"
+                    aria-label={`${game.name} - ${game.status} - ${game.playerCount} players${game.isHost ? ' - You are the host' : ''}`}
+                  >
+                    <article>
+                      {/* Game Image */}
+                      {isValidImageUrl && (
+                        <div className="mb-3 -mx-4 -mt-4">
+                          <img
+                            src={game.imageUrl}
+                            alt={game.name}
+                            className="w-full h-32 object-cover rounded-t-lg"
+                          />
+                        </div>
+                      )}
 
                     <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold truncate">{game.name}</h3>
@@ -213,7 +256,17 @@ export default function Dashboard() {
                     </div>
                   )}
                 </article>
-              </Link>
+                </Link>
+                <div className="px-4 pb-3 pt-1 border-t">
+                  <button
+                    onClick={() => handleExport(game.id, game.name)}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 rounded"
+                    aria-label={`Export ${game.name} as YAML`}
+                  >
+                    Export YAML
+                  </button>
+                </div>
+              </div>
             );
           })}
           </div>

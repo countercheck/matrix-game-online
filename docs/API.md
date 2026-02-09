@@ -296,7 +296,7 @@ Get game details.
 ```
 
 ### PUT /games/:gameId
-Update game settings (host only, lobby status only).
+Update game name/description (host only). Can be used at any time, including during active gameplay.
 
 ### DELETE /games/:gameId
 Delete a game (host only, lobby status only). This performs a soft delete by marking the game as deleted while preserving the data.
@@ -352,7 +352,7 @@ When a persona is marked as `isNpc: true`, the system:
 **Note:** The NPC system user must be seeded in the database before games with NPC personas can be started. Run `pnpm db:seed` to create the NPC user.
 
 ### PUT /games/:gameId/personas/:personaId
-Update a persona's details (host only, lobby status only).
+Update a persona's details (host only). Can be used at any time, including during active gameplay.
 
 **Request Body:**
 ```json
@@ -390,7 +390,7 @@ Update a persona's details (host only, lobby status only).
 ```
 
 **Error Responses:**
-- `400 Bad Request` - Game has already started (status is not LOBBY), or validation failed
+- `400 Bad Request` - Validation failed
 - `403 Forbidden` - Not the game host
 - `404 Not Found` - Game or persona not found
 - `409 Conflict` - Persona name already exists in this game
@@ -428,6 +428,88 @@ Propose a new action (one per player per round).
 **Request Body:**
 ```json
 {
+
+---
+
+## Host Edit Endpoints
+
+These endpoints allow the game host to edit any content at any point during the game. All edits are logged as GameEvents for audit trail.
+
+### PUT /actions/:actionId
+Update an action's description or desired outcome (host only).
+
+**Request Body:**
+```json
+{
+  "actionDescription": "Updated action description",
+  "desiredOutcome": "Updated desired outcome"
+}
+```
+
+**Notes:**
+- At least one field must be provided
+- `actionDescription` max 1800 characters
+- `desiredOutcome` max 1200 characters
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": { "id": "uuid", "actionDescription": "...", "desiredOutcome": "..." }
+}
+```
+
+**Errors:** `403 Forbidden` (not host), `404 Not Found`
+
+### PUT /actions/:actionId/arguments/:argumentId
+Update an argument's content (host only).
+
+**Request Body:**
+```json
+{
+  "content": "Updated argument content"
+}
+```
+
+**Notes:** `content` max 900 characters.
+
+**Response:** `200 OK`
+
+**Errors:** `403 Forbidden` (not host), `404 Not Found`
+
+### PUT /actions/:actionId/narration
+Update a narration's content (host only).
+
+**Request Body:**
+```json
+{
+  "content": "Updated narration content"
+}
+```
+
+**Notes:** `content` max 3600 characters.
+
+**Response:** `200 OK`
+
+**Errors:** `403 Forbidden` (not host), `404 Not Found`
+
+### PUT /rounds/:roundId/summary
+Update a round summary's content (host only).
+
+**Request Body:**
+```json
+{
+  "content": "Updated round summary content"
+}
+```
+
+**Notes:** `content` max 7500 characters.
+
+**Response:** `200 OK`
+
+**Errors:** `403 Forbidden` (not host), `404 Not Found`
+
+---
 
 ### GET /games/:gameId/export
 Export the full game state as a downloadable YAML file. Includes game info, personas, players, and complete round/action history.

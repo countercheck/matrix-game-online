@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 
@@ -11,15 +11,26 @@ export default function ResetPassword() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const tokenParam = searchParams.get('token');
     if (tokenParam) {
       setToken(tokenParam);
+      setError(''); // Clear error when valid token is found
     } else {
       setError('Invalid reset link. Please request a new password reset.');
     }
   }, [searchParams]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +45,32 @@ export default function ResetPassword() {
       return;
     }
 
+    // Client-side password strength validation
+    const passwordErrors: string[] = [];
+    if (newPassword.length < 8) {
+      passwordErrors.push('at least 8 characters');
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      passwordErrors.push('one lowercase letter');
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      passwordErrors.push('one uppercase letter');
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      passwordErrors.push('one number');
+    }
+
+    if (passwordErrors.length > 0) {
+      setError(`Password must contain ${passwordErrors.join(', ')}`);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await api.post('/auth/reset-password', { token, newPassword });
       setMessage(response.data.data.message);
       // Redirect to login after 2 seconds
-      setTimeout(() => {
+      redirectTimeoutRef.current = setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err: unknown) {

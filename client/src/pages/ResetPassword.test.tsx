@@ -30,6 +30,7 @@ describe('ResetPassword Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSearchParams.set('token', 'valid-token');
+    vi.useRealTimers(); // Reset to real timers before each test
   });
 
   it('should render reset password form', () => {
@@ -177,7 +178,12 @@ describe('ResetPassword Page', () => {
     await user.type(screen.getByLabelText(/confirm password/i), 'NewPassword123');
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
-    // Wait for redirect (2 second delay)
+    // Wait for the success message
+    await waitFor(() => {
+      expect(screen.getByText(/password has been reset successfully/i)).toBeInTheDocument();
+    });
+
+    // Wait for redirect (2 second delay + buffer)
     await waitFor(
       () => {
         expect(mockNavigate).toHaveBeenCalledWith('/login');

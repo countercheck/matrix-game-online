@@ -242,37 +242,20 @@ export default function Dashboard() {
                       <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                         Host
                       </span>
-                    </div>
-
-                    {game.description && (
-                      <RichTextDisplay
-                        content={game.description}
-                        className="text-sm mt-1 line-clamp-2 [&_p]:my-0 [&_p]:text-muted-foreground"
-                        disableLinks
-                      />
                     )}
+                  </div>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
-                      <span>{game.playerCount} players</span>
-                      {game.currentRound && <span>Round {game.currentRound}</span>}
-                      {game.isHost && (
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                          Host
-                        </span>
-                      )}
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Playing as <span className="font-medium">{game.playerName}</span>
+                  </div>
+
+                  {game.status === 'ACTIVE' && (
+                    <div className="mt-2 text-xs">
+                      <span className="text-muted-foreground">Phase: </span>
+                      <span className="font-medium">{game.currentPhase}</span>
                     </div>
-
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Playing as <span className="font-medium">{game.playerName}</span>
-                    </div>
-
-                    {game.status === 'ACTIVE' && (
-                      <div className="mt-2 text-xs">
-                        <span className="text-muted-foreground">Phase: </span>
-                        <span className="font-medium">{game.currentPhase}</span>
-                      </div>
-                    )}
-                  </article>
+                  )}
+                </article>
                 </Link>
                 <div className="px-4 pb-3 pt-1 border-t">
                   <button

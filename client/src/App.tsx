@@ -77,14 +77,7 @@ function App() {
           </PublicRoute>
         }
       />
-      <Route
-        path="/reset-password"
-        element={
-          <PublicRoute>
-            <ResetPassword />
-          </PublicRoute>
-        }
-      />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         path="/"
         element={

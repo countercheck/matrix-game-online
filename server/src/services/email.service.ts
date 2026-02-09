@@ -387,3 +387,25 @@ export async function sendTimeoutOccurredEmail(
 
   return sendEmail({ to, subject, text, html });
 }
+
+export async function sendPasswordResetEmail(
+  to: string,
+  resetUrl: string
+): Promise<boolean> {
+  const subject = 'Password Reset Request';
+  const text = `You requested a password reset. Click the link to reset your password: ${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.`;
+  const html = wrapInTemplate(
+    `
+    <h2>Password Reset Request</h2>
+    <p>You requested a password reset for your account.</p>
+    <p>Click the button below to reset your password:</p>
+    <a href="${resetUrl}" class="button">Reset Password</a>
+    <p style="font-size: 12px; color: #6b7280;">Or copy this link: ${resetUrl}</p>
+    <p><strong>This link will expire in 1 hour.</strong></p>
+    <p>If you didn't request this, please ignore this email. Your password will remain unchanged.</p>
+    `,
+    subject
+  );
+
+  return sendEmail({ to, subject, text, html });
+}

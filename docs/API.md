@@ -383,6 +383,32 @@ Propose a new action (one per player per round).
 **Request Body:**
 ```json
 {
+  "actionDescription": "I search the ancient library for clues",
+  "desiredOutcome": "Find a map to the hidden temple",
+  "initialArguments": [
+    "My character has extensive knowledge of ancient texts",
+    "The library is well-preserved and organized"
+  ]
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "actionDescription": "I search the ancient library for clues",
+    "desiredOutcome": "Find a map to the hidden temple",
+    "phase": "ARGUMENTATION"
+  }
+}
+```
+
+**Errors:**
+- `400 Bad Request` - Invalid input or player already proposed an action this round
+- `403 Forbidden` - Not a member of the game or game not in PROPOSAL phase
+- `404 Not Found` - Game or round not found
 
 ---
 

@@ -388,6 +388,30 @@ export async function sendTimeoutOccurredEmail(
   return sendEmail({ to, subject, text, html });
 }
 
+export async function sendYourTurnEmail(
+  to: string,
+  gameName: string,
+  gameId: string,
+  turnAction: string
+): Promise<boolean> {
+  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const subject = `It's your turn in "${gameName}"`;
+  const text = `It's your turn to ${turnAction} in "${gameName}". Go to the game: ${gameUrl}`;
+  const html = wrapInTemplate(
+    `
+    <h2>It's Your Turn!</h2>
+    <p>The game <strong>"${gameName}"</strong> is waiting on you.</p>
+    <div class="highlight">
+      <p>Your next step: <strong>${turnAction}</strong></p>
+    </div>
+    <a href="${gameUrl}" class="button">Take Your Turn</a>
+    `,
+    subject
+  );
+
+  return sendEmail({ to, subject, text, html });
+}
+
 export async function sendPasswordResetEmail(
   to: string,
   resetUrl: string

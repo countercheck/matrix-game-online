@@ -148,5 +148,21 @@ describe('Email Service', () => {
 
       process.env.EMAIL_ENABLED = originalEnv;
     });
+
+    it('should return false from sendYourTurnEmail when email is disabled', async () => {
+      const originalEnv = process.env.EMAIL_ENABLED;
+      process.env.EMAIL_ENABLED = 'false';
+
+      const { sendYourTurnEmail } = await import(
+        '../../../src/services/email.service.js'
+      );
+
+      const result = await sendYourTurnEmail(
+        'test@example.com', 'Test Game', 'game-1', 'propose an action'
+      );
+      expect(result).toBe(false);
+
+      process.env.EMAIL_ENABLED = originalEnv;
+    });
   });
 });

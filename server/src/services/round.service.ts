@@ -2,7 +2,7 @@ import { db } from '../config/database.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../middleware/errorHandler.js';
 import { requireMember, logGameEvent } from './game.service.js';
 import type { RoundSummaryInput, UpdateRoundSummaryInput } from '../utils/validators.js';
-import { notifyNewRound } from './notification.service.js';
+import { notifyNewRound, notifyYourTurn } from './notification.service.js';
 
 export async function getRound(roundId: string, userId: string) {
   const round = await db.round.findUnique({
@@ -176,6 +176,18 @@ export async function submitRoundSummary(
   notifyNewRound(round.gameId, round.game.name, nextRound.roundNumber).catch(
     () => {}
   );
+
+  // Notify all human players it's their turn to propose
+  const humanPlayers = await db.gamePlayer.findMany({
+    where: { gameId: round.gameId, isActive: true, isNpc: false },
+    select: { userId: true },
+  });
+  notifyYourTurn(
+    round.gameId,
+    round.game.name,
+    humanPlayers.map((p) => p.userId),
+    'propose an action'
+  ).catch(() => {});
 
   return {
     summary,

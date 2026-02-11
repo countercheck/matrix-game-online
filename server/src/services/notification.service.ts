@@ -10,6 +10,7 @@ import {
   sendNewRoundEmail,
   sendTimeoutWarningEmail,
   sendTimeoutOccurredEmail,
+  sendYourTurnEmail,
 } from './email.service.js';
 
 export interface NotificationPreferences {
@@ -21,6 +22,7 @@ export interface NotificationPreferences {
   roundSummaryNeeded: boolean;
   newRound: boolean;
   timeoutWarnings: boolean;
+  yourTurn: boolean;
 }
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
@@ -31,7 +33,8 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   resolutionReady: true,
   roundSummaryNeeded: true,
   newRound: true,
-  timeoutWarnings: true,
+  timeoutWarnings: false,
+  yourTurn: true,
 };
 
 /**
@@ -52,6 +55,7 @@ export function getNotificationPreferences(
     roundSummaryNeeded: userPrefs.roundSummaryNeeded !== false,
     newRound: userPrefs.newRound !== false,
     timeoutWarnings: userPrefs.timeoutWarnings !== false,
+    yourTurn: userPrefs.yourTurn !== false,
   };
 }
 
@@ -377,5 +381,36 @@ export async function notifyTimeoutOccurred(
     logger.info(`Sent timeout occurred notifications for game ${gameId}`);
   } catch (error) {
     logger.error(`Failed to send timeout occurred notifications: ${error}`);
+  }
+}
+
+/**
+ * Notify specific players that it's their turn to act.
+ * turnAction should describe what they need to do (e.g. "propose an action", "cast your vote").
+ */
+export async function notifyYourTurn(
+  gameId: string,
+  gameName: string,
+  playerUserIds: string[],
+  turnAction: string
+): Promise<void> {
+  try {
+    const users = await db.user.findMany({
+      where: { id: { in: playerUserIds } },
+      select: { id: true, email: true, notificationPreferences: true },
+    });
+
+    for (const user of users) {
+      const prefs = getNotificationPreferences(
+        user.notificationPreferences as Record<string, unknown>
+      );
+      if (shouldNotify(prefs, 'yourTurn')) {
+        await sendYourTurnEmail(user.email, gameName, gameId, turnAction);
+      }
+    }
+
+    logger.info(`Sent your-turn notifications for game ${gameId}`);
+  } catch (error) {
+    logger.error(`Failed to send your-turn notifications: ${error}`);
   }
 }

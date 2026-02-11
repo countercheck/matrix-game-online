@@ -326,6 +326,7 @@
 ### 6.4 Timeout Notifications
 - [✓] Send reminder emails before timeout
 - [✓] Send notification when timeout occurs
+- [✓] Timeout warnings disabled by default (no cron scheduler yet)
 - [✓] Test notification delivery
 
 ---
@@ -348,6 +349,7 @@
 - [✓] Notify initiator when resolution ready
 - [✓] Notify players when round summary needed
 - [✓] Notify players when new round starts
+- [✓] Notify player when it's their turn to act ("your turn" emails)
 - [✓] Test all notification triggers
 
 ### 7.3 Notification Preferences

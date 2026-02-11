@@ -24,6 +24,7 @@ vi.mock('../../../src/services/email.service.js', () => ({
   sendNewRoundEmail: vi.fn().mockResolvedValue(true),
   sendTimeoutWarningEmail: vi.fn().mockResolvedValue(true),
   sendTimeoutOccurredEmail: vi.fn().mockResolvedValue(true),
+  sendYourTurnEmail: vi.fn().mockResolvedValue(true),
 }));
 
 // Mock logger
@@ -42,6 +43,7 @@ import {
   notifyActionProposed,
   notifyVotingStarted,
   notifyResolutionReady,
+  notifyYourTurn,
 } from '../../../src/services/notification.service.js';
 import { db } from '../../../src/config/database.js';
 import * as emailService from '../../../src/services/email.service.js';
@@ -62,7 +64,8 @@ describe('Notification Service', () => {
       expect(prefs.resolutionReady).toBe(true);
       expect(prefs.roundSummaryNeeded).toBe(true);
       expect(prefs.newRound).toBe(true);
-      expect(prefs.timeoutWarnings).toBe(true);
+      expect(prefs.timeoutWarnings).toBe(false);
+      expect(prefs.yourTurn).toBe(true);
     });
 
     it('should return default preferences when user prefs is empty', () => {
@@ -281,6 +284,82 @@ describe('Notification Service', () => {
       );
 
       expect(emailService.sendResolutionReadyEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('notifyYourTurn', () => {
+    it('should send your-turn emails to specified players', async () => {
+      vi.mocked(db.user.findMany).mockResolvedValue([
+        {
+          id: 'user-1',
+          email: 'user1@example.com',
+          notificationPreferences: {},
+        },
+        {
+          id: 'user-2',
+          email: 'user2@example.com',
+          notificationPreferences: {},
+        },
+      ] as any);
+
+      await notifyYourTurn(
+        'game-1',
+        'Test Game',
+        ['user-1', 'user-2'],
+        'propose an action'
+      );
+
+      expect(emailService.sendYourTurnEmail).toHaveBeenCalledTimes(2);
+      expect(emailService.sendYourTurnEmail).toHaveBeenCalledWith(
+        'user1@example.com',
+        'Test Game',
+        'game-1',
+        'propose an action'
+      );
+      expect(emailService.sendYourTurnEmail).toHaveBeenCalledWith(
+        'user2@example.com',
+        'Test Game',
+        'game-1',
+        'propose an action'
+      );
+    });
+
+    it('should not send email if yourTurn preference is false', async () => {
+      vi.mocked(db.user.findMany).mockResolvedValue([
+        {
+          id: 'user-1',
+          email: 'user1@example.com',
+          notificationPreferences: { yourTurn: false },
+        },
+      ] as any);
+
+      await notifyYourTurn(
+        'game-1',
+        'Test Game',
+        ['user-1'],
+        'cast your vote'
+      );
+
+      expect(emailService.sendYourTurnEmail).not.toHaveBeenCalled();
+    });
+
+    it('should not send email if emailEnabled is false', async () => {
+      vi.mocked(db.user.findMany).mockResolvedValue([
+        {
+          id: 'user-1',
+          email: 'user1@example.com',
+          notificationPreferences: { emailEnabled: false },
+        },
+      ] as any);
+
+      await notifyYourTurn(
+        'game-1',
+        'Test Game',
+        ['user-1'],
+        'draw tokens'
+      );
+
+      expect(emailService.sendYourTurnEmail).not.toHaveBeenCalled();
     });
   });
 

@@ -15,18 +15,19 @@ interface GameSettings {
 }
 
 /**
- * Get or throw if NPC system user doesn't exist
+ * Get or create the NPC system user.
+ * Auto-creates the user if it doesn't exist, so no manual seeding is required.
  */
 async function getNpcUser() {
-  const npcUser = await db.user.findUnique({
+  const npcUser = await db.user.upsert({
     where: { email: NPC_USER_EMAIL },
+    update: {},
+    create: {
+      email: NPC_USER_EMAIL,
+      displayName: 'NPC System',
+      passwordHash: 'npc-system-user-no-login',
+    },
   });
-
-  if (!npcUser) {
-    throw new Error(
-      `NPC system user not found. Please run 'pnpm db:seed' to create the NPC user with email: ${NPC_USER_EMAIL}`
-    );
-  }
 
   return npcUser;
 }

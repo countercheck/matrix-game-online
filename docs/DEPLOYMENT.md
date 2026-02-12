@@ -157,9 +157,9 @@ npx prisma migrate deploy
 DATABASE_URL="postgresql://..." npx prisma migrate deploy
 ```
 
-### Seeding the NPC System User
+### Seeding the NPC System User (Optional)
 
-After running migrations, seed the NPC system user required for NPC persona functionality:
+The NPC system user is automatically created when needed for games with NPC personas, so manual seeding is optional. However, you can pre-create it by running:
 
 ```bash
 # From the server directory
@@ -172,7 +172,7 @@ npx tsx prisma/seed.ts
 
 This creates a system user with email `npc@system.local` (configurable via `NPC_USER_EMAIL` environment variable) that is used for all NPC players in games with NPC personas.
 
-**Note:** The seed script uses `upsert`, so it's safe to run multiple times.
+**Note:** The seed script uses `upsert`, so it's safe to run multiple times. The NPC user will be auto-created on first use if not seeded.
 
 ### Database Connection String Format
 

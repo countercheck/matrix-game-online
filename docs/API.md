@@ -185,9 +185,14 @@ Update notification preferences.
 **Request Body:**
 ```json
 {
-  "emailOnActionProposed": true,
-  "emailOnVotingStart": true,
-  "emailOnResolution": false
+  "emailEnabled": true,
+  "gameStarted": true,
+  "actionProposed": true,
+  "votingStarted": true,
+  "resolutionReady": true,
+  "roundSummaryNeeded": true,
+  "newRound": true,
+  "timeoutWarnings": false
 }
 ```
 

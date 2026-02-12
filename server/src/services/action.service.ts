@@ -10,6 +10,7 @@ import {
   notifyResolutionReady,
   notifyNarrationNeeded,
   notifyRoundSummaryNeeded,
+  notifyYourTurn,
 } from './notification.service.js';
 
 /**
@@ -527,6 +528,12 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
         fullAction.initiator.userId,
         fullAction.actionDescription
       ).catch(() => {});
+      notifyYourTurn(
+        action.gameId,
+        game.name,
+        [fullAction.initiator.userId],
+        'draw tokens to determine the outcome'
+      ).catch(() => {});
     }
   }
 
@@ -659,6 +666,12 @@ export async function drawTokens(actionId: string, userId: string) {
     userId,
     drawResult.resultType,
     drawResult.resultValue
+  ).catch(() => {});
+  notifyYourTurn(
+    action.gameId,
+    action.game.name,
+    [userId],
+    'write the narration for your action'
   ).catch(() => {});
 
   return tokenDraw;
@@ -838,6 +851,31 @@ export async function submitNarration(actionId: string, userId: string, data: Na
         },
       });
 
+      // Notify players who haven't proposed yet that it's their turn
+      const allPlayers = await db.gamePlayer.findMany({
+        where: { gameId: action.gameId, isActive: true, isNpc: false },
+        select: { userId: true },
+      });
+      const proposedUserIds = new Set(
+        (
+          await db.action.findMany({
+            where: { roundId: action.game.currentRound!.id },
+            select: { initiator: { select: { userId: true } } },
+          })
+        ).map((a) => a.initiator.userId)
+      );
+      const remainingUserIds = allPlayers
+        .filter((p) => !proposedUserIds.has(p.userId))
+        .map((p) => p.userId);
+      if (remainingUserIds.length > 0) {
+        notifyYourTurn(
+          action.gameId,
+          action.game.name,
+          remainingUserIds,
+          'propose an action'
+        ).catch(() => {});
+      }
+
       // Check if NPC should auto-propose (all humans have proposed)
       await checkAndProposeNpcAction(action.gameId);
     }
@@ -1013,6 +1051,12 @@ export async function skipVoting(actionId: string, userId: string) {
     action.game.name,
     action.initiator.userId,
     action.actionDescription
+  ).catch(() => {});
+  notifyYourTurn(
+    action.gameId,
+    action.game.name,
+    [action.initiator.userId],
+    'draw tokens to determine the outcome'
   ).catch(() => {});
 
   return {

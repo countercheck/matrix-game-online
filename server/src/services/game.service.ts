@@ -2,7 +2,7 @@ import { db } from '../config/database.js';
 import { GamePhase, Prisma } from '@prisma/client';
 import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
 import type { CreateGameInput, UpdatePersonaInput } from '../utils/validators.js';
-import { notifyGameStarted } from './notification.service.js';
+import { notifyGameStarted, notifyYourTurn } from './notification.service.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { getUploadsDir } from '../config/uploads.js';
@@ -579,6 +579,12 @@ export async function startGame(gameId: string, userId: string) {
 
   // Send notifications (async, don't wait)
   notifyGameStarted(gameId, game.name).catch(() => {});
+
+  // Notify all human players it's their turn to propose
+  const humanPlayerUserIds = updatedGame.players
+    .filter((p) => !p.isNpc)
+    .map((p) => p.user.id);
+  notifyYourTurn(gameId, game.name, humanPlayerUserIds, 'propose an action').catch(() => {});
 
   return updatedGame;
 }

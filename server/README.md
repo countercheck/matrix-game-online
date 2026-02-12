@@ -83,9 +83,9 @@ See [API Documentation](../docs/API.md) for full details.
 1. Create PostgreSQL database
 2. Configure `DATABASE_URL` in `.env`
 3. Run migrations: `npx prisma migrate dev`
-4. Seed database: `npm run db:seed`
+4. (Optional) Seed database: `npm run db:seed`
 
-The seed script creates an NPC system user (`npc@system.local`) required for games with NPC personas.
+**Note:** The NPC system user (`npc@system.local`) is automatically created when needed for games with NPC personas, so running the seed script is optional.
 
 ### Schema Overview
 

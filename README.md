@@ -58,7 +58,7 @@ pnpm db:generate
 # Run migrations
 pnpm db:migrate
 
-# Seed the database (creates NPC system user)
+# (Optional) Seed the database with sample data
 pnpm db:seed
 ```
 

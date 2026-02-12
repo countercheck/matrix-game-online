@@ -300,7 +300,7 @@ describe('Notification Service', () => {
           email: 'user2@example.com',
           notificationPreferences: {},
         },
-      ] as any);
+      ] as Array<{ id: string; email: string; notificationPreferences: Record<string, unknown> | null }>);
 
       await notifyYourTurn(
         'game-1',
@@ -331,7 +331,7 @@ describe('Notification Service', () => {
           email: 'user1@example.com',
           notificationPreferences: { yourTurn: false },
         },
-      ] as any);
+      ] as Array<{ id: string; email: string; notificationPreferences: Record<string, unknown> | null }>);
 
       await notifyYourTurn(
         'game-1',
@@ -350,7 +350,7 @@ describe('Notification Service', () => {
           email: 'user1@example.com',
           notificationPreferences: { emailEnabled: false },
         },
-      ] as any);
+      ] as Array<{ id: string; email: string; notificationPreferences: Record<string, unknown> | null }>);
 
       await notifyYourTurn(
         'game-1',

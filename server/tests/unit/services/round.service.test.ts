@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockDb, mockRequireMember, mockLogGameEvent, mockNotifyNewRound } = vi.hoisted(() => {
+const { mockDb, mockRequireMember, mockLogGameEvent, mockNotifyNewRound, mockNotifyYourTurn } = vi.hoisted(() => {
   const mockDb = {
     round: {
       findUnique: vi.fn(),
@@ -17,6 +17,7 @@ const { mockDb, mockRequireMember, mockLogGameEvent, mockNotifyNewRound } = vi.h
     },
     gamePlayer: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     gameEvent: {
       create: vi.fn(),
@@ -25,7 +26,8 @@ const { mockDb, mockRequireMember, mockLogGameEvent, mockNotifyNewRound } = vi.h
   const mockRequireMember = vi.fn();
   const mockLogGameEvent = vi.fn();
   const mockNotifyNewRound = vi.fn().mockResolvedValue(undefined);
-  return { mockDb, mockRequireMember, mockLogGameEvent, mockNotifyNewRound };
+  const mockNotifyYourTurn = vi.fn().mockResolvedValue(undefined);
+  return { mockDb, mockRequireMember, mockLogGameEvent, mockNotifyNewRound, mockNotifyYourTurn };
 });
 
 vi.mock('../../../src/config/database.js', () => ({
@@ -39,6 +41,7 @@ vi.mock('../../../src/services/game.service.js', () => ({
 
 vi.mock('../../../src/services/notification.service.js', () => ({
   notifyNewRound: mockNotifyNewRound,
+  notifyYourTurn: mockNotifyYourTurn,
 }));
 
 vi.mock('../../../src/middleware/errorHandler.js', () => ({
@@ -177,6 +180,11 @@ describe('Round Service', () => {
     beforeEach(() => {
       mockDb.round.findUnique.mockResolvedValue(mockRound);
       mockDb.gamePlayer.findFirst.mockResolvedValue({ id: 'p1' });
+      mockDb.gamePlayer.findMany.mockResolvedValue([
+        { userId: 'user-1' },
+        { userId: 'user-2' },
+        { userId: 'user-3' },
+      ]);
       mockDb.roundSummary.create.mockResolvedValue({ id: 'summary-1', content: 'Test' });
       mockDb.round.update.mockResolvedValue({});
       mockDb.game.findUnique.mockResolvedValue(mockNextRoundGame);

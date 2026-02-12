@@ -32,6 +32,7 @@ vi.mock('../../../src/services/notification.service.js', () => ({
   notifyVotingStarted: vi.fn().mockResolvedValue(undefined),
   notifyResolutionReady: vi.fn().mockResolvedValue(undefined),
   notifyRoundSummaryNeeded: vi.fn().mockResolvedValue(undefined),
+  notifyYourTurn: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock game service exports

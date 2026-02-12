@@ -192,8 +192,7 @@ Update notification preferences.
   "resolutionReady": true,
   "roundSummaryNeeded": true,
   "newRound": true,
-  "timeoutWarnings": false,
-  "yourTurn": true
+  "timeoutWarnings": false
 }
 ```
 

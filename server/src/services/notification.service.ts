@@ -46,17 +46,16 @@ export function getNotificationPreferences(
   if (!userPrefs) {
     return DEFAULT_PREFERENCES;
   }
-  return {
-    emailEnabled: userPrefs.emailEnabled !== undefined ? userPrefs.emailEnabled === true : DEFAULT_PREFERENCES.emailEnabled,
-    gameStarted: userPrefs.gameStarted !== undefined ? userPrefs.gameStarted === true : DEFAULT_PREFERENCES.gameStarted,
-    actionProposed: userPrefs.actionProposed !== undefined ? userPrefs.actionProposed === true : DEFAULT_PREFERENCES.actionProposed,
-    votingStarted: userPrefs.votingStarted !== undefined ? userPrefs.votingStarted === true : DEFAULT_PREFERENCES.votingStarted,
-    resolutionReady: userPrefs.resolutionReady !== undefined ? userPrefs.resolutionReady === true : DEFAULT_PREFERENCES.resolutionReady,
-    roundSummaryNeeded: userPrefs.roundSummaryNeeded !== undefined ? userPrefs.roundSummaryNeeded === true : DEFAULT_PREFERENCES.roundSummaryNeeded,
-    newRound: userPrefs.newRound !== undefined ? userPrefs.newRound === true : DEFAULT_PREFERENCES.newRound,
-    timeoutWarnings: userPrefs.timeoutWarnings !== undefined ? userPrefs.timeoutWarnings === true : DEFAULT_PREFERENCES.timeoutWarnings,
-    yourTurn: userPrefs.yourTurn !== undefined ? userPrefs.yourTurn === true : DEFAULT_PREFERENCES.yourTurn,
-  };
+  
+  const result = { ...DEFAULT_PREFERENCES };
+  
+  for (const key of Object.keys(DEFAULT_PREFERENCES) as Array<keyof NotificationPreferences>) {
+    if (key in userPrefs && typeof userPrefs[key] === 'boolean') {
+      result[key] = userPrefs[key] as boolean;
+    }
+  }
+  
+  return result;
 }
 
 /**

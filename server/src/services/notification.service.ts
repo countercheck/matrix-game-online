@@ -47,15 +47,15 @@ export function getNotificationPreferences(
     return DEFAULT_PREFERENCES;
   }
   return {
-    emailEnabled: userPrefs.emailEnabled !== false,
-    gameStarted: userPrefs.gameStarted !== false,
-    actionProposed: userPrefs.actionProposed !== false,
-    votingStarted: userPrefs.votingStarted !== false,
-    resolutionReady: userPrefs.resolutionReady !== false,
-    roundSummaryNeeded: userPrefs.roundSummaryNeeded !== false,
-    newRound: userPrefs.newRound !== false,
-    timeoutWarnings: userPrefs.timeoutWarnings !== false,
-    yourTurn: userPrefs.yourTurn !== false,
+    emailEnabled: userPrefs.emailEnabled !== undefined ? userPrefs.emailEnabled === true : DEFAULT_PREFERENCES.emailEnabled,
+    gameStarted: userPrefs.gameStarted !== undefined ? userPrefs.gameStarted === true : DEFAULT_PREFERENCES.gameStarted,
+    actionProposed: userPrefs.actionProposed !== undefined ? userPrefs.actionProposed === true : DEFAULT_PREFERENCES.actionProposed,
+    votingStarted: userPrefs.votingStarted !== undefined ? userPrefs.votingStarted === true : DEFAULT_PREFERENCES.votingStarted,
+    resolutionReady: userPrefs.resolutionReady !== undefined ? userPrefs.resolutionReady === true : DEFAULT_PREFERENCES.resolutionReady,
+    roundSummaryNeeded: userPrefs.roundSummaryNeeded !== undefined ? userPrefs.roundSummaryNeeded === true : DEFAULT_PREFERENCES.roundSummaryNeeded,
+    newRound: userPrefs.newRound !== undefined ? userPrefs.newRound === true : DEFAULT_PREFERENCES.newRound,
+    timeoutWarnings: userPrefs.timeoutWarnings !== undefined ? userPrefs.timeoutWarnings === true : DEFAULT_PREFERENCES.timeoutWarnings,
+    yourTurn: userPrefs.yourTurn !== undefined ? userPrefs.yourTurn === true : DEFAULT_PREFERENCES.yourTurn,
   };
 }
 

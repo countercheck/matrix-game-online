@@ -44,6 +44,7 @@ export const notificationPreferencesSchema = z.object({
   roundSummaryNeeded: z.boolean().optional(),
   newRound: z.boolean().optional(),
   timeoutWarnings: z.boolean().optional(),
+  yourTurn: z.boolean().optional(),
 });
 
 // Persona schema

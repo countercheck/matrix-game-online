@@ -115,7 +115,7 @@ export default function GameView() {
     checkTimeout();
     const interval = setInterval(checkTimeout, 1000);
     return () => clearInterval(interval);
-  }, [game, currentTimeoutHours, game?.phaseStartedAt]);
+  }, [game, currentTimeoutHours]);
 
   if (isLoading) {
     return (

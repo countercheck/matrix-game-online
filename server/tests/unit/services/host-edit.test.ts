@@ -34,7 +34,11 @@ vi.mock('../../../src/services/notification.service.js', () => ({
 }));
 
 // Import after mocks
-import { updateAction, updateArgument, updateNarration } from '../../../src/services/action.service.js';
+import {
+  updateAction,
+  updateArgument,
+  updateNarration,
+} from '../../../src/services/action.service.js';
 import { updateRoundSummary } from '../../../src/services/round.service.js';
 
 beforeEach(() => {
@@ -68,7 +72,9 @@ describe('Host Edit: updateAction', () => {
     });
     expect(result.actionDescription).toBe('Updated description');
     expect(mockLogGameEvent).toHaveBeenCalledWith(
-      gameId, userId, 'ACTION_EDITED',
+      gameId,
+      userId,
+      'ACTION_EDITED',
       expect.objectContaining({ actionId })
     );
   });
@@ -76,16 +82,18 @@ describe('Host Edit: updateAction', () => {
   it('should throw NotFoundError when action does not exist', async () => {
     mockDb.action.findUnique.mockResolvedValue(null);
 
-    await expect(updateAction(actionId, userId, { actionDescription: 'test' }))
-      .rejects.toThrow('Action not found');
+    await expect(updateAction(actionId, userId, { actionDescription: 'test' })).rejects.toThrow(
+      'Action not found'
+    );
   });
 
   it('should throw ForbiddenError when user is not host', async () => {
     mockDb.action.findUnique.mockResolvedValue({ id: actionId, gameId });
     mockDb.gamePlayer.findFirst.mockResolvedValue(null);
 
-    await expect(updateAction(actionId, userId, { actionDescription: 'test' }))
-      .rejects.toThrow('Only the game host can perform this action');
+    await expect(updateAction(actionId, userId, { actionDescription: 'test' })).rejects.toThrow(
+      'Only the game host can perform this action'
+    );
   });
 });
 
@@ -113,7 +121,9 @@ describe('Host Edit: updateArgument', () => {
       where: { gameId, userId, isActive: true, isHost: true },
     });
     expect(mockLogGameEvent).toHaveBeenCalledWith(
-      gameId, userId, 'ARGUMENT_EDITED',
+      gameId,
+      userId,
+      'ARGUMENT_EDITED',
       expect.objectContaining({ argumentId, actionId })
     );
   });
@@ -121,8 +131,9 @@ describe('Host Edit: updateArgument', () => {
   it('should throw NotFoundError when argument does not exist', async () => {
     mockDb.argument.findUnique.mockResolvedValue(null);
 
-    await expect(updateArgument(argumentId, userId, { content: 'test' }))
-      .rejects.toThrow('Argument not found');
+    await expect(updateArgument(argumentId, userId, { content: 'test' })).rejects.toThrow(
+      'Argument not found'
+    );
   });
 
   it('should throw ForbiddenError when user is not host', async () => {
@@ -132,8 +143,9 @@ describe('Host Edit: updateArgument', () => {
     });
     mockDb.gamePlayer.findFirst.mockResolvedValue(null);
 
-    await expect(updateArgument(argumentId, userId, { content: 'test' }))
-      .rejects.toThrow('Only the game host can perform this action');
+    await expect(updateArgument(argumentId, userId, { content: 'test' })).rejects.toThrow(
+      'Only the game host can perform this action'
+    );
   });
 });
 
@@ -161,7 +173,9 @@ describe('Host Edit: updateNarration', () => {
       where: { gameId, userId, isActive: true, isHost: true },
     });
     expect(mockLogGameEvent).toHaveBeenCalledWith(
-      gameId, userId, 'NARRATION_EDITED',
+      gameId,
+      userId,
+      'NARRATION_EDITED',
       expect.objectContaining({ actionId })
     );
   });
@@ -169,8 +183,9 @@ describe('Host Edit: updateNarration', () => {
   it('should throw NotFoundError when narration does not exist', async () => {
     mockDb.narration.findUnique.mockResolvedValue(null);
 
-    await expect(updateNarration(actionId, userId, { content: 'test' }))
-      .rejects.toThrow('Narration not found');
+    await expect(updateNarration(actionId, userId, { content: 'test' })).rejects.toThrow(
+      'Narration not found'
+    );
   });
 
   it('should throw ForbiddenError when user is not host', async () => {
@@ -181,8 +196,9 @@ describe('Host Edit: updateNarration', () => {
     });
     mockDb.gamePlayer.findFirst.mockResolvedValue(null);
 
-    await expect(updateNarration(actionId, userId, { content: 'test' }))
-      .rejects.toThrow('Only the game host can perform this action');
+    await expect(updateNarration(actionId, userId, { content: 'test' })).rejects.toThrow(
+      'Only the game host can perform this action'
+    );
   });
 });
 
@@ -210,7 +226,9 @@ describe('Host Edit: updateRoundSummary', () => {
       where: { gameId, userId, isActive: true, isHost: true },
     });
     expect(mockLogGameEvent).toHaveBeenCalledWith(
-      gameId, userId, 'ROUND_SUMMARY_EDITED',
+      gameId,
+      userId,
+      'ROUND_SUMMARY_EDITED',
       expect.objectContaining({ roundId })
     );
   });
@@ -218,8 +236,9 @@ describe('Host Edit: updateRoundSummary', () => {
   it('should throw NotFoundError when round does not exist', async () => {
     mockDb.round.findUnique.mockResolvedValue(null);
 
-    await expect(updateRoundSummary(roundId, userId, { content: 'test' }))
-      .rejects.toThrow('Round not found');
+    await expect(updateRoundSummary(roundId, userId, { content: 'test' })).rejects.toThrow(
+      'Round not found'
+    );
   });
 
   it('should throw NotFoundError when round summary does not exist', async () => {
@@ -229,8 +248,9 @@ describe('Host Edit: updateRoundSummary', () => {
       summary: null,
     });
 
-    await expect(updateRoundSummary(roundId, userId, { content: 'test' }))
-      .rejects.toThrow('Round summary not found');
+    await expect(updateRoundSummary(roundId, userId, { content: 'test' })).rejects.toThrow(
+      'Round summary not found'
+    );
   });
 
   it('should throw ForbiddenError when user is not host', async () => {
@@ -241,7 +261,8 @@ describe('Host Edit: updateRoundSummary', () => {
     });
     mockDb.gamePlayer.findFirst.mockResolvedValue(null);
 
-    await expect(updateRoundSummary(roundId, userId, { content: 'test' }))
-      .rejects.toThrow('Only the game host can perform this action');
+    await expect(updateRoundSummary(roundId, userId, { content: 'test' })).rejects.toThrow(
+      'Only the game host can perform this action'
+    );
   });
 });

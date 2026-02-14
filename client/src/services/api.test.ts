@@ -15,10 +15,10 @@ describe('API Client Configuration', () => {
       // This test documents the expected production behavior
       // When VITE_API_URL is set during build, baseURL should be: VITE_API_URL + /api
       // Example: VITE_API_URL=https://api.example.com -> baseURL=https://api.example.com/api
-      
+
       const baseURL = api.defaults.baseURL;
       expect(baseURL).toBeDefined();
-      
+
       // In production builds with VITE_API_URL set, baseURL will be absolute
       // In development/test without VITE_API_URL, baseURL will be relative
       if (baseURL && baseURL.startsWith('http')) {
@@ -36,10 +36,10 @@ describe('API Client Configuration', () => {
       // This prevents double slashes: https://api.example.com//api
       // The logic: apiRoot = VITE_API_URL.replace(/\/+$/, '')
       // Then: baseURL = apiRoot ? `${apiRoot}/api` : '/api'
-      
+
       const baseURL = api.defaults.baseURL;
       expect(baseURL).toBeDefined();
-      
+
       // Verify no double slashes in the URL
       if (baseURL && baseURL.includes('://')) {
         // Remove protocol to check path doesn't have //

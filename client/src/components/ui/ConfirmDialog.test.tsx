@@ -33,13 +33,7 @@ describe('ConfirmDialog', () => {
   });
 
   it('should render custom button text', () => {
-    render(
-      <ConfirmDialog
-        {...defaultProps}
-        confirmText="Delete"
-        cancelText="Keep"
-      />
-    );
+    render(<ConfirmDialog {...defaultProps} confirmText="Delete" cancelText="Keep" />);
 
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Keep' })).toBeInTheDocument();
@@ -57,13 +51,7 @@ describe('ConfirmDialog', () => {
   it('should call onConfirm when confirm is clicked', async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
     const onClose = vi.fn();
-    render(
-      <ConfirmDialog
-        {...defaultProps}
-        onConfirm={onConfirm}
-        onClose={onClose}
-      />
-    );
+    render(<ConfirmDialog {...defaultProps} onConfirm={onConfirm} onClose={onClose} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
 
@@ -78,9 +66,7 @@ describe('ConfirmDialog', () => {
 
   it('should call onClose when backdrop is clicked', () => {
     const onClose = vi.fn();
-    const { container } = render(
-      <ConfirmDialog {...defaultProps} onClose={onClose} />
-    );
+    const { container } = render(<ConfirmDialog {...defaultProps} onClose={onClose} />);
 
     // Click the backdrop (first div with bg-black/50)
     const backdrop = container.querySelector('.bg-black\\/50');
@@ -92,9 +78,9 @@ describe('ConfirmDialog', () => {
   });
 
   it('should show loading state during async confirm', async () => {
-    const onConfirm = vi.fn().mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 100))
-    );
+    const onConfirm = vi
+      .fn()
+      .mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
     render(<ConfirmDialog {...defaultProps} onConfirm={onConfirm} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));

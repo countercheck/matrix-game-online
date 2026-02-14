@@ -1,6 +1,11 @@
 import { db } from '../config/database.js';
 import { GamePhase, Prisma } from '@prisma/client';
-import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
+import {
+  BadRequestError,
+  NotFoundError,
+  ForbiddenError,
+  ConflictError,
+} from '../middleware/errorHandler.js';
 import type { CreateGameInput, UpdatePersonaInput } from '../utils/validators.js';
 import { notifyGameStarted } from './notification.service.js';
 import fs from 'fs/promises';
@@ -210,7 +215,7 @@ export async function updateGame(gameId: string, userId: string, data: Partial<C
   });
 
   await logGameEvent(gameId, userId, 'GAME_EDITED', {
-    fieldsUpdated: Object.keys(data).filter(k => data[k as keyof typeof data] !== undefined),
+    fieldsUpdated: Object.keys(data).filter((k) => data[k as keyof typeof data] !== undefined),
   });
 
   return updatedGame;
@@ -366,11 +371,7 @@ export async function deleteGame(gameId: string, userId: string) {
   return { message: 'Game deleted successfully' };
 }
 
-export async function selectPersona(
-  gameId: string,
-  userId: string,
-  personaId: string | null
-) {
+export async function selectPersona(gameId: string, userId: string, personaId: string | null) {
   const game = await db.game.findUnique({
     where: { id: gameId },
     include: {
@@ -726,7 +727,6 @@ export async function updateGameImage(gameId: string, userId: string, imageUrl: 
 
   return updatedGame;
 }
-
 
 export async function transitionPhase(gameId: string, newPhase: GamePhase) {
   const game = await db.game.findUnique({ where: { id: gameId } });

@@ -125,14 +125,14 @@ gh pr create --fill
 
 **Update documentation after every code change.** This is mandatory, not optional.
 
-| Change Type | Update These Docs |
-|-------------|-------------------|
-| New API endpoint | `docs/API.md` |
-| Database schema change | `docs/API.md`, run migration |
-| New environment variable | `.env.example`, `docs/DEPLOYMENT.md` |
-| New feature | `README.md`, relevant component README |
-| Bug fix | `DEVELOPMENT_PLAN.md` (if tracked) |
-| Completed task | `DEVELOPMENT_PLAN.md` |
+| Change Type              | Update These Docs                      |
+| ------------------------ | -------------------------------------- |
+| New API endpoint         | `docs/API.md`                          |
+| Database schema change   | `docs/API.md`, run migration           |
+| New environment variable | `.env.example`, `docs/DEPLOYMENT.md`   |
+| New feature              | `README.md`, relevant component README |
+| Bug fix                  | `DEVELOPMENT_PLAN.md` (if tracked)     |
+| Completed task           | `DEVELOPMENT_PLAN.md`                  |
 
 ### Documentation Files
 
@@ -148,17 +148,20 @@ gh pr create --fill
 ## Game Domain
 
 ### Action Resolution Phases
+
 ```
 WAITING -> PROPOSAL -> ARGUMENTATION -> VOTING -> RESOLUTION -> NARRATION -> COMPLETE
 ```
 
 ### Token Mechanics
+
 - Base pool: 1 Success + 1 Failure
 - Per player vote: adds 2 tokens based on vote type
 - Draw: 3 tokens randomly
 - Results: +3 (SSS), +1 (SSF), -1 (SFF), -3 (FFF)
 
 ### Key Entities
+
 - User, Game, GamePlayer, Round, Action, Argument, Vote
 
 ## Environment

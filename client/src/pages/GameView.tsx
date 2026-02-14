@@ -186,11 +186,7 @@ export default function GameView() {
           );
         }
         return (
-          <TokenDraw
-            gameId={game.id}
-            action={game.currentAction}
-            currentUserId={currentUserId}
-          />
+          <TokenDraw gameId={game.id} action={game.currentAction} currentUserId={currentUserId} />
         );
 
       case 'NARRATION':
@@ -234,24 +230,11 @@ export default function GameView() {
       {/* Header with optional image */}
       {game.imageUrl ? (
         <div className="relative w-full h-32 sm:h-40 rounded-lg overflow-hidden">
-          <img
-            src={game.imageUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+          <img src={game.imageUrl} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end justify-between p-4">
             <div className="flex items-center gap-3">
-              <Link
-                to="/"
-                className="text-white/90 hover:text-white"
-                title="Back to Dashboard"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+              <Link to="/" className="text-white/90 hover:text-white" title="Back to Dashboard">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -264,7 +247,8 @@ export default function GameView() {
                 <h1 className="text-2xl font-bold text-white">{game.name}</h1>
                 {game.currentRound && (
                   <p className="text-sm text-white/90">
-                    Round {game.currentRound.roundNumber} • {game.currentRound.actionsCompleted}/{game.currentRound.totalActionsRequired} actions
+                    Round {game.currentRound.roundNumber} • {game.currentRound.actionsCompleted}/
+                    {game.currentRound.totalActionsRequired} actions
                   </p>
                 )}
               </div>
@@ -274,14 +258,14 @@ export default function GameView() {
                 game.currentPhase === 'PROPOSAL'
                   ? 'bg-blue-500 text-white'
                   : game.currentPhase === 'ARGUMENTATION'
-                  ? 'bg-purple-500 text-white'
-                  : game.currentPhase === 'VOTING'
-                  ? 'bg-orange-500 text-white'
-                  : game.currentPhase === 'RESOLUTION'
-                  ? 'bg-green-500 text-white'
-                  : game.currentPhase === 'NARRATION'
-                  ? 'bg-indigo-500 text-white'
-                  : 'bg-gray-500 text-white'
+                    ? 'bg-purple-500 text-white'
+                    : game.currentPhase === 'VOTING'
+                      ? 'bg-orange-500 text-white'
+                      : game.currentPhase === 'RESOLUTION'
+                        ? 'bg-green-500 text-white'
+                        : game.currentPhase === 'NARRATION'
+                          ? 'bg-indigo-500 text-white'
+                          : 'bg-gray-500 text-white'
               }`}
             >
               {game.currentPhase}
@@ -290,72 +274,64 @@ export default function GameView() {
         </div>
       ) : (
         <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="text-muted-foreground hover:text-foreground"
-              title="Back to Dashboard"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="text-muted-foreground hover:text-foreground"
+                title="Back to Dashboard"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-            </Link>
-            <h1 className="text-2xl font-bold">{game.name}</h1>
-          </div>
-          {game.currentRound && (
-            <div className="flex items-center gap-3 mt-1">
-              <p className="text-muted-foreground">
-                Round {game.currentRound.roundNumber} &bull;{' '}
-                {game.currentRound.actionsCompleted}/{game.currentRound.totalActionsRequired} actions
-                completed
-              </p>
-              {game.currentRound.roundNumber > 1 && (
-                <button
-                  onClick={() => setShowRoundHistory(true)}
-                  className="text-xs text-primary hover:underline"
-                >
-                  View past rounds
-                </button>
-              )}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+              </Link>
+              <h1 className="text-2xl font-bold">{game.name}</h1>
             </div>
-          )}
+            {game.currentRound && (
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-muted-foreground">
+                  Round {game.currentRound.roundNumber} &bull; {game.currentRound.actionsCompleted}/
+                  {game.currentRound.totalActionsRequired} actions completed
+                </p>
+                {game.currentRound.roundNumber > 1 && (
+                  <button
+                    onClick={() => setShowRoundHistory(true)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    View past rounds
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="text-right">
+            <span
+              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                game.currentPhase === 'PROPOSAL'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                  : game.currentPhase === 'ARGUMENTATION'
+                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                    : game.currentPhase === 'VOTING'
+                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                      : game.currentPhase === 'RESOLUTION'
+                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                        : game.currentPhase === 'NARRATION'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+              }`}
+            >
+              {game.currentPhase.replace('_', ' ')}
+            </span>
+            {myPlayer && (
+              <p className="text-xs text-muted-foreground mt-1">Playing as {myPlayer.playerName}</p>
+            )}
+          </div>
         </div>
-        <div className="text-right">
-          <span
-            className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-              game.currentPhase === 'PROPOSAL'
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                : game.currentPhase === 'ARGUMENTATION'
-                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-                : game.currentPhase === 'VOTING'
-                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                : game.currentPhase === 'RESOLUTION'
-                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-                : game.currentPhase === 'NARRATION'
-                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-            }`}
-          >
-            {game.currentPhase.replace('_', ' ')}
-          </span>
-          {myPlayer && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Playing as {myPlayer.playerName}
-            </p>
-          )}
-        </div>
-      </div>
       )}
 
       {/* Main Game Area */}
@@ -386,7 +362,9 @@ export default function GameView() {
                 <li key={player.id} className="text-sm">
                   <div
                     className={`flex items-center justify-between ${
-                      player.persona ? 'cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors' : ''
+                      player.persona
+                        ? 'cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors'
+                        : ''
                     }`}
                     onClick={() => {
                       if (player.persona) {
@@ -395,7 +373,9 @@ export default function GameView() {
                     }}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className={`flex items-center gap-1 ${player.userId === currentUserId ? 'font-medium' : ''}`}>
+                      <div
+                        className={`flex items-center gap-1 ${player.userId === currentUserId ? 'font-medium' : ''}`}
+                      >
                         {player.persona && (
                           <span
                             className={`transition-transform text-xs text-muted-foreground ${
@@ -411,9 +391,7 @@ export default function GameView() {
                         </span>
                       </div>
                       {player.persona && (
-                        <p className="text-xs text-muted-foreground pl-4">
-                          {player.playerName}
-                        </p>
+                        <p className="text-xs text-muted-foreground pl-4">{player.playerName}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -440,7 +418,9 @@ export default function GameView() {
                       )}
                       {player.persona.isNpc && player.persona.npcActionDescription && (
                         <div>
-                          <span className="font-medium text-amber-700 dark:text-amber-300">Action: </span>
+                          <span className="font-medium text-amber-700 dark:text-amber-300">
+                            Action:{' '}
+                          </span>
                           <RichTextDisplay
                             content={player.persona.npcActionDescription}
                             className="text-muted-foreground [&_p]:inline [&_p]:my-0"
@@ -450,7 +430,9 @@ export default function GameView() {
                       )}
                       {player.persona.isNpc && player.persona.npcDesiredOutcome && (
                         <div>
-                          <span className="font-medium text-amber-700 dark:text-amber-300">Goal: </span>
+                          <span className="font-medium text-amber-700 dark:text-amber-300">
+                            Goal:{' '}
+                          </span>
                           <RichTextDisplay
                             content={player.persona.npcDesiredOutcome}
                             className="text-muted-foreground [&_p]:inline [&_p]:my-0"
@@ -467,7 +449,10 @@ export default function GameView() {
 
           {/* NPC Momentum - only show if there's an NPC */}
           {game.players.some((p) => p.isNpc) && (
-            <NpcMomentumDisplay momentum={game.npcMomentum || 0} npcName={game.players.find((p) => p.isNpc)?.playerName || 'NPC'} />
+            <NpcMomentumDisplay
+              momentum={game.npcMomentum || 0}
+              npcName={game.players.find((p) => p.isNpc)?.playerName || 'NPC'}
+            />
           )}
 
           {/* Current Action Summary (when not in proposal) */}
@@ -519,12 +504,7 @@ export default function GameView() {
                 onClick={() => setShowRoundHistory(false)}
                 className="p-1 hover:bg-muted rounded"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -576,18 +556,17 @@ function NpcMomentumDisplay({ momentum, npcName }: { momentum: number; npcName: 
       </h3>
       <div className="flex items-center justify-between">
         <span className={`text-2xl font-bold ${getMomentumColor()}`}>
-          {momentum > 0 ? '+' : ''}{momentum}
+          {momentum > 0 ? '+' : ''}
+          {momentum}
         </span>
-        <span className={`text-sm ${getMomentumColor()}`}>
-          {getMomentumLabel()}
-        </span>
+        <span className={`text-sm ${getMomentumColor()}`}>{getMomentumLabel()}</span>
       </div>
       <p className="text-xs text-muted-foreground mt-2">
         {momentum > 0
           ? `${npcName} is succeeding in their goals`
           : momentum < 0
-          ? `${npcName} is being thwarted`
-          : `The conflict is evenly balanced`}
+            ? `${npcName} is being thwarted`
+            : `The conflict is evenly balanced`}
       </p>
     </div>
   );

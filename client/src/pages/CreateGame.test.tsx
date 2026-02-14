@@ -26,7 +26,7 @@ describe('CreateGame Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPost.mockReset();
-    
+
     // Mock URL.createObjectURL for image preview
     globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
     globalThis.URL.revokeObjectURL = vi.fn();
@@ -67,10 +67,14 @@ describe('CreateGame Page', () => {
     await user.click(screen.getByRole('button', { name: /create game/i }));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith('/games', {
-        name: 'Test Game',
-        description: undefined,
-      }, undefined);
+      expect(mockPost).toHaveBeenCalledWith(
+        '/games',
+        {
+          name: 'Test Game',
+          description: undefined,
+        },
+        undefined
+      );
     });
   });
 
@@ -173,10 +177,15 @@ describe('CreateGame Page', () => {
     });
 
     // Verify first call is game creation
-    expect(mockPost).toHaveBeenNthCalledWith(1, '/games', {
-      name: 'Test Game',
-      description: undefined,
-    }, undefined);
+    expect(mockPost).toHaveBeenNthCalledWith(
+      1,
+      '/games',
+      {
+        name: 'Test Game',
+        description: undefined,
+      },
+      undefined
+    );
 
     // Verify second call is image upload with FormData and Content-Type undefined
     const secondCall = mockPost.mock.calls[1];

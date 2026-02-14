@@ -90,17 +90,20 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
     setDrawnTokens([]);
 
     tokens.forEach((token, index) => {
-      setTimeout(() => {
-        setDrawnTokens((prev) => [...prev, token]);
-        if (index === tokens.length - 1) {
-          setTimeout(() => {
-            setAnimationComplete(true);
-            setIsDrawing(false);
-            queryClient.invalidateQueries({ queryKey: ['drawResult', action.id] });
-            queryClient.invalidateQueries({ queryKey: ['game', gameId] });
-          }, 1000);
-        }
-      }, (index + 1) * 600);
+      setTimeout(
+        () => {
+          setDrawnTokens((prev) => [...prev, token]);
+          if (index === tokens.length - 1) {
+            setTimeout(() => {
+              setAnimationComplete(true);
+              setIsDrawing(false);
+              queryClient.invalidateQueries({ queryKey: ['drawResult', action.id] });
+              queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+            }, 1000);
+          }
+        },
+        (index + 1) * 600
+      );
     });
   };
 
@@ -138,10 +141,10 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
             displayInfo.color === 'green'
               ? 'bg-green-50 border-green-500 dark:bg-green-950'
               : displayInfo.color === 'yellow'
-              ? 'bg-yellow-50 border-yellow-500 dark:bg-yellow-950'
-              : displayInfo.color === 'orange'
-              ? 'bg-orange-50 border-orange-500 dark:bg-orange-950'
-              : 'bg-red-50 border-red-500 dark:bg-red-950'
+                ? 'bg-yellow-50 border-yellow-500 dark:bg-yellow-950'
+                : displayInfo.color === 'orange'
+                  ? 'bg-orange-50 border-orange-500 dark:bg-orange-950'
+                  : 'bg-red-50 border-red-500 dark:bg-red-950'
           }`}
         >
           <h3 className="text-2xl font-bold mb-2">{displayInfo.label}</h3>
@@ -168,8 +171,8 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
                 existingResult.resultValue > 0
                   ? 'text-green-600'
                   : existingResult.resultValue < 0
-                  ? 'text-red-600'
-                  : 'text-yellow-600'
+                    ? 'text-red-600'
+                    : 'text-yellow-600'
               }
             >
               {existingResult.resultValue > 0 ? '+' : ''}
@@ -184,9 +187,7 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
         </div>
 
         <div className="text-center text-sm text-muted-foreground">
-          {isInitiator
-            ? 'Time to narrate the outcome!'
-            : 'Waiting for the initiator to narrate...'}
+          {isInitiator ? 'Time to narrate the outcome!' : 'Waiting for the initiator to narrate...'}
         </div>
       </div>
     );

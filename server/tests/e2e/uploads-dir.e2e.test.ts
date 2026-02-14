@@ -84,7 +84,10 @@ describe('UPLOADS_DIR Integration Tests', () => {
     await fs.writeFile(filePath, imageData);
 
     // Verify file was created in UPLOADS_DIR
-    const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+    const fileExists = await fs
+      .access(filePath)
+      .then(() => true)
+      .catch(() => false);
     expect(fileExists).toBe(true);
 
     // Verify file can be served
@@ -100,21 +103,27 @@ describe('UPLOADS_DIR Integration Tests', () => {
     await fs.writeFile(filePath, 'delete me');
 
     // Verify file exists
-    let fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+    let fileExists = await fs
+      .access(filePath)
+      .then(() => true)
+      .catch(() => false);
     expect(fileExists).toBe(true);
 
     // Delete the file
     await fs.unlink(filePath);
 
     // Verify file no longer exists
-    fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+    fileExists = await fs
+      .access(filePath)
+      .then(() => true)
+      .catch(() => false);
     expect(fileExists).toBe(false);
   });
 
   it('should prevent path traversal when resolving file paths', async () => {
     // Simulate the path traversal protection used in game.service.ts
     const uploadsDirResolved = path.resolve(getUploadsDir());
-    
+
     // Test legitimate filename
     const safeFilename = 'image-123.png';
     const safeFilePath = path.resolve(uploadsDirResolved, safeFilename);

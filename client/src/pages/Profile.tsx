@@ -97,12 +97,8 @@ export default function Profile() {
         </div>
 
         <div>
-          <label className="text-sm font-medium text-muted-foreground">
-            Member since
-          </label>
-          <p className="mt-1 text-muted-foreground">
-            {new Date(profile.id).toLocaleDateString()}
-          </p>
+          <label className="text-sm font-medium text-muted-foreground">Member since</label>
+          <p className="mt-1 text-muted-foreground">{new Date(profile.id).toLocaleDateString()}</p>
         </div>
       </div>
 
@@ -121,9 +117,7 @@ export default function Profile() {
             />
             <span className="text-sm">Email notifications</span>
           </label>
-          <p className="text-xs text-muted-foreground ml-6">
-            Notification settings coming soon
-          </p>
+          <p className="text-xs text-muted-foreground ml-6">Notification settings coming soon</p>
         </div>
       </div>
     </div>

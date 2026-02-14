@@ -9,12 +9,7 @@ interface HostControlsProps {
   isHost: boolean;
 }
 
-export function HostControls({
-  gameId,
-  currentPhase,
-  currentActionId,
-  isHost,
-}: HostControlsProps) {
+export function HostControls({ gameId, currentPhase, currentActionId, isHost }: HostControlsProps) {
   const queryClient = useQueryClient();
   const [confirmSkip, setConfirmSkip] = useState<string | null>(null);
 

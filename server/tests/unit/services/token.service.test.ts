@@ -20,7 +20,7 @@ function performTokenDraw(successCount: number, failureCount: number) {
   const drawnFailure = 3 - drawnSuccess;
 
   // Calculate result: -3, -1, +1, +3
-  const resultValue = (drawnSuccess * 2) - 3;
+  const resultValue = drawnSuccess * 2 - 3;
 
   const resultType = getResultType(drawnSuccess);
 
@@ -35,10 +35,14 @@ function performTokenDraw(successCount: number, failureCount: number) {
 
 function getResultType(successCount: number): string {
   switch (successCount) {
-    case 3: return 'TRIUMPH';
-    case 2: return 'SUCCESS_BUT';
-    case 1: return 'FAILURE_BUT';
-    default: return 'DISASTER';
+    case 3:
+      return 'TRIUMPH';
+    case 2:
+      return 'SUCCESS_BUT';
+    case 1:
+      return 'FAILURE_BUT';
+    default:
+      return 'DISASTER';
   }
 }
 
@@ -75,10 +79,10 @@ describe('Token Service', () => {
 
     it('should calculate correct result values', () => {
       // Test result value calculation directly
-      expect((3 * 2) - 3).toBe(3);  // 3 success = +3
-      expect((2 * 2) - 3).toBe(1);  // 2 success = +1
-      expect((1 * 2) - 3).toBe(-1); // 1 success = -1
-      expect((0 * 2) - 3).toBe(-3); // 0 success = -3
+      expect(3 * 2 - 3).toBe(3); // 3 success = +3
+      expect(2 * 2 - 3).toBe(1); // 2 success = +1
+      expect(1 * 2 - 3).toBe(-1); // 1 success = -1
+      expect(0 * 2 - 3).toBe(-3); // 0 success = -3
     });
   });
 

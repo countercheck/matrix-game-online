@@ -3,6 +3,7 @@
 Base URL: `/api`
 
 All endpoints except authentication require a valid JWT token in the `Authorization` header:
+
 ```
 Authorization: Bearer <token>
 ```
@@ -12,9 +13,11 @@ Authorization: Bearer <token>
 ## Authentication
 
 ### POST /auth/register
+
 Create a new user account.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -24,6 +27,7 @@ Create a new user account.
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -39,9 +43,11 @@ Create a new user account.
 ```
 
 ### POST /auth/login
+
 Authenticate and receive a token.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -50,6 +56,7 @@ Authenticate and receive a token.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -61,14 +68,17 @@ Authenticate and receive a token.
 ```
 
 ### POST /auth/logout
+
 Invalidate current session.
 
 **Response:** `200 OK`
 
 ### POST /auth/refresh
+
 Refresh an expiring token.
 
 **Request Body:**
+
 ```json
 {
   "token": "current-jwt-token"
@@ -76,6 +86,7 @@ Refresh an expiring token.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -84,9 +95,11 @@ Refresh an expiring token.
 ```
 
 ### POST /auth/forgot-password
+
 Request a password reset email. Returns success even if email doesn't exist (prevents email enumeration).
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -94,6 +107,7 @@ Request a password reset email. Returns success even if email doesn't exist (pre
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -104,9 +118,11 @@ Request a password reset email. Returns success even if email doesn't exist (pre
 ```
 
 ### POST /auth/reset-password
+
 Reset password using a valid reset token from email.
 
 **Request Body:**
+
 ```json
 {
   "token": "reset-token-from-email",
@@ -115,6 +131,7 @@ Reset password using a valid reset token from email.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -125,6 +142,7 @@ Reset password using a valid reset token from email.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request` - Invalid or expired token
 - `400 Bad Request` - Password doesn't meet requirements (min 8 chars, uppercase, lowercase, number)
 
@@ -133,9 +151,11 @@ Reset password using a valid reset token from email.
 ## Users
 
 ### GET /users/me
+
 Get current user's profile.
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -150,9 +170,11 @@ Get current user's profile.
 ```
 
 ### PUT /users/me
+
 Update current user's profile.
 
 **Request Body:**
+
 ```json
 {
   "displayName": "NewName",
@@ -161,9 +183,11 @@ Update current user's profile.
 ```
 
 ### GET /users/me/games
+
 Get all games the current user is participating in.
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -180,9 +204,11 @@ Get all games the current user is participating in.
 ```
 
 ### PUT /users/me/notifications
+
 Update notification preferences.
 
 **Request Body:**
+
 ```json
 {
   "emailOnActionProposed": true,
@@ -196,9 +222,11 @@ Update notification preferences.
 ## Games
 
 ### POST /games
+
 Create a new game.
 
 **Request Body:**
+
 ```json
 {
   "name": "My Game",
@@ -225,6 +253,7 @@ Create a new game.
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -240,17 +269,21 @@ Create a new game.
 ---
 
 ### POST /games/:gameId/image
+
 Upload an image for a game. Only the game creator can upload images.
 
 **Request:**
+
 - Content-Type: `multipart/form-data`
 - Body: Form data with `image` field containing the image file
 
 **Constraints:**
+
 - Maximum file size: 5MB
 - Allowed formats: JPEG, JPG, PNG, GIF, WebP
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -268,6 +301,7 @@ Upload an image for a game. Only the game creator can upload images.
 ```
 
 **Errors:**
+
 - `400 Bad Request` - No file uploaded or invalid file type/size
 - `403 Forbidden` - User is not the game creator
 - `404 Not Found` - Game not found
@@ -275,9 +309,11 @@ Upload an image for a game. Only the game creator can upload images.
 ---
 
 ### GET /games/:gameId
+
 Get game details.
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -296,12 +332,15 @@ Get game details.
 ```
 
 ### PUT /games/:gameId
+
 Update game name/description (host only). Can be used at any time, including during active gameplay.
 
 ### DELETE /games/:gameId
+
 Delete a game (host only, lobby status only). This performs a soft delete by marking the game as deleted while preserving the data.
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -312,28 +351,33 @@ Delete a game (host only, lobby status only). This performs a soft delete by mar
 ```
 
 **Error Responses:**
+
 - `403 Forbidden` - Not the game host
 - `400 Bad Request` - Game has already started (status is not LOBBY)
 - `404 Not Found` - Game not found or already deleted
 
 ### POST /games/:gameId/join
+
 Join a game.
 
 **Request Body:**
+
 ```json
 {
   "playerName": "NewPlayer",
-  "personaId": "uuid"  // optional
+  "personaId": "uuid" // optional
 }
 ```
 
 ### POST /games/:gameId/select-persona
+
 Select or change persona (lobby only).
 
 **Request Body:**
+
 ```json
 {
-  "personaId": "uuid"  // or null to deselect
+  "personaId": "uuid" // or null to deselect
 }
 ```
 
@@ -342,6 +386,7 @@ Select or change persona (lobby only).
 #### NPC Personas
 
 When a persona is marked as `isNpc: true`, the system:
+
 1. Creates an NPC player automatically when the game starts using a dedicated NPC system user
 2. The NPC always proposes last each round
 3. Uses the scripted `npcActionDescription` and `npcDesiredOutcome` for proposals
@@ -352,9 +397,11 @@ When a persona is marked as `isNpc: true`, the system:
 **Note:** The NPC system user must be seeded in the database before games with NPC personas can be started. Run `pnpm db:seed` to create the NPC user.
 
 ### PUT /games/:gameId/personas/:personaId
+
 Update a persona's details (host only). Can be used at any time, including during active gameplay.
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated Persona Name",
@@ -365,6 +412,7 @@ Update a persona's details (host only). Can be used at any time, including durin
 ```
 
 **Notes:**
+
 - All fields are optional - only include fields you want to update
 - `name` must be unique within the game (max 50 characters)
 - `description` max 1800 characters (supports markdown)
@@ -372,6 +420,7 @@ Update a persona's details (host only). Can be used at any time, including durin
 - Send empty string or null to clear a description field
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -390,18 +439,22 @@ Update a persona's details (host only). Can be used at any time, including durin
 ```
 
 **Error Responses:**
+
 - `400 Bad Request` - Validation failed
 - `403 Forbidden` - Not the game host
 - `404 Not Found` - Game or persona not found
 - `409 Conflict` - Persona name already exists in this game
 
 ### POST /games/:gameId/leave
+
 Leave a game (lobby only).
 
 ### POST /games/:gameId/start
+
 Start the game (host only, minimum 2 players).
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -414,18 +467,23 @@ Start the game (host only, minimum 2 players).
 ```
 
 ### GET /games/:gameId/players
+
 Get list of players in the game.
 
 ### GET /games/:gameId/history
+
 Get complete action history for the game.
 
 ### GET /games/:gameId/rounds
+
 Get all rounds for the game.
 
 ### POST /games/:gameId/actions
+
 Propose a new action (one per player per round).
 
 **Request Body:**
+
 ```json
 {
   "actionDescription": "I search the ancient library for clues",
@@ -438,6 +496,7 @@ Propose a new action (one per player per round).
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -451,6 +510,7 @@ Propose a new action (one per player per round).
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Invalid input or player already proposed an action this round
 - `403 Forbidden` - Not a member of the game or game not in PROPOSAL phase
 - `404 Not Found` - Game or round not found
@@ -462,9 +522,11 @@ Propose a new action (one per player per round).
 These endpoints allow the game host to edit any content at any point during the game. All edits are logged as GameEvents for audit trail.
 
 ### PUT /actions/:actionId
+
 Update an action's description or desired outcome (host only).
 
 **Request Body:**
+
 ```json
 {
   "actionDescription": "Updated action description",
@@ -473,11 +535,13 @@ Update an action's description or desired outcome (host only).
 ```
 
 **Notes:**
+
 - At least one field must be provided
 - `actionDescription` max 1800 characters
 - `desiredOutcome` max 1200 characters
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -488,9 +552,11 @@ Update an action's description or desired outcome (host only).
 **Errors:** `403 Forbidden` (not host), `404 Not Found`
 
 ### PUT /actions/:actionId/arguments/:argumentId
+
 Update an argument's content (host only).
 
 **Request Body:**
+
 ```json
 {
   "content": "Updated argument content"
@@ -504,9 +570,11 @@ Update an argument's content (host only).
 **Errors:** `403 Forbidden` (not host), `404 Not Found`
 
 ### PUT /actions/:actionId/narration
+
 Update a narration's content (host only).
 
 **Request Body:**
+
 ```json
 {
   "content": "Updated narration content"
@@ -520,9 +588,11 @@ Update a narration's content (host only).
 **Errors:** `403 Forbidden` (not host), `404 Not Found`
 
 ### PUT /rounds/:roundId/summary
+
 Update a round summary's content (host only).
 
 **Request Body:**
+
 ```json
 {
   "content": "Updated round summary content"
@@ -538,6 +608,7 @@ Update a round summary's content (host only).
 ---
 
 ### GET /games/:gameId/export
+
 Export the full game state as a downloadable YAML file. Includes game info, personas, players, and complete round/action history.
 
 **Response:** `200 OK` (Content-Type: `text/yaml`)
@@ -545,18 +616,22 @@ Export the full game state as a downloadable YAML file. Includes game info, pers
 Returns a YAML file as an attachment. The filename is derived from the game name and current date, e.g. `my-game-export-2025-01-15.yaml`.
 
 **Errors:**
+
 - `403 Forbidden` - Not a member of the game
 - `404 Not Found` - Game not found
 
 ---
 
 ### POST /games/import
+
 Create a new game from an exported YAML file. Imports game name, description, settings, and personas as a fresh LOBBY game. Historical data (rounds, actions, etc.) is ignored. The game name is appended with " (Copy)".
 
 **Request:**
+
 - Content-Type: `text/yaml` (raw YAML body) or `application/json` with `{ "yaml": "..." }`
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -569,8 +644,8 @@ Create a new game from an exported YAML file. Imports game name, description, se
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Invalid YAML or missing required fields
 - `401 Unauthorized` - Not authenticated
 
 ---
-

@@ -35,10 +35,7 @@ vi.mock('../../../src/config/database.js', () => ({
             }
           }
           if (where.votingStartedAt?.lt) {
-            if (
-              !action.votingStartedAt ||
-              action.votingStartedAt >= where.votingStartedAt.lt
-            ) {
+            if (!action.votingStartedAt || action.votingStartedAt >= where.votingStartedAt.lt) {
               return;
             }
           }
@@ -61,9 +58,7 @@ vi.mock('../../../src/config/database.js', () => ({
         if (include?.game) {
           result.game = { ...games.get(action.gameId) };
           if (include.game.include?.players) {
-            result.game.players = (players.get(action.gameId) || []).filter(
-              (p: any) => p.isActive
-            );
+            result.game.players = (players.get(action.gameId) || []).filter((p: any) => p.isActive);
           }
         }
         if (include?.votes) {
@@ -106,9 +101,10 @@ vi.mock('../../../src/config/database.js', () => ({
         const actionArgs = args.get(where.actionId) || [];
         if (actionArgs.length === 0) return null;
         if (orderBy?.sequence === 'desc') {
-          return actionArgs.reduce((max: any, arg: any) =>
-            arg.sequence > (max?.sequence || 0) ? arg : max
-          , null);
+          return actionArgs.reduce(
+            (max: any, arg: any) => (arg.sequence > (max?.sequence || 0) ? arg : max),
+            null
+          );
         }
         return actionArgs[0];
       }),
@@ -325,8 +321,8 @@ describe('Timeout Service Integration', () => {
       expect(result.playersAffected).toBe(2); // player-2 and player-3
       const actionArgs = args.get('action-1');
       expect(actionArgs.length).toBe(3); // Original + 2 placeholders
-      const placeholders = actionArgs.filter((a: any) =>
-        a.content === '[No argument submitted - timed out]'
+      const placeholders = actionArgs.filter(
+        (a: any) => a.content === '[No argument submitted - timed out]'
       );
       expect(placeholders.length).toBe(2);
     });
@@ -355,9 +351,7 @@ describe('Timeout Service Integration', () => {
     });
 
     it('should throw error for non-existent action', async () => {
-      await expect(processArgumentationTimeout('non-existent')).rejects.toThrow(
-        'Action not found'
-      );
+      await expect(processArgumentationTimeout('non-existent')).rejects.toThrow('Action not found');
     });
 
     it('should throw error for action not in ARGUING phase', async () => {
@@ -385,9 +379,7 @@ describe('Timeout Service Integration', () => {
       });
 
       // Only player-1 has voted
-      votes.set('action-1', [
-        { id: 'vote-1', actionId: 'action-1', playerId: 'player-1' },
-      ]);
+      votes.set('action-1', [{ id: 'vote-1', actionId: 'action-1', playerId: 'player-1' }]);
 
       const result = await processVotingTimeout('action-1');
 
@@ -457,9 +449,7 @@ describe('Timeout Service Integration', () => {
         votingStartedAt: twentyFiveHoursAgo,
       });
 
-      votes.set('action-1', [
-        { id: 'vote-1', actionId: 'action-1', playerId: 'player-1' },
-      ]);
+      votes.set('action-1', [{ id: 'vote-1', actionId: 'action-1', playerId: 'player-1' }]);
 
       await processVotingTimeout('action-1');
 

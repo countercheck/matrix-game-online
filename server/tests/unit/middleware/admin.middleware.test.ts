@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
 import { UserRole } from '@prisma/client';
-import { requireRole, requireModerator, requireAdmin } from '../../../src/middleware/admin.middleware.js';
+import {
+  requireRole,
+  requireModerator,
+  requireAdmin,
+} from '../../../src/middleware/admin.middleware.js';
 import { UnauthorizedError, ForbiddenError } from '../../../src/middleware/errorHandler.js';
 
 describe('Admin Middleware', () => {

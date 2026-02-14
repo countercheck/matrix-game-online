@@ -49,7 +49,8 @@ const getExtensionFromMime = (mimetype: string): string => {
 
 // Configure multer
 const parsedMaxFileSize = parseInt(process.env.MAX_FILE_SIZE || '5242880', 10);
-const maxFileSize = Number.isFinite(parsedMaxFileSize) && parsedMaxFileSize > 0 ? parsedMaxFileSize : 5242880; // 5MB default
+const maxFileSize =
+  Number.isFinite(parsedMaxFileSize) && parsedMaxFileSize > 0 ? parsedMaxFileSize : 5242880; // 5MB default
 
 export const upload = multer({
   storage: storage,

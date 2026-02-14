@@ -46,8 +46,7 @@ export async function getTimedOutArgumentationActions(
   });
 
   return actions.filter(
-    (a): a is typeof a & { argumentationStartedAt: Date } =>
-      a.argumentationStartedAt !== null
+    (a): a is typeof a & { argumentationStartedAt: Date } => a.argumentationStartedAt !== null
   );
 }
 
@@ -85,9 +84,7 @@ export async function getTimedOutVotingActions(
  * Creates placeholder arguments for players who haven't argued,
  * then advances the action to voting phase.
  */
-export async function processArgumentationTimeout(
-  actionId: string
-): Promise<TimeoutResult> {
+export async function processArgumentationTimeout(actionId: string): Promise<TimeoutResult> {
   const action = await db.action.findUnique({
     where: { id: actionId },
     include: {
@@ -188,9 +185,7 @@ export async function processArgumentationTimeout(
  * Auto-casts UNCERTAIN votes for players who haven't voted.
  * Then advances to RESOLUTION phase if all votes are now in.
  */
-export async function processVotingTimeout(
-  actionId: string
-): Promise<TimeoutResult> {
+export async function processVotingTimeout(actionId: string): Promise<TimeoutResult> {
   const action = await db.action.findUnique({
     where: { id: actionId },
     include: {
@@ -215,9 +210,7 @@ export async function processVotingTimeout(
 
   // Find players who haven't voted
   const votedPlayerIds = action.votes.map((v) => v.playerId);
-  const playersWhoHaventVoted = action.game.players.filter(
-    (p) => !votedPlayerIds.includes(p.id)
-  );
+  const playersWhoHaventVoted = action.game.players.filter((p) => !votedPlayerIds.includes(p.id));
 
   // Create auto-votes for missing players (UNCERTAIN = 1 success, 1 failure)
   if (playersWhoHaventVoted.length > 0) {
@@ -231,9 +224,7 @@ export async function processVotingTimeout(
       })),
     });
 
-    logger.info(
-      `Auto-cast ${playersWhoHaventVoted.length} UNCERTAIN votes for action ${actionId}`
-    );
+    logger.info(`Auto-cast ${playersWhoHaventVoted.length} UNCERTAIN votes for action ${actionId}`);
   }
 
   // Update action to resolved
@@ -278,9 +269,7 @@ export async function processVotingTimeout(
  * Process all timed-out actions.
  * This is the main entry point for the timeout worker.
  */
-export async function processAllTimeouts(
-  config: TimeoutConfig = {}
-): Promise<{
+export async function processAllTimeouts(config: TimeoutConfig = {}): Promise<{
   argumentationTimeouts: TimeoutResult[];
   votingTimeouts: TimeoutResult[];
   errors: { actionId: string; error: string }[];
@@ -317,10 +306,7 @@ export async function processAllTimeouts(
     }
   }
 
-  if (
-    results.argumentationTimeouts.length > 0 ||
-    results.votingTimeouts.length > 0
-  ) {
+  if (results.argumentationTimeouts.length > 0 || results.votingTimeouts.length > 0) {
     logger.info(
       `Processed ${results.argumentationTimeouts.length} argumentation timeouts and ${results.votingTimeouts.length} voting timeouts`
     );
@@ -361,9 +347,7 @@ export async function getActionTimeoutStatus(
   const now = Date.now();
 
   if (action.status === 'ARGUING' && action.argumentationStartedAt) {
-    const timeoutAt = new Date(
-      action.argumentationStartedAt.getTime() + argTimeoutMs
-    );
+    const timeoutAt = new Date(action.argumentationStartedAt.getTime() + argTimeoutMs);
     const remainingMs = timeoutAt.getTime() - now;
     return {
       phase: 'ARGUMENTATION',

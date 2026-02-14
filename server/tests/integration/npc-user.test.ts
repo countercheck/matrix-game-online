@@ -54,7 +54,7 @@ describe('NPC System User', () => {
 
     expect(npcUser).toBeDefined();
     expect(npcUser?.id).toBeDefined();
-    
+
     // The NPC user should be available for creating GamePlayer records
     // We don't create a test game here, just verify the user exists
   });

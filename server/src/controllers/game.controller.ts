@@ -284,6 +284,38 @@ export async function exportGame(
   }
 }
 
+export async function getTimeoutStatus(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const gameId = req.params.gameId as string;
+    const userId = req.user!.id;
+    // Verify membership by fetching game (throws if not a member)
+    await gameService.getGame(gameId, userId);
+    const status = await gameService.getGameTimeoutStatus(gameId);
+    res.json({ success: true, data: status });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function extendTimeout(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const gameId = req.params.gameId as string;
+    const userId = req.user!.id;
+    const result = await gameService.extendTimeout(gameId, userId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function importGame(
   req: Request,
   res: Response,

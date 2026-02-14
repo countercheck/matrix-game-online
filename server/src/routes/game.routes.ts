@@ -32,6 +32,10 @@ router.post('/:gameId/actions', authenticateToken, gameController.proposeAction)
 // Export/import
 router.get('/:gameId/export', authenticateToken, gameController.exportGame);
 
+// Timeout controls
+router.get('/:gameId/timeout-status', authenticateToken, gameController.getTimeoutStatus);
+router.post('/:gameId/extend-timeout', authenticateToken, gameController.extendTimeout);
+
 // Host skip controls
 router.post('/:gameId/skip-proposals', authenticateToken, gameController.skipProposals);
 

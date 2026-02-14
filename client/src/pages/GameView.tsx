@@ -327,9 +327,8 @@ export default function GameView() {
               </Link>
               <h1 className="text-2xl font-bold">{game.name}</h1>
             </div>
-          )}
-        </div>
-        <div className="text-right">
+          </div>
+          <div className="text-right">
           <div className="flex items-center justify-end gap-2">
             <PhaseCountdown
               phaseStartedAt={game.phaseStartedAt}
@@ -359,6 +358,7 @@ export default function GameView() {
               Playing as {myPlayer.playerName}
             </p>
           )}
+          </div>
         </div>
       )}
 

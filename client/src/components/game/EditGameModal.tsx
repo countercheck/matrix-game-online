@@ -23,12 +23,7 @@ interface EditGameModalProps {
   }) => Promise<void>;
   initialName: string;
   initialDescription: string;
-  initialSettings?: {
-    proposalTimeoutHours?: number;
-    argumentationTimeoutHours?: number;
-    votingTimeoutHours?: number;
-    narrationTimeoutHours?: number;
-  };
+  initialSettings?: Record<string, unknown>;
 }
 
 export function EditGameModal({
@@ -42,16 +37,16 @@ export function EditGameModal({
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [proposalTimeout, setProposalTimeout] = useState(
-    initialSettings?.proposalTimeoutHours ?? -1
+    (initialSettings?.proposalTimeoutHours as number | undefined) ?? -1
   );
   const [argumentationTimeout, setArgumentationTimeout] = useState(
-    initialSettings?.argumentationTimeoutHours ?? -1
+    (initialSettings?.argumentationTimeoutHours as number | undefined) ?? -1
   );
   const [votingTimeout, setVotingTimeout] = useState(
-    initialSettings?.votingTimeoutHours ?? -1
+    (initialSettings?.votingTimeoutHours as number | undefined) ?? -1
   );
   const [narrationTimeout, setNarrationTimeout] = useState(
-    initialSettings?.narrationTimeoutHours ?? -1
+    (initialSettings?.narrationTimeoutHours as number | undefined) ?? -1
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -64,15 +59,26 @@ export function EditGameModal({
     setIsLoading(true);
 
     try {
+      // Merge with existing settings to preserve other fields
+      const mergedSettings: Record<string, unknown> = initialSettings
+        ? {
+            ...initialSettings,
+            proposalTimeoutHours: proposalTimeout,
+            argumentationTimeoutHours: argumentationTimeout,
+            votingTimeoutHours: votingTimeout,
+            narrationTimeoutHours: narrationTimeout,
+          }
+        : {
+            proposalTimeoutHours: proposalTimeout,
+            argumentationTimeoutHours: argumentationTimeout,
+            votingTimeoutHours: votingTimeout,
+            narrationTimeoutHours: narrationTimeout,
+          };
+
       await onSave({
         name,
         description: description.trim() || null,
-        settings: {
-          proposalTimeoutHours: proposalTimeout,
-          argumentationTimeoutHours: argumentationTimeout,
-          votingTimeoutHours: votingTimeout,
-          narrationTimeoutHours: narrationTimeout,
-        },
+        settings: mergedSettings,
       });
       onClose();
     } catch (err: unknown) {
@@ -87,10 +93,10 @@ export function EditGameModal({
     if (!isLoading) {
       setName(initialName);
       setDescription(initialDescription);
-      setProposalTimeout(initialSettings?.proposalTimeoutHours ?? -1);
-      setArgumentationTimeout(initialSettings?.argumentationTimeoutHours ?? -1);
-      setVotingTimeout(initialSettings?.votingTimeoutHours ?? -1);
-      setNarrationTimeout(initialSettings?.narrationTimeoutHours ?? -1);
+      setProposalTimeout((initialSettings?.proposalTimeoutHours as number | undefined) ?? -1);
+      setArgumentationTimeout((initialSettings?.argumentationTimeoutHours as number | undefined) ?? -1);
+      setVotingTimeout((initialSettings?.votingTimeoutHours as number | undefined) ?? -1);
+      setNarrationTimeout((initialSettings?.narrationTimeoutHours as number | undefined) ?? -1);
       setError('');
       onClose();
     }

@@ -25,17 +25,33 @@ export interface GameTimeoutSettings {
   narrationTimeoutMs: number | null;
 }
 
-function convertTimeoutHoursToMs(hours: number | undefined): number | null {
-  if (hours === undefined || hours === -1) return null; // infinite
-  return hours * 60 * 60 * 1000;
+function convertTimeoutHoursToMs(hours: unknown): number | null {
+  if (hours === undefined || hours === null) return null;
+
+  let value: number;
+  if (typeof hours === 'number') {
+    value = hours;
+  } else if (typeof hours === 'string' && hours.trim() !== '') {
+    const parsed = Number(hours);
+    if (!Number.isFinite(parsed)) return null;
+    value = parsed;
+  } else {
+    return null;
+  }
+
+  if (!Number.isInteger(value)) return null;
+  if (value === -1) return null; // infinite timeout
+  if (value <= 0) return null;
+
+  return value * 60 * 60 * 1000;
 }
 
 export function getGameTimeoutSettings(settings: Record<string, unknown>): GameTimeoutSettings {
   return {
-    proposalTimeoutMs: convertTimeoutHoursToMs(settings.proposalTimeoutHours as number | undefined),
-    argumentationTimeoutMs: convertTimeoutHoursToMs(settings.argumentationTimeoutHours as number | undefined),
-    votingTimeoutMs: convertTimeoutHoursToMs(settings.votingTimeoutHours as number | undefined),
-    narrationTimeoutMs: convertTimeoutHoursToMs(settings.narrationTimeoutHours as number | undefined),
+    proposalTimeoutMs: convertTimeoutHoursToMs(settings.proposalTimeoutHours),
+    argumentationTimeoutMs: convertTimeoutHoursToMs(settings.argumentationTimeoutHours),
+    votingTimeoutMs: convertTimeoutHoursToMs(settings.votingTimeoutHours),
+    narrationTimeoutMs: convertTimeoutHoursToMs(settings.narrationTimeoutHours),
   };
 }
 

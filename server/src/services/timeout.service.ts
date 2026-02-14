@@ -159,17 +159,23 @@ async function processProposalTimeout(
     where: { gameId, isHost: true, isActive: true },
   });
 
+  const hostNotified = !!host;
+
   if (host) {
     notifyTimeoutOccurred(gameId, gameName, 'PROPOSAL', [host.userId]).catch(() => {});
   }
 
-  logger.info(`Proposal timeout for game ${gameId} - host notified`);
+  if (hostNotified) {
+    logger.info(`Proposal timeout for game ${gameId} - host notified`);
+  } else {
+    logger.info(`Proposal timeout for game ${gameId} - no active host to notify`);
+  }
 
   return {
     gameId,
     phase: 'PROPOSAL',
     playersAffected: 0,
-    hostNotified: true,
+    hostNotified,
   };
 }
 
@@ -406,16 +412,22 @@ async function processNarrationTimeout(
     where: { gameId, isHost: true, isActive: true },
   });
 
+  const hostNotified = !!host;
+
   if (host) {
     notifyTimeoutOccurred(gameId, gameName, 'NARRATION', [host.userId]).catch(() => {});
   }
 
-  logger.info(`Narration timeout for game ${gameId} - host notified`);
+  if (hostNotified) {
+    logger.info(`Narration timeout for game ${gameId} - host notified`);
+  } else {
+    logger.info(`Narration timeout for game ${gameId} - no active host to notify`);
+  }
 
   return {
     gameId,
     phase: 'NARRATION',
     playersAffected: 0,
-    hostNotified: true,
+    hostNotified,
   };
 }

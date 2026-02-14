@@ -137,7 +137,9 @@ export function HostControls({
             {currentPhase === 'PROPOSAL' ? 'Proposal' : 'Narration'} phase has timed out
           </p>
           <p className="text-xs text-red-600 dark:text-red-400">
-            You can extend the time or skip this phase.
+            {currentPhase === 'PROPOSAL' 
+              ? 'You can extend the time or skip this phase.'
+              : 'You can extend the time to allow more narration.'}
           </p>
           <div className="flex gap-2">
             <button

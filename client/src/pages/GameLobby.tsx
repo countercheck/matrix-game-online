@@ -37,6 +37,10 @@ interface Game {
   personas: Persona[];
   settings: {
     personasRequired?: boolean;
+    proposalTimeoutHours?: number;
+    argumentationTimeoutHours?: number;
+    votingTimeoutHours?: number;
+    narrationTimeoutHours?: number;
   };
 }
 
@@ -84,7 +88,7 @@ export default function GameLobby() {
   });
 
   const updateGameMutation = useMutation({
-    mutationFn: (data: { name: string; description: string | null }) =>
+    mutationFn: (data: { name: string; description: string | null; settings?: Record<string, unknown> }) =>
       api.put(`/games/${gameId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
@@ -471,6 +475,7 @@ export default function GameLobby() {
           }}
           initialName={game.name}
           initialDescription={game.description || ''}
+          initialSettings={game.settings}
         />
       )}
 

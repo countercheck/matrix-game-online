@@ -17,9 +17,25 @@ interface CreateGameData {
   description?: string;
   settings?: {
     personasRequired?: boolean;
+    proposalTimeoutHours?: number;
+    argumentationTimeoutHours?: number;
+    votingTimeoutHours?: number;
+    narrationTimeoutHours?: number;
   };
   personas?: Persona[];
 }
+
+const TIMEOUT_OPTIONS = [
+  { label: 'No limit', value: -1 },
+  { label: '1 hour', value: 1 },
+  { label: '4 hours', value: 4 },
+  { label: '8 hours', value: 8 },
+  { label: '12 hours', value: 12 },
+  { label: '24 hours', value: 24 },
+  { label: '48 hours', value: 48 },
+  { label: '72 hours', value: 72 },
+  { label: '1 week', value: 168 },
+];
 
 export default function CreateGame() {
   const navigate = useNavigate();
@@ -31,6 +47,11 @@ export default function CreateGame() {
   const [showPersonas, setShowPersonas] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showTimeouts, setShowTimeouts] = useState(false);
+  const [proposalTimeout, setProposalTimeout] = useState(-1);
+  const [argumentationTimeout, setArgumentationTimeout] = useState(-1);
+  const [votingTimeout, setVotingTimeout] = useState(-1);
+  const [narrationTimeout, setNarrationTimeout] = useState(-1);
 
   const createMutation = useMutation({
     mutationFn: (data: CreateGameData) => api.post('/games', data),
@@ -147,8 +168,16 @@ export default function CreateGame() {
 
     if (validPersonas.length > 0) {
       data.personas = validPersonas;
-      data.settings = { personasRequired };
     }
+
+    // Always include settings with timeout values
+    data.settings = {
+      ...(validPersonas.length > 0 ? { personasRequired } : {}),
+      proposalTimeoutHours: proposalTimeout,
+      argumentationTimeoutHours: argumentationTimeout,
+      votingTimeoutHours: votingTimeout,
+      narrationTimeoutHours: narrationTimeout,
+    };
 
     createMutation.mutate(data);
   };
@@ -376,6 +405,59 @@ export default function CreateGame() {
           )}
         </div>
 
+        {/* Phase Timeouts Section */}
+        <div className="border rounded-md">
+          <button
+            type="button"
+            onClick={() => setShowTimeouts(!showTimeouts)}
+            className="w-full px-4 py-3 text-left font-medium flex justify-between items-center hover:bg-muted/50"
+          >
+            <span>Phase Timeouts (Optional)</span>
+            <span className="text-muted-foreground text-sm">
+              {[proposalTimeout, argumentationTimeout, votingTimeout, narrationTimeout].some(
+                (t) => t !== -1
+              )
+                ? 'Configured'
+                : 'No limits'}
+            </span>
+          </button>
+
+          {showTimeouts && (
+            <div className="p-4 border-t space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Set time limits for each game phase. When a timeout expires, the
+                host will be prompted to extend or skip. Argumentation and voting
+                phases auto-resolve when they time out.
+              </p>
+
+              <TimeoutSelect
+                label="Proposal"
+                value={proposalTimeout}
+                onChange={setProposalTimeout}
+                description="Time for players to propose actions"
+              />
+              <TimeoutSelect
+                label="Argumentation"
+                value={argumentationTimeout}
+                onChange={setArgumentationTimeout}
+                description="Time for players to submit arguments"
+              />
+              <TimeoutSelect
+                label="Voting"
+                value={votingTimeout}
+                onChange={setVotingTimeout}
+                description="Time for players to cast votes"
+              />
+              <TimeoutSelect
+                label="Narration"
+                value={narrationTimeout}
+                onChange={setNarrationTimeout}
+                description="Time for the initiator to narrate"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-2">
           <button
             type="button"
@@ -394,6 +476,38 @@ export default function CreateGame() {
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function TimeoutSelect({
+  label,
+  value,
+  onChange,
+  description,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  description: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium">{label}</label>
+        <select
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="px-2 py-1 border rounded-md bg-background text-sm"
+        >
+          {TIMEOUT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="text-xs text-muted-foreground">{description}</p>
     </div>
   );
 }

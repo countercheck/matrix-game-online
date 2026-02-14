@@ -1,4 +1,4 @@
-import { processAllTimeouts, type TimeoutConfig } from '../services/timeout.service.js';
+import { processAllTimeouts } from '../services/timeout.service.js';
 import { logger } from '../utils/logger.js';
 
 // Default interval: check every 5 minutes
@@ -9,14 +9,13 @@ let isRunning = false;
 
 export interface TimeoutWorkerOptions {
   intervalMs?: number;
-  timeoutConfig?: TimeoutConfig;
 }
 
 /**
  * Run a single timeout check cycle.
  * Can be called manually or by the scheduler.
  */
-export async function runTimeoutCheck(config?: TimeoutConfig): Promise<void> {
+export async function runTimeoutCheck(): Promise<void> {
   if (isRunning) {
     logger.debug('Timeout check already in progress, skipping');
     return;
@@ -25,20 +24,14 @@ export async function runTimeoutCheck(config?: TimeoutConfig): Promise<void> {
   isRunning = true;
   try {
     logger.debug('Running timeout check...');
-    const results = await processAllTimeouts(config);
+    const { results, errors } = await processAllTimeouts();
 
-    if (results.errors.length > 0) {
-      logger.warn(`Timeout check completed with ${results.errors.length} errors`);
+    if (errors.length > 0) {
+      logger.warn(`Timeout check completed with ${errors.length} errors`);
     }
 
-    if (
-      results.argumentationTimeouts.length > 0 ||
-      results.votingTimeouts.length > 0
-    ) {
-      logger.info(
-        `Timeout check: processed ${results.argumentationTimeouts.length} argumentation, ` +
-          `${results.votingTimeouts.length} voting timeouts`
-      );
+    if (results.length > 0) {
+      logger.info(`Timeout check: processed ${results.length} timeouts`);
     }
   } catch (error) {
     logger.error(
@@ -63,11 +56,11 @@ export function startTimeoutWorker(options: TimeoutWorkerOptions = {}): void {
   logger.info(`Starting timeout worker with ${intervalMs / 1000}s interval`);
 
   // Run immediately on start
-  runTimeoutCheck(options.timeoutConfig);
+  runTimeoutCheck();
 
   // Then run at intervals
   intervalId = setInterval(() => {
-    runTimeoutCheck(options.timeoutConfig);
+    runTimeoutCheck();
   }, intervalMs);
 }
 

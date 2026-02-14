@@ -45,7 +45,6 @@ export function PhaseCountdown({
 
   useEffect(() => {
     if (!shouldShow || !phaseStartedAt || timeoutHours === undefined) {
-      setRemainingMs(null);
       return;
     }
 

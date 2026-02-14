@@ -37,14 +37,14 @@ export function PhaseCountdown({
   // Phases that don't have countdowns
   const nonTimedPhases = ['WAITING', 'RESOLUTION', 'ROUND_SUMMARY', 'COMPLETED'];
 
-  const isInfinite = !timeoutHours || timeoutHours === -1;
+  const isInfinite = timeoutHours === undefined || timeoutHours === -1;
   const shouldShow =
     !isInfinite &&
     phaseStartedAt &&
     !nonTimedPhases.includes(currentPhase);
 
   useEffect(() => {
-    if (!shouldShow || !phaseStartedAt || !timeoutHours) {
+    if (!shouldShow || !phaseStartedAt || timeoutHours === undefined) {
       setRemainingMs(null);
       return;
     }

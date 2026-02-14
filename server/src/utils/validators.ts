@@ -80,10 +80,22 @@ export const createGameSchema = z.object({
   description: z.string().max(3600).optional(),
   settings: z.object({
     argumentLimit: z.number().int().min(1).max(10).default(3),
-    proposalTimeoutHours: z.number().int().min(-1).max(168).default(-1),
-    argumentationTimeoutHours: z.number().int().min(-1).max(168).default(-1),
-    votingTimeoutHours: z.number().int().min(-1).max(168).default(-1),
-    narrationTimeoutHours: z.number().int().min(-1).max(168).default(-1),
+    proposalTimeoutHours: z.union([
+      z.literal(-1),
+      z.number().int().min(1).max(168),
+    ]).default(-1),
+    argumentationTimeoutHours: z.union([
+      z.literal(-1),
+      z.number().int().min(1).max(168),
+    ]).default(24),
+    votingTimeoutHours: z.union([
+      z.literal(-1),
+      z.number().int().min(1).max(168),
+    ]).default(24),
+    narrationTimeoutHours: z.union([
+      z.literal(-1),
+      z.number().int().min(1).max(168),
+    ]).default(24),
     narrationMode: z.enum(['initiator_only', 'collaborative']).default('initiator_only'),
     personasRequired: z.boolean().default(false),
   }).optional(),

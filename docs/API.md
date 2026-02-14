@@ -574,3 +574,69 @@ Create a new game from an exported YAML file. Imports game name, description, se
 
 ---
 
+### GET /games/:gameId/timeout-status
+Get the current timeout status for a game's phase, including the time remaining.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "hasTimeout": true,
+    "remainingMs": 3600000,
+    "isTimedOut": false
+  }
+}
+```
+
+**Fields:**
+- `hasTimeout`: Whether the current phase has a timeout configured
+- `remainingMs`: Milliseconds remaining before timeout (null if no timeout or phase not started)
+- `isTimedOut`: Whether the phase has already timed out
+
+**Errors:**
+- `403 Forbidden` - Not a member of the game
+- `404 Not Found` - Game not found
+
+---
+
+### POST /games/:gameId/extend-timeout
+Extend the timeout for the current phase by 24 hours. Only available to the game host.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Timeout extended by 24 hours"
+  }
+}
+```
+
+**Errors:**
+- `403 Forbidden` - Not the game host
+- `404 Not Found` - Game not found
+
+---
+
+### POST /games/:gameId/skip-proposals
+Skip the proposal phase and move directly to round summary. Only available to the game host when in PROPOSAL phase.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Skipped proposal phase",
+    "game": { /* updated game object */ }
+  }
+}
+```
+
+**Errors:**
+- `403 Forbidden` - Not the game host
+- `404 Not Found` - Game not found
+- `400 Bad Request` - Not in PROPOSAL phase
+
+---
+

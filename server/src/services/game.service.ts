@@ -12,6 +12,31 @@ const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
 interface GameSettings {
   argumentLimit?: number;
   personasRequired?: boolean;
+  proposalTimeoutHours?: number;
+  argumentationTimeoutHours?: number;
+  votingTimeoutHours?: number;
+  narrationTimeoutHours?: number;
+}
+
+export interface GameTimeoutSettings {
+  proposalTimeoutMs: number | null;
+  argumentationTimeoutMs: number | null;
+  votingTimeoutMs: number | null;
+  narrationTimeoutMs: number | null;
+}
+
+function convertTimeoutHoursToMs(hours: number | undefined): number | null {
+  if (hours === undefined || hours === -1) return null; // infinite
+  return hours * 60 * 60 * 1000;
+}
+
+export function getGameTimeoutSettings(settings: Record<string, unknown>): GameTimeoutSettings {
+  return {
+    proposalTimeoutMs: convertTimeoutHoursToMs(settings.proposalTimeoutHours as number | undefined),
+    argumentationTimeoutMs: convertTimeoutHoursToMs(settings.argumentationTimeoutHours as number | undefined),
+    votingTimeoutMs: convertTimeoutHoursToMs(settings.votingTimeoutHours as number | undefined),
+    narrationTimeoutMs: convertTimeoutHoursToMs(settings.narrationTimeoutHours as number | undefined),
+  };
 }
 
 /**
@@ -560,6 +585,7 @@ export async function startGame(gameId: string, userId: string) {
       currentPhase: 'PROPOSAL',
       currentRoundId: round.id,
       startedAt: new Date(),
+      phaseStartedAt: new Date(),
     },
     include: {
       players: {
@@ -751,13 +777,90 @@ export async function transitionPhase(gameId: string, newPhase: GamePhase) {
 
   await db.game.update({
     where: { id: gameId },
-    data: { currentPhase: newPhase },
+    data: {
+      currentPhase: newPhase,
+      phaseStartedAt: new Date(),
+    },
   });
 
   await logGameEvent(gameId, null, 'PHASE_CHANGED', {
     from: game.currentPhase,
     to: newPhase,
   });
+}
+
+export async function extendTimeout(gameId: string, userId: string) {
+  await requireHost(gameId, userId);
+
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    select: { id: true, currentPhase: true, deletedAt: true },
+  });
+
+  if (!game || game.deletedAt) {
+    throw new NotFoundError('Game not found');
+  }
+
+  await db.game.update({
+    where: { id: gameId },
+    data: { phaseStartedAt: new Date() },
+  });
+
+  await logGameEvent(gameId, userId, 'TIMEOUT_EXTENDED', {
+    phase: game.currentPhase,
+  });
+
+  return { message: 'Timeout extended' };
+}
+
+export async function getGameTimeoutStatus(gameId: string) {
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    select: {
+      currentPhase: true,
+      phaseStartedAt: true,
+      settings: true,
+    },
+  });
+
+  if (!game || !game.phaseStartedAt) {
+    return null;
+  }
+
+  const timeoutConfig = getGameTimeoutSettings((game.settings as Record<string, unknown>) || {});
+  const phase = game.currentPhase;
+
+  const phaseToTimeout: Record<string, number | null> = {
+    PROPOSAL: timeoutConfig.proposalTimeoutMs,
+    ARGUMENTATION: timeoutConfig.argumentationTimeoutMs,
+    VOTING: timeoutConfig.votingTimeoutMs,
+    NARRATION: timeoutConfig.narrationTimeoutMs,
+  };
+
+  const timeoutMs = phaseToTimeout[phase] ?? null;
+
+  if (timeoutMs === null) {
+    return {
+      phase,
+      startedAt: game.phaseStartedAt,
+      timeoutAt: null,
+      isTimedOut: false,
+      remainingMs: null,
+      isInfinite: true,
+    };
+  }
+
+  const timeoutAt = new Date(game.phaseStartedAt.getTime() + timeoutMs);
+  const remainingMs = Math.max(0, timeoutAt.getTime() - Date.now());
+
+  return {
+    phase,
+    startedAt: game.phaseStartedAt,
+    timeoutAt,
+    isTimedOut: remainingMs <= 0,
+    remainingMs,
+    isInfinite: false,
+  };
 }
 
 // Helper functions

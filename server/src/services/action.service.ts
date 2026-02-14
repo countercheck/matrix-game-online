@@ -99,6 +99,7 @@ export async function checkAndProposeNpcAction(gameId: string) {
     data: {
       currentPhase: 'ARGUMENTATION',
       currentActionId: action.id,
+      phaseStartedAt: new Date(),
     },
   });
 
@@ -188,6 +189,7 @@ export async function proposeAction(gameId: string, userId: string, data: Action
     data: {
       currentPhase: 'ARGUMENTATION',
       currentActionId: action.id,
+      phaseStartedAt: new Date(),
     },
   });
 
@@ -835,6 +837,7 @@ export async function submitNarration(actionId: string, userId: string, data: Na
         data: {
           currentPhase: 'PROPOSAL',
           currentActionId: null,
+          phaseStartedAt: new Date(),
         },
       });
 

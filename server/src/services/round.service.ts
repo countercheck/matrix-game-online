@@ -282,6 +282,7 @@ async function createNextRound(gameId: string, roundNumber: number) {
       currentRoundId: newRound.id,
       currentPhase: 'PROPOSAL',
       currentActionId: null,
+      phaseStartedAt: new Date(),
     },
   });
 

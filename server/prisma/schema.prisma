@@ -51,6 +51,7 @@ model Game {
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
   startedAt       DateTime?    @map("started_at")
+  phaseStartedAt  DateTime?    @map("phase_started_at")
   completedAt     DateTime?    @map("completed_at")
   deletedAt       DateTime?    @map("deleted_at")
 

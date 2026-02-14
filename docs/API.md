@@ -582,17 +582,31 @@ Get the current timeout status for a game's phase, including the time remaining.
 {
   "success": true,
   "data": {
-    "hasTimeout": true,
+    "phase": "PROPOSAL",
+    "startedAt": "2026-02-14T20:00:00.000Z",
+    "timeoutAt": "2026-02-15T20:00:00.000Z",
+    "isTimedOut": false,
     "remainingMs": 3600000,
-    "isTimedOut": false
+    "isInfinite": false
   }
 }
 ```
 
+**Response when no timeout configured or phase not started:** `200 OK`
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
 **Fields:**
-- `hasTimeout`: Whether the current phase has a timeout configured
-- `remainingMs`: Milliseconds remaining before timeout (null if no timeout or phase not started)
+- `phase`: The current game phase
+- `startedAt`: When the current phase started (ISO timestamp)
+- `timeoutAt`: When the phase will timeout (ISO timestamp, null if infinite)
 - `isTimedOut`: Whether the phase has already timed out
+- `remainingMs`: Milliseconds remaining before timeout (0 if timed out)
+- `isInfinite`: Whether the timeout is infinite (no timeout configured)
 
 **Errors:**
 - `403 Forbidden` - Not a member of the game
@@ -601,14 +615,14 @@ Get the current timeout status for a game's phase, including the time remaining.
 ---
 
 ### POST /games/:gameId/extend-timeout
-Extend the timeout for the current phase by 24 hours. Only available to the game host.
+Reset the timeout for the current phase, restarting the current phase timer. Only available to the game host.
 
 **Response:** `200 OK`
 ```json
 {
   "success": true,
   "data": {
-    "message": "Timeout extended by 24 hours"
+    "message": "Timeout extended"
   }
 }
 ```
@@ -620,15 +634,15 @@ Extend the timeout for the current phase by 24 hours. Only available to the game
 ---
 
 ### POST /games/:gameId/skip-proposals
-Skip the proposal phase and move directly to round summary. Only available to the game host when in PROPOSAL phase.
+Skip remaining proposals in the current round and move to round summary. Only available to the game host when in PROPOSAL phase. At least one action must be proposed.
 
 **Response:** `200 OK`
 ```json
 {
   "success": true,
   "data": {
-    "message": "Skipped proposal phase",
-    "game": { /* updated game object */ }
+    "message": "Remaining proposals skipped, moved to round summary",
+    "completedActions": 3
   }
 }
 ```
@@ -636,7 +650,7 @@ Skip the proposal phase and move directly to round summary. Only available to th
 **Errors:**
 - `403 Forbidden` - Not the game host
 - `404 Not Found` - Game not found
-- `400 Bad Request` - Not in PROPOSAL phase
+- `400 Bad Request` - Not in PROPOSAL phase or no actions proposed yet
 
 ---
 

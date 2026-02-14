@@ -58,7 +58,7 @@ describe('Timeout Service Integration', () => {
           currentPhase: 'PROPOSAL',
           phaseStartedAt: null, // No timestamp
           settings: { proposalTimeoutHours: 1 },
-          createdById: testUserId,
+          creatorId: testUserId,
         },
       });
       testGameId = game.id;
@@ -78,7 +78,7 @@ describe('Timeout Service Integration', () => {
           currentPhase: 'PROPOSAL',
           phaseStartedAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // 48 hours ago
           settings: { proposalTimeoutHours: -1 }, // Infinite
-          createdById: testUserId,
+          creatorId: testUserId,
         },
       });
       testGameId = game.id;
@@ -98,7 +98,7 @@ describe('Timeout Service Integration', () => {
           currentPhase: 'PROPOSAL',
           phaseStartedAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
           settings: { proposalTimeoutHours: 24 }, // 24 hour timeout
-          createdById: testUserId,
+          creatorId: testUserId,
         },
       });
       testGameId = game.id;
@@ -118,7 +118,7 @@ describe('Timeout Service Integration', () => {
           currentPhase: 'PROPOSAL',
           phaseStartedAt: new Date(Date.now() - 25 * 60 * 60 * 1000), // 25 hours ago
           settings: { proposalTimeoutHours: 24 }, // 24 hour timeout
-          createdById: testUserId,
+          creatorId: testUserId,
         },
       });
       testGameId = game.id;
@@ -128,6 +128,8 @@ describe('Timeout Service Integration', () => {
         data: {
           gameId: game.id,
           userId: testUserId,
+          playerName: 'Test Host',
+          joinOrder: 1,
           isHost: true,
           isActive: true,
         },
@@ -160,7 +162,7 @@ describe('Timeout Service Integration', () => {
           currentPhase: 'NARRATION',
           phaseStartedAt: new Date(Date.now() - 25 * 60 * 60 * 1000), // 25 hours ago
           settings: { narrationTimeoutHours: 24 },
-          createdById: testUserId,
+          creatorId: testUserId,
         },
       });
       testGameId = game.id;
@@ -170,6 +172,8 @@ describe('Timeout Service Integration', () => {
         data: {
           gameId: game.id,
           userId: testUserId,
+          playerName: 'Test Host',
+          joinOrder: 1,
           isHost: true,
           isActive: true,
         },

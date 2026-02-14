@@ -97,7 +97,9 @@ export function ArgumentationPhase({
         <EditActionModal
           isOpen={showEditAction}
           onClose={() => setShowEditAction(false)}
-          onSave={async (data) => { await editActionMutation.mutateAsync(data); }}
+          onSave={async (data) => {
+            await editActionMutation.mutateAsync(data);
+          }}
           initialActionDescription={action.actionDescription}
           initialDesiredOutcome={action.desiredOutcome}
         />
@@ -110,11 +112,7 @@ export function ArgumentationPhase({
 
       {/* Add argument form */}
       {!hasCompletedArgumentation && (
-        <AddArgument
-          actionId={action.id}
-          gameId={gameId}
-          remainingArguments={remainingArguments}
-        />
+        <AddArgument actionId={action.id} gameId={gameId} remainingArguments={remainingArguments} />
       )}
 
       {/* Complete argumentation */}
@@ -131,7 +129,8 @@ export function ArgumentationPhase({
             )}
             {waitingStatus?.playersRemaining && (
               <p className="text-xs text-muted-foreground">
-                {waitingStatus.playersRemaining} player{waitingStatus.playersRemaining !== 1 ? 's' : ''} still arguing
+                {waitingStatus.playersRemaining} player
+                {waitingStatus.playersRemaining !== 1 ? 's' : ''} still arguing
               </p>
             )}
           </div>
@@ -148,7 +147,7 @@ export function ArgumentationPhase({
               disabled={completeMutation.isPending}
               className="py-2 px-4 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 disabled:opacity-50"
             >
-              {completeMutation.isPending ? 'Submitting...' : 'I\'m Done'}
+              {completeMutation.isPending ? 'Submitting...' : "I'm Done"}
             </button>
           </div>
         )}

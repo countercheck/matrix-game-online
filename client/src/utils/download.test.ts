@@ -72,7 +72,7 @@ describe('downloadBlob', () => {
     // Use spies instead of direct assignment
     appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
     removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
-    
+
     // Mock URL methods on globalThis
     if (!globalThis.URL.createObjectURL) {
       globalThis.URL.createObjectURL = vi.fn();
@@ -126,7 +126,7 @@ describe('downloadBlob', () => {
   it('should click the link to trigger download', () => {
     const blob = new Blob(['test'], { type: 'text/yaml' });
     const clickSpy = vi.fn();
-    
+
     // Temporarily override the spy to add click spy
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     appendChildSpy.mockImplementationOnce((node: any) => {

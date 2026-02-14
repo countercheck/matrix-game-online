@@ -17,11 +17,11 @@ function toSnakeCase(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
     return obj;
   }
-  
+
   if (Array.isArray(obj)) {
     return obj.map(toSnakeCase);
   }
-  
+
   if (typeof obj === 'object') {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -30,7 +30,7 @@ function toSnakeCase(obj: unknown): unknown {
     }
     return result;
   }
-  
+
   return obj;
 }
 

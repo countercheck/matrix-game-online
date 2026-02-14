@@ -31,19 +31,14 @@ export async function runTimeoutCheck(config?: TimeoutConfig): Promise<void> {
       logger.warn(`Timeout check completed with ${results.errors.length} errors`);
     }
 
-    if (
-      results.argumentationTimeouts.length > 0 ||
-      results.votingTimeouts.length > 0
-    ) {
+    if (results.argumentationTimeouts.length > 0 || results.votingTimeouts.length > 0) {
       logger.info(
         `Timeout check: processed ${results.argumentationTimeouts.length} argumentation, ` +
           `${results.votingTimeouts.length} voting timeouts`
       );
     }
   } catch (error) {
-    logger.error(
-      `Timeout check failed: ${error instanceof Error ? error.message : String(error)}`
-    );
+    logger.error(`Timeout check failed: ${error instanceof Error ? error.message : String(error)}`);
   } finally {
     isRunning = false;
   }

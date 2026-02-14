@@ -9,36 +9,30 @@ describe('Complete Game Flow E2E Tests', () => {
   describe('Full Game Lifecycle', () => {
     it('should complete full game setup flow: register -> create -> invite -> join -> start', async () => {
       // Step 1: Register host user
-      const hostResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'host@example.com',
-          password: 'HostPassword123!',
-          displayName: 'Game Host',
-        });
+      const hostResponse = await request(app).post('/api/auth/register').send({
+        email: 'host@example.com',
+        password: 'HostPassword123!',
+        displayName: 'Game Host',
+      });
 
       expect(hostResponse.status).toBe(201);
       const hostToken = hostResponse.body.data.token;
 
       // Step 2: Register player users
-      const player1Response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'player1@example.com',
-          password: 'Player1Pass123!',
-          displayName: 'Player Alpha',
-        });
+      const player1Response = await request(app).post('/api/auth/register').send({
+        email: 'player1@example.com',
+        password: 'Player1Pass123!',
+        displayName: 'Player Alpha',
+      });
 
       expect(player1Response.status).toBe(201);
       const player1Token = player1Response.body.data.token;
 
-      const player2Response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'player2@example.com',
-          password: 'Player2Pass123!',
-          displayName: 'Player Beta',
-        });
+      const player2Response = await request(app).post('/api/auth/register').send({
+        email: 'player2@example.com',
+        password: 'Player2Pass123!',
+        displayName: 'Player Beta',
+      });
 
       expect(player2Response.status).toBe(201);
       const player2Token = player2Response.body.data.token;
@@ -132,30 +126,26 @@ describe('Complete Game Flow E2E Tests', () => {
       });
 
       expect(events.length).toBeGreaterThanOrEqual(4);
-      expect(events.map(e => e.eventType)).toContain('GAME_CREATED');
-      expect(events.map(e => e.eventType)).toContain('PLAYER_JOINED');
-      expect(events.map(e => e.eventType)).toContain('GAME_STARTED');
-      expect(events.map(e => e.eventType)).toContain('ROUND_STARTED');
+      expect(events.map((e) => e.eventType)).toContain('GAME_CREATED');
+      expect(events.map((e) => e.eventType)).toContain('PLAYER_JOINED');
+      expect(events.map((e) => e.eventType)).toContain('GAME_STARTED');
+      expect(events.map((e) => e.eventType)).toContain('ROUND_STARTED');
     });
 
     it('should handle concurrent join attempts gracefully', async () => {
       // Setup users
-      const hostResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'host@test.com',
-          password: 'Password123!',
-          displayName: 'Host',
-        });
+      const hostResponse = await request(app).post('/api/auth/register').send({
+        email: 'host@test.com',
+        password: 'Password123!',
+        displayName: 'Host',
+      });
       const hostToken = hostResponse.body.data.token;
 
-      const playerResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'player@test.com',
-          password: 'Password123!',
-          displayName: 'Player',
-        });
+      const playerResponse = await request(app).post('/api/auth/register').send({
+        email: 'player@test.com',
+        password: 'Password123!',
+        displayName: 'Player',
+      });
       const playerToken = playerResponse.body.data.token;
 
       // Create game
@@ -181,8 +171,8 @@ describe('Complete Game Flow E2E Tests', () => {
       const results = await Promise.all(joinPromises);
 
       // One should succeed, one should fail with conflict
-      const successCount = results.filter(r => r.status === 200).length;
-      const conflictCount = results.filter(r => r.status === 409).length;
+      const successCount = results.filter((r) => r.status === 200).length;
+      const conflictCount = results.filter((r) => r.status === 409).length;
 
       expect(successCount).toBe(1);
       expect(conflictCount).toBe(1);
@@ -190,22 +180,18 @@ describe('Complete Game Flow E2E Tests', () => {
 
     it('should prevent starting a game that is already in progress', async () => {
       // Setup
-      const user1Response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'user1@test.com',
-          password: 'Password123!',
-          displayName: 'User 1',
-        });
+      const user1Response = await request(app).post('/api/auth/register').send({
+        email: 'user1@test.com',
+        password: 'Password123!',
+        displayName: 'User 1',
+      });
       const user1Token = user1Response.body.data.token;
 
-      const user2Response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'user2@test.com',
-          password: 'Password123!',
-          displayName: 'User 2',
-        });
+      const user2Response = await request(app).post('/api/auth/register').send({
+        email: 'user2@test.com',
+        password: 'Password123!',
+        displayName: 'User 2',
+      });
       const user2Token = user2Response.body.data.token;
 
       // Create and start game
@@ -235,22 +221,18 @@ describe('Complete Game Flow E2E Tests', () => {
 
     it('should track game state correctly after player leaves and rejoins', async () => {
       // Setup
-      const hostResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'host@leave.com',
-          password: 'Password123!',
-          displayName: 'Host',
-        });
+      const hostResponse = await request(app).post('/api/auth/register').send({
+        email: 'host@leave.com',
+        password: 'Password123!',
+        displayName: 'Host',
+      });
       const hostToken = hostResponse.body.data.token;
 
-      const playerResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'player@leave.com',
-          password: 'Password123!',
-          displayName: 'Player',
-        });
+      const playerResponse = await request(app).post('/api/auth/register').send({
+        email: 'player@leave.com',
+        password: 'Password123!',
+        displayName: 'Player',
+      });
       const playerToken = playerResponse.body.data.token;
 
       // Create game
@@ -308,13 +290,11 @@ describe('Complete Game Flow E2E Tests', () => {
 
   describe('Error Handling', () => {
     it('should return proper error for invalid game ID format', async () => {
-      const userResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'error@test.com',
-          password: 'Password123!',
-          displayName: 'Error Tester',
-        });
+      const userResponse = await request(app).post('/api/auth/register').send({
+        email: 'error@test.com',
+        password: 'Password123!',
+        displayName: 'Error Tester',
+      });
 
       const response = await request(app)
         .get('/api/games/invalid-uuid-format')
@@ -324,21 +304,17 @@ describe('Complete Game Flow E2E Tests', () => {
     });
 
     it('should return 401 for unauthenticated requests', async () => {
-      const response = await request(app)
-        .post('/api/games')
-        .send({ name: 'Unauthorized Game' });
+      const response = await request(app).post('/api/games').send({ name: 'Unauthorized Game' });
 
       expect(response.status).toBe(401);
     });
 
     it('should return 404 for non-existent game', async () => {
-      const userResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'test@notfound.com',
-          password: 'Password123!',
-          displayName: 'Tester',
-        });
+      const userResponse = await request(app).post('/api/auth/register').send({
+        email: 'test@notfound.com',
+        password: 'Password123!',
+        displayName: 'Tester',
+      });
 
       const response = await request(app)
         .get('/api/games/00000000-0000-0000-0000-000000000000')

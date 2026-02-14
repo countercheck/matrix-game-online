@@ -15,31 +15,25 @@ describe('Action Resolution E2E Tests', () => {
     await cleanDatabase();
 
     // Create 3 users
-    const hostResponse = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'host@action.com',
-        password: 'Password123!',
-        displayName: 'Game Host',
-      });
+    const hostResponse = await request(app).post('/api/auth/register').send({
+      email: 'host@action.com',
+      password: 'Password123!',
+      displayName: 'Game Host',
+    });
     hostToken = hostResponse.body.data.token;
 
-    const player1Response = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'player1@action.com',
-        password: 'Password123!',
-        displayName: 'Player One',
-      });
+    const player1Response = await request(app).post('/api/auth/register').send({
+      email: 'player1@action.com',
+      password: 'Password123!',
+      displayName: 'Player One',
+    });
     player1Token = player1Response.body.data.token;
 
-    const player2Response = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'player2@action.com',
-        password: 'Password123!',
-        displayName: 'Player Two',
-      });
+    const player2Response = await request(app).post('/api/auth/register').send({
+      email: 'player2@action.com',
+      password: 'Password123!',
+      displayName: 'Player Two',
+    });
     player2Token = player2Response.body.data.token;
 
     // Create and setup game
@@ -113,7 +107,9 @@ describe('Action Resolution E2E Tests', () => {
       // For now, test that second proposal fails during same round
       // Switch to player 1 for second action of round
       await request(app)
-        .post(`/api/actions/${(await testDb.action.findFirst({ where: { gameId } }))!.id}/complete-argumentation`)
+        .post(
+          `/api/actions/${(await testDb.action.findFirst({ where: { gameId } }))!.id}/complete-argumentation`
+        )
         .set('Authorization', `Bearer ${player1Token}`);
 
       // This would need more setup to properly test, but shows the concept

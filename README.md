@@ -5,6 +5,7 @@ A web-based implementation of the Mosaic Strict Matrix Game's Action Resolution 
 ## Overview
 
 This application allows players to:
+
 - Create and join games with invite links
 - Propose actions and argue for their success
 - Vote on action outcomes using a token-based system
@@ -14,6 +15,7 @@ This application allows players to:
 ## Tech Stack
 
 **Frontend:**
+
 - React 18 with TypeScript
 - Vite for development and building
 - TanStack Query for server state
@@ -21,6 +23,7 @@ This application allows players to:
 - React Router for navigation
 
 **Backend:**
+
 - Node.js 20 with TypeScript
 - Express.js REST API
 - Prisma ORM
@@ -98,12 +101,14 @@ This starts both the frontend (http://localhost:5173) and backend (http://localh
 ## Available Scripts
 
 ### Root level
+
 - `pnpm dev` - Start both frontend and backend in development mode
 - `pnpm build` - Build both frontend and backend for production
 - `pnpm lint` - Run linting across all packages
 - `pnpm format` - Format code with Prettier
 
 ### Database
+
 - `pnpm db:generate` - Generate Prisma client
 - `pnpm db:migrate` - Run database migrations
 - `pnpm db:push` - Push schema changes to database

@@ -40,7 +40,14 @@ interface NarrationFormProps {
   isHost?: boolean;
 }
 
-const resultLabels: Record<string, { label: string; guidance: string; colorKey: 'triumph' | 'successBut' | 'failureBut' | 'disaster' }> = {
+const resultLabels: Record<
+  string,
+  {
+    label: string;
+    guidance: string;
+    colorKey: 'triumph' | 'successBut' | 'failureBut' | 'disaster';
+  }
+> = {
   TRIUMPH: {
     label: 'Triumph!',
     guidance: 'Describe a complete success with additional benefits or advantages.',
@@ -69,32 +76,68 @@ const getResultStyles = (colorKey: 'triumph' | 'successBut' | 'failureBut' | 'di
     triumph: {
       container: 'bg-result-triumph-bg border-result-triumph text-result-triumph-text',
       icon: (
-        <svg className="w-5 h-5 text-result-triumph" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        <svg
+          className="w-5 h-5 text-result-triumph"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clipRule="evenodd"
+          />
         </svg>
       ),
     },
     successBut: {
       container: 'bg-result-success-but-bg border-result-success-but text-result-success-but-text',
       icon: (
-        <svg className="w-5 h-5 text-result-success-but" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        <svg
+          className="w-5 h-5 text-result-success-but"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+            clipRule="evenodd"
+          />
         </svg>
       ),
     },
     failureBut: {
       container: 'bg-result-failure-but-bg border-result-failure-but text-result-failure-but-text',
       icon: (
-        <svg className="w-5 h-5 text-result-failure-but" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        <svg
+          className="w-5 h-5 text-result-failure-but"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+            clipRule="evenodd"
+          />
         </svg>
       ),
     },
     disaster: {
       container: 'bg-result-disaster-bg border-result-disaster text-result-disaster-text',
       icon: (
-        <svg className="w-5 h-5 text-result-disaster" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+        <svg
+          className="w-5 h-5 text-result-disaster"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+            clipRule="evenodd"
+          />
         </svg>
       ),
     },
@@ -102,15 +145,19 @@ const getResultStyles = (colorKey: 'triumph' | 'successBut' | 'failureBut' | 'di
   return styles[colorKey];
 };
 
-export function NarrationForm({ gameId, action, currentUserId, isHost = false }: NarrationFormProps) {
+export function NarrationForm({
+  gameId,
+  action,
+  currentUserId,
+  isHost = false,
+}: NarrationFormProps) {
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
   const [showEditNarration, setShowEditNarration] = useState(false);
 
   const editNarrationMutation = useMutation({
-    mutationFn: (data: { content: string }) =>
-      api.put(`/actions/${action.id}/narration`, data),
+    mutationFn: (data: { content: string }) => api.put(`/actions/${action.id}/narration`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['narration', action.id] });
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
@@ -211,7 +258,8 @@ export function NarrationForm({ gameId, action, currentUserId, isHost = false }:
             )}
           </div>
           <p className="text-sm text-muted-foreground mb-3">
-            Narrated by {existingNarration.author.playerName} · {formatRelativeTime(existingNarration.createdAt)}
+            Narrated by {existingNarration.author.playerName} ·{' '}
+            {formatRelativeTime(existingNarration.createdAt)}
           </p>
           <div className="p-4 bg-muted rounded-md">
             <RichTextDisplay content={existingNarration.content} />
@@ -227,7 +275,9 @@ export function NarrationForm({ gameId, action, currentUserId, isHost = false }:
           <EditNarrationModal
             isOpen={showEditNarration}
             onClose={() => setShowEditNarration(false)}
-            onSave={async (data) => { await editNarrationMutation.mutateAsync(data); }}
+            onSave={async (data) => {
+              await editNarrationMutation.mutateAsync(data);
+            }}
             initialContent={existingNarration.content}
           />
         )}
@@ -272,9 +322,7 @@ export function NarrationForm({ gameId, action, currentUserId, isHost = false }:
           <p className="text-sm text-muted-foreground">{resultInfo.guidance}</p>
 
           {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-              {error}
-            </div>
+            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>
           )}
 
           <div className="space-y-2">

@@ -40,48 +40,44 @@ export async function logAdminAction(data: AuditLogData) {
 // ============================================================================
 
 export async function getDashboardStats() {
-  const [
-    totalUsers,
-    bannedUsers,
-    activeGames,
-    completedGames,
-    recentUsers,
-    recentGames,
-  ] = await Promise.all([
-    db.user.count(),
-    db.user.count({ where: { isBanned: true } }),
-    db.game.count({ where: { status: { in: [GameStatus.LOBBY, GameStatus.ACTIVE] }, deletedAt: null } }),
-    db.game.count({ where: { status: GameStatus.COMPLETED, deletedAt: null } }),
-    db.user.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        role: true,
-        createdAt: true,
-      },
-    }),
-    db.game.findMany({
-      where: { deletedAt: null },
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        playerCount: true,
-        createdAt: true,
-        creator: {
-          select: {
-            id: true,
-            displayName: true,
+  const [totalUsers, bannedUsers, activeGames, completedGames, recentUsers, recentGames] =
+    await Promise.all([
+      db.user.count(),
+      db.user.count({ where: { isBanned: true } }),
+      db.game.count({
+        where: { status: { in: [GameStatus.LOBBY, GameStatus.ACTIVE] }, deletedAt: null },
+      }),
+      db.game.count({ where: { status: GameStatus.COMPLETED, deletedAt: null } }),
+      db.user.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          email: true,
+          displayName: true,
+          role: true,
+          createdAt: true,
+        },
+      }),
+      db.game.findMany({
+        where: { deletedAt: null },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          playerCount: true,
+          createdAt: true,
+          creator: {
+            select: {
+              id: true,
+              displayName: true,
+            },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
   return {
     stats: {

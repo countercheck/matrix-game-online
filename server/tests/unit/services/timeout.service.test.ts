@@ -311,11 +311,7 @@ describe('Timeout Service', () => {
     it('should skip creating arguments when all players have argued', async () => {
       mockDb.action.findUnique.mockResolvedValue({
         ...mockAction,
-        arguments: [
-          { playerId: 'player-1' },
-          { playerId: 'player-2' },
-          { playerId: 'player-3' },
-        ],
+        arguments: [{ playerId: 'player-1' }, { playerId: 'player-2' }, { playerId: 'player-3' }],
       });
 
       const result = await processArgumentationTimeout('action-1');
@@ -366,9 +362,7 @@ describe('Timeout Service', () => {
         status: 'ARGUING',
       });
 
-      await expect(processVotingTimeout('action-1')).rejects.toThrow(
-        'not in voting phase'
-      );
+      await expect(processVotingTimeout('action-1')).rejects.toThrow('not in voting phase');
     });
 
     it('should create UNCERTAIN auto-votes for players who have not voted', async () => {
@@ -419,12 +413,10 @@ describe('Timeout Service', () => {
     it('should send timeout notification', async () => {
       await processVotingTimeout('action-1');
 
-      expect(mockNotifyTimeoutOccurred).toHaveBeenCalledWith(
-        'game-1',
-        'Test Game',
-        'VOTING',
-        ['user-2', 'user-3']
-      );
+      expect(mockNotifyTimeoutOccurred).toHaveBeenCalledWith('game-1', 'Test Game', 'VOTING', [
+        'user-2',
+        'user-3',
+      ]);
     });
 
     it('should return correct TimeoutResult', async () => {
@@ -442,11 +434,7 @@ describe('Timeout Service', () => {
     it('should skip creating votes when all players have voted', async () => {
       mockDb.action.findUnique.mockResolvedValue({
         ...mockAction,
-        votes: [
-          { playerId: 'player-1' },
-          { playerId: 'player-2' },
-          { playerId: 'player-3' },
-        ],
+        votes: [{ playerId: 'player-1' }, { playerId: 'player-2' }, { playerId: 'player-3' }],
       });
 
       const result = await processVotingTimeout('action-1');

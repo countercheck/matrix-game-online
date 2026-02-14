@@ -41,7 +41,6 @@ interface EnvConfig {
   argumentationTimeoutHours: number;
   votingTimeoutHours: number;
 
-
   // Monitoring
   logLevel: string;
   sentryDsn?: string;
@@ -80,16 +79,11 @@ function validateEnv(): void {
   }
 
   // Check JWT_SECRET is not the default
-  if (
-    process.env.JWT_SECRET ===
-    'your-super-secret-jwt-key-change-this-in-production'
-  ) {
+  if (process.env.JWT_SECRET === 'your-super-secret-jwt-key-change-this-in-production') {
     if (isProduction) {
       missing.push('JWT_SECRET (using default value)');
     } else {
-      logger.warn(
-        'Using default JWT_SECRET - this is insecure for production!'
-      );
+      logger.warn('Using default JWT_SECRET - this is insecure for production!');
     }
   }
 

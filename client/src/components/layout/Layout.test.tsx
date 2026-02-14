@@ -80,7 +80,7 @@ describe('Layout Component', () => {
 
     // Multiple links go to dashboard (logo + nav link), check at least one has correct href
     const dashboardLinks = screen.getAllByRole('link', { name: /dashboard/i });
-    const linkWithCorrectHref = dashboardLinks.find(link => link.getAttribute('href') === '/');
+    const linkWithCorrectHref = dashboardLinks.find((link) => link.getAttribute('href') === '/');
     expect(linkWithCorrectHref).toBeTruthy();
   });
 
@@ -95,7 +95,7 @@ describe('Layout Component', () => {
     render(<Layout />);
 
     const helpLinks = screen.getAllByRole('link', { name: /help/i });
-    const linkWithCorrectHref = helpLinks.find(link => link.getAttribute('href') === '/help');
+    const linkWithCorrectHref = helpLinks.find((link) => link.getAttribute('href') === '/help');
     expect(linkWithCorrectHref).toBeTruthy();
   });
 });

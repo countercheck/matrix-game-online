@@ -254,12 +254,7 @@ describe('Notification Service', () => {
         notificationPreferences: { emailEnabled: true, resolutionReady: true },
       } as any);
 
-      await notifyResolutionReady(
-        'game-1',
-        'Test Game',
-        'user-1',
-        'Test action'
-      );
+      await notifyResolutionReady('game-1', 'Test Game', 'user-1', 'Test action');
 
       expect(emailService.sendResolutionReadyEmail).toHaveBeenCalledTimes(1);
       expect(emailService.sendResolutionReadyEmail).toHaveBeenCalledWith(
@@ -273,12 +268,7 @@ describe('Notification Service', () => {
     it('should not send email if user not found', async () => {
       vi.mocked(db.user.findUnique).mockResolvedValue(null);
 
-      await notifyResolutionReady(
-        'game-1',
-        'Test Game',
-        'non-existent',
-        'Test action'
-      );
+      await notifyResolutionReady('game-1', 'Test Game', 'non-existent', 'Test action');
 
       expect(emailService.sendResolutionReadyEmail).not.toHaveBeenCalled();
     });
@@ -286,14 +276,10 @@ describe('Notification Service', () => {
 
   describe('Error handling', () => {
     it('should handle database errors gracefully', async () => {
-      vi.mocked(db.gamePlayer.findMany).mockRejectedValue(
-        new Error('Database error')
-      );
+      vi.mocked(db.gamePlayer.findMany).mockRejectedValue(new Error('Database error'));
 
       // Should not throw
-      await expect(
-        notifyGameStarted('game-1', 'Test Game')
-      ).resolves.not.toThrow();
+      await expect(notifyGameStarted('game-1', 'Test Game')).resolves.not.toThrow();
     });
 
     it('should handle email sending errors gracefully', async () => {
@@ -310,14 +296,10 @@ describe('Notification Service', () => {
         },
       ] as any);
 
-      vi.mocked(emailService.sendGameStartedEmail).mockRejectedValue(
-        new Error('SMTP error')
-      );
+      vi.mocked(emailService.sendGameStartedEmail).mockRejectedValue(new Error('SMTP error'));
 
       // Should not throw
-      await expect(
-        notifyGameStarted('game-1', 'Test Game')
-      ).resolves.not.toThrow();
+      await expect(notifyGameStarted('game-1', 'Test Game')).resolves.not.toThrow();
     });
   });
 });

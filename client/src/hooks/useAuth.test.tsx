@@ -15,7 +15,7 @@ const localStorageMock = {
     delete mockLocalStorage[key];
   }),
   clear: vi.fn(() => {
-    Object.keys(mockLocalStorage).forEach(key => delete mockLocalStorage[key]);
+    Object.keys(mockLocalStorage).forEach((key) => delete mockLocalStorage[key]);
   }),
 };
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });

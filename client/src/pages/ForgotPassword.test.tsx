@@ -94,9 +94,7 @@ describe('ForgotPassword Page', () => {
     await user.click(screen.getByRole('button', { name: /send reset link/i }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/password reset link has been sent/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/password reset link has been sent/i)).toBeInTheDocument();
     });
   });
 

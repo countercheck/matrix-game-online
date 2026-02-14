@@ -7,7 +7,10 @@ export const listUsersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().optional(),
   role: z.nativeEnum(UserRole).optional(),
-  isBanned: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+  isBanned: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
   sortBy: z.enum(['createdAt', 'lastLogin', 'displayName', 'email']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
@@ -17,7 +20,10 @@ export const updateUserRoleSchema = z.object({
 });
 
 export const banUserSchema = z.object({
-  reason: z.string().min(1, 'Ban reason is required').max(500, 'Ban reason must be 500 characters or less'),
+  reason: z
+    .string()
+    .min(1, 'Ban reason is required')
+    .max(500, 'Ban reason must be 500 characters or less'),
 });
 
 // Game Management Schemas

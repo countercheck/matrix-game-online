@@ -52,7 +52,9 @@ interface Round {
 export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: RoundHistoryProps) {
   const queryClient = useQueryClient();
   const [expandedRound, setExpandedRound] = useState<string | null>(null);
-  const [editingSummary, setEditingSummary] = useState<{ roundId: string; content: string } | null>(null);
+  const [editingSummary, setEditingSummary] = useState<{ roundId: string; content: string } | null>(
+    null
+  );
 
   const editSummaryMutation = useMutation({
     mutationFn: ({ roundId, content }: { roundId: string; content: string }) =>
@@ -182,22 +184,18 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                     {/* Quick Stats */}
                     <div className="flex items-center gap-2 text-sm">
                       {triumphs > 0 && (
-                        <span className="text-green-600 dark:text-green-400">
-                          ✨ {triumphs}
-                        </span>
+                        <span className="text-green-600 dark:text-green-400">✨ {triumphs}</span>
                       )}
                       {disasters > 0 && (
-                        <span className="text-red-600 dark:text-red-400">
-                          💥 {disasters}
-                        </span>
+                        <span className="text-red-600 dark:text-red-400">💥 {disasters}</span>
                       )}
                       <span
                         className={`font-medium ${
                           netResult > 0
                             ? 'text-green-600 dark:text-green-400'
                             : netResult < 0
-                            ? 'text-red-600 dark:text-red-400'
-                            : 'text-muted-foreground'
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-muted-foreground'
                         }`}
                       >
                         {netResult > 0 ? '+' : ''}
@@ -241,7 +239,10 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditingSummary({ roundId: round.id, content: round.summary!.content });
+                              setEditingSummary({
+                                roundId: round.id,
+                                content: round.summary!.content,
+                              });
                             }}
                             className="text-xs text-primary hover:underline"
                             title="Edit round summary (host)"
@@ -250,7 +251,10 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                           </button>
                         )}
                       </div>
-                      <RichTextDisplay content={round.summary.content} className="text-sm [&_p]:my-1" />
+                      <RichTextDisplay
+                        content={round.summary.content}
+                        className="text-sm [&_p]:my-1"
+                      />
                       <p className="text-xs text-muted-foreground mt-2">
                         Written on {formatDate(round.summary.createdAt)}
                       </p>
@@ -268,9 +272,7 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs text-muted-foreground">
-                                #{index + 1}
-                              </span>
+                              <span className="text-xs text-muted-foreground">#{index + 1}</span>
                               {action.argumentationWasSkipped && (
                                 <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
                                   Args skipped
@@ -324,8 +326,8 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                             netResult > 0
                               ? 'text-green-600 dark:text-green-400'
                               : netResult < 0
-                              ? 'text-red-600 dark:text-red-400'
-                              : 'text-muted-foreground'
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-muted-foreground'
                           }`}
                         >
                           {netResult > 0 ? '+' : ''}

@@ -55,11 +55,7 @@ describe('Security Middleware', () => {
   });
 
   describe('sanitizeInput middleware', () => {
-    function createMockReq(
-      body?: object,
-      query?: object,
-      params?: object
-    ): Request {
+    function createMockReq(body?: object, query?: object, params?: object): Request {
       return {
         body: body || {},
         query: query || {},
@@ -133,10 +129,7 @@ describe('Security Middleware', () => {
     });
 
     it('should sanitize query parameters', () => {
-      const req = createMockReq(
-        {},
-        { search: '<script>xss</script>' }
-      );
+      const req = createMockReq({}, { search: '<script>xss</script>' });
       const res = createMockRes();
       const next = vi.fn() as NextFunction;
 
@@ -146,11 +139,7 @@ describe('Security Middleware', () => {
     });
 
     it('should sanitize URL params', () => {
-      const req = createMockReq(
-        {},
-        {},
-        { id: '<script>xss</script>' }
-      );
+      const req = createMockReq({}, {}, { id: '<script>xss</script>' });
       const res = createMockRes();
       const next = vi.fn() as NextFunction;
 
@@ -191,10 +180,7 @@ describe('Security Middleware', () => {
 
       securityHeaders(req, res, next);
 
-      expect(res.setHeader).toHaveBeenCalledWith(
-        'X-Content-Type-Options',
-        'nosniff'
-      );
+      expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
     });
 
     it('should set X-XSS-Protection header', () => {
@@ -206,10 +192,7 @@ describe('Security Middleware', () => {
 
       securityHeaders(req, res, next);
 
-      expect(res.setHeader).toHaveBeenCalledWith(
-        'X-XSS-Protection',
-        '1; mode=block'
-      );
+      expect(res.setHeader).toHaveBeenCalledWith('X-XSS-Protection', '1; mode=block');
     });
 
     it('should set Referrer-Policy header', () => {
@@ -256,7 +239,11 @@ describe('Security Middleware', () => {
   });
 
   describe('csrfProtection middleware', () => {
-    function createMockReq(method: string, path: string, headers: Record<string, string> = {}): Request {
+    function createMockReq(
+      method: string,
+      path: string,
+      headers: Record<string, string> = {}
+    ): Request {
       return {
         method,
         path,
@@ -269,11 +256,11 @@ describe('Security Middleware', () => {
       const res = {
         statusCode: 200,
         jsonData: null as unknown,
-        status: vi.fn().mockImplementation(function(this: typeof res, code: number) {
+        status: vi.fn().mockImplementation(function (this: typeof res, code: number) {
           this.statusCode = code;
           return this;
         }),
-        json: vi.fn().mockImplementation(function(this: typeof res, data: unknown) {
+        json: vi.fn().mockImplementation(function (this: typeof res, data: unknown) {
           this.jsonData = data;
           return this;
         }),
@@ -314,7 +301,9 @@ describe('Security Middleware', () => {
     });
 
     it('should allow DELETE requests with valid X-Requested-With header', () => {
-      const req = createMockReq('DELETE', '/api/games/123', { 'X-Requested-With': 'XMLHttpRequest' });
+      const req = createMockReq('DELETE', '/api/games/123', {
+        'X-Requested-With': 'XMLHttpRequest',
+      });
       const res = createMockRes();
       const next = vi.fn() as NextFunction;
 

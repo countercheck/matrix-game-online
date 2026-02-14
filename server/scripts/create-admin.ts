@@ -22,11 +22,15 @@ async function main() {
   const [email, displayName, password] = process.argv.slice(2);
 
   if (!email) {
-    console.error('Usage: pnpm tsx server/scripts/create-admin.ts <email> [displayName] [password]');
+    console.error(
+      'Usage: pnpm tsx server/scripts/create-admin.ts <email> [displayName] [password]'
+    );
     console.error('');
     console.error('Examples:');
     console.error('  # Create a new admin user');
-    console.error('  pnpm tsx server/scripts/create-admin.ts admin@example.com "Admin User" SecurePass123');
+    console.error(
+      '  pnpm tsx server/scripts/create-admin.ts admin@example.com "Admin User" SecurePass123'
+    );
     console.error('');
     console.error('  # Promote an existing user to admin');
     console.error('  pnpm tsx server/scripts/create-admin.ts existing@example.com');
@@ -67,9 +71,13 @@ async function main() {
     } else {
       // Create new admin user
       if (!displayName || !password) {
-        console.error('Error: displayName and password are required when creating a new admin user.');
+        console.error(
+          'Error: displayName and password are required when creating a new admin user.'
+        );
         console.error('');
-        console.error('Usage: pnpm tsx server/scripts/create-admin.ts <email> <displayName> <password>');
+        console.error(
+          'Usage: pnpm tsx server/scripts/create-admin.ts <email> <displayName> <password>'
+        );
         process.exit(1);
       }
 

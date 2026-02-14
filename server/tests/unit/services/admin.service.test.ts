@@ -2,7 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { UserRole, GameStatus } from '@prisma/client';
 import * as adminService from '../../../src/services/admin.service.js';
 import { db } from '../../../src/config/database.js';
-import { BadRequestError, NotFoundError, ForbiddenError } from '../../../src/middleware/errorHandler.js';
+import {
+  BadRequestError,
+  NotFoundError,
+  ForbiddenError,
+} from '../../../src/middleware/errorHandler.js';
 
 vi.mock('../../../src/config/database.js', () => ({
   db: {
@@ -46,7 +50,13 @@ describe('Admin Service', () => {
       vi.mocked(db.user.count).mockResolvedValueOnce(100).mockResolvedValueOnce(5);
       vi.mocked(db.game.count).mockResolvedValueOnce(20).mockResolvedValueOnce(50);
       vi.mocked(db.user.findMany).mockResolvedValue([
-        { id: '1', email: 'user1@test.com', displayName: 'User 1', role: UserRole.USER, createdAt: new Date() },
+        {
+          id: '1',
+          email: 'user1@test.com',
+          displayName: 'User 1',
+          role: UserRole.USER,
+          createdAt: new Date(),
+        },
       ]);
       vi.mocked(db.game.findMany).mockResolvedValue([
         {
@@ -90,7 +100,12 @@ describe('Admin Service', () => {
       vi.mocked(db.user.findMany).mockResolvedValue(mockUsers);
       vi.mocked(db.user.count).mockResolvedValue(1);
 
-      const result = await adminService.listUsers({ page: 1, limit: 20, sortBy: 'createdAt', sortOrder: 'desc' });
+      const result = await adminService.listUsers({
+        page: 1,
+        limit: 20,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
 
       expect(result.users).toHaveLength(1);
       expect(result.pagination.total).toBe(1);
@@ -193,7 +208,9 @@ describe('Admin Service', () => {
       } as any);
       vi.mocked(db.adminAuditLog.create).mockResolvedValue({} as any);
 
-      const result = await adminService.updateUserRole(adminId, userId, { role: UserRole.MODERATOR });
+      const result = await adminService.updateUserRole(adminId, userId, {
+        role: UserRole.MODERATOR,
+      });
 
       expect(result.role).toBe(UserRole.MODERATOR);
       expect(db.adminAuditLog.create).toHaveBeenCalled();
@@ -246,9 +263,9 @@ describe('Admin Service', () => {
     it('should throw BadRequestError when trying to ban self', async () => {
       const adminId = 'admin1';
 
-      await expect(
-        adminService.banUser(adminId, adminId, { reason: 'Test' })
-      ).rejects.toThrow(BadRequestError);
+      await expect(adminService.banUser(adminId, adminId, { reason: 'Test' })).rejects.toThrow(
+        BadRequestError
+      );
     });
 
     it('should throw ForbiddenError when trying to ban an admin', async () => {
@@ -259,9 +276,9 @@ describe('Admin Service', () => {
         isBanned: false,
       } as any);
 
-      await expect(
-        adminService.banUser('admin1', 'user1', { reason: 'Test' })
-      ).rejects.toThrow(ForbiddenError);
+      await expect(adminService.banUser('admin1', 'user1', { reason: 'Test' })).rejects.toThrow(
+        ForbiddenError
+      );
     });
 
     it('should throw BadRequestError when user is already banned', async () => {
@@ -272,9 +289,9 @@ describe('Admin Service', () => {
         isBanned: true,
       } as any);
 
-      await expect(
-        adminService.banUser('admin1', 'user1', { reason: 'Test' })
-      ).rejects.toThrow(BadRequestError);
+      await expect(adminService.banUser('admin1', 'user1', { reason: 'Test' })).rejects.toThrow(
+        BadRequestError
+      );
     });
   });
 
@@ -334,7 +351,12 @@ describe('Admin Service', () => {
       vi.mocked(db.game.findMany).mockResolvedValue(mockGames);
       vi.mocked(db.game.count).mockResolvedValue(1);
 
-      const result = await adminService.listGames({ page: 1, limit: 20, sortBy: 'createdAt', sortOrder: 'desc' });
+      const result = await adminService.listGames({
+        page: 1,
+        limit: 20,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
 
       expect(result.games).toHaveLength(1);
       expect(result.pagination.total).toBe(1);
@@ -367,7 +389,9 @@ describe('Admin Service', () => {
     it('should throw NotFoundError for non-existent game', async () => {
       vi.mocked(db.game.findUnique).mockResolvedValue(null);
 
-      await expect(adminService.deleteGame('admin1', 'non-existent')).rejects.toThrow(NotFoundError);
+      await expect(adminService.deleteGame('admin1', 'non-existent')).rejects.toThrow(
+        NotFoundError
+      );
     });
   });
 
@@ -464,9 +488,9 @@ describe('Admin Service', () => {
         game: { id: 'game2', name: 'Other Game', playerCount: 3 },
       } as any);
 
-      await expect(
-        adminService.removePlayerFromGame('admin1', 'game1', 'player1')
-      ).rejects.toThrow(BadRequestError);
+      await expect(adminService.removePlayerFromGame('admin1', 'game1', 'player1')).rejects.toThrow(
+        BadRequestError
+      );
     });
 
     it('should throw BadRequestError when player is already inactive', async () => {
@@ -478,9 +502,9 @@ describe('Admin Service', () => {
         game: { id: 'game1', name: 'Test Game', playerCount: 2 },
       } as any);
 
-      await expect(
-        adminService.removePlayerFromGame('admin1', 'game1', 'player1')
-      ).rejects.toThrow(BadRequestError);
+      await expect(adminService.removePlayerFromGame('admin1', 'game1', 'player1')).rejects.toThrow(
+        BadRequestError
+      );
     });
   });
 

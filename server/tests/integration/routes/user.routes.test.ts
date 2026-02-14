@@ -8,15 +8,18 @@ function createTestApp() {
   app.use(express.json());
 
   // Mock user database
-  const users: Record<string, {
-    id: string;
-    email: string;
-    displayName: string;
-    avatarUrl: string | null;
-    notificationPreferences: Record<string, unknown>;
-    createdAt: Date;
-    lastLogin: Date | null;
-  }> = {
+  const users: Record<
+    string,
+    {
+      id: string;
+      email: string;
+      displayName: string;
+      avatarUrl: string | null;
+      notificationPreferences: Record<string, unknown>;
+      createdAt: Date;
+      lastLogin: Date | null;
+    }
+  > = {
     'user-123': {
       id: 'user-123',
       email: 'test@example.com',
@@ -57,7 +60,11 @@ function createTestApp() {
   ];
 
   // Mock auth middleware
-  const authenticateToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authenticateToken = (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(' ')[1];
 
@@ -360,9 +367,7 @@ describe('User Routes', () => {
     });
 
     it('should return 401 without token', async () => {
-      const response = await request(app)
-        .put('/api/users/me')
-        .send({ displayName: 'New Name' });
+      const response = await request(app).put('/api/users/me').send({ displayName: 'New Name' });
 
       expect(response.status).toBe(401);
     });
@@ -482,9 +487,7 @@ describe('User Routes', () => {
     });
 
     it('should return 401 without token', async () => {
-      const response = await request(app)
-        .put('/api/users/me/notifications')
-        .send({ email: false });
+      const response = await request(app).put('/api/users/me/notifications').send({ email: false });
 
       expect(response.status).toBe(401);
     });

@@ -44,7 +44,11 @@ router.post('/games/:gameId/pause', requireModerator, adminController.pauseGame)
 router.post('/games/:gameId/resume', requireModerator, adminController.resumeGame);
 
 // Remove player - Moderator+
-router.post('/games/:gameId/players/:playerId/remove', requireModerator, adminController.removePlayer);
+router.post(
+  '/games/:gameId/players/:playerId/remove',
+  requireModerator,
+  adminController.removePlayer
+);
 
 // ============================================================================
 // Audit Logs - Admin only

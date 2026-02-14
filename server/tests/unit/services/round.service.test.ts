@@ -60,7 +60,11 @@ vi.mock('../../../src/utils/logger.js', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
-import { getRound, submitRoundSummary, getRoundSummary } from '../../../src/services/round.service.js';
+import {
+  getRound,
+  submitRoundSummary,
+  getRoundSummary,
+} from '../../../src/services/round.service.js';
 
 describe('Round Service', () => {
   beforeEach(() => {
@@ -77,13 +81,33 @@ describe('Round Service', () => {
       actionsCompleted: 1,
       totalActionsRequired: 3,
       actions: [
-        { initiator: { userId: 'user-1', user: { displayName: 'Player 1' } }, tokenDraw: null, narration: null, sequenceNumber: 1 },
+        {
+          initiator: { userId: 'user-1', user: { displayName: 'Player 1' } },
+          tokenDraw: null,
+          narration: null,
+          sequenceNumber: 1,
+        },
       ],
       game: {
         players: [
-          { id: 'p1', userId: 'user-1', playerName: 'Player 1', user: { id: 'user-1', displayName: 'Player 1' } },
-          { id: 'p2', userId: 'user-2', playerName: 'Player 2', user: { id: 'user-2', displayName: 'Player 2' } },
-          { id: 'p3', userId: 'user-3', playerName: 'Player 3', user: { id: 'user-3', displayName: 'Player 3' } },
+          {
+            id: 'p1',
+            userId: 'user-1',
+            playerName: 'Player 1',
+            user: { id: 'user-1', displayName: 'Player 1' },
+          },
+          {
+            id: 'p2',
+            userId: 'user-2',
+            playerName: 'Player 2',
+            user: { id: 'user-2', displayName: 'Player 2' },
+          },
+          {
+            id: 'p3',
+            userId: 'user-3',
+            playerName: 'Player 3',
+            user: { id: 'user-3', displayName: 'Player 3' },
+          },
         ],
       },
       summary: null,
@@ -194,9 +218,9 @@ describe('Round Service', () => {
         actionsCompleted: 2,
       });
 
-      await expect(
-        submitRoundSummary('round-1', 'user-1', { content: 'Summary' })
-      ).rejects.toThrow('not complete');
+      await expect(submitRoundSummary('round-1', 'user-1', { content: 'Summary' })).rejects.toThrow(
+        'not complete'
+      );
     });
 
     it('should throw if game is not in ROUND_SUMMARY phase', async () => {
@@ -205,9 +229,9 @@ describe('Round Service', () => {
         game: { ...mockRound.game, currentPhase: 'NARRATION' },
       });
 
-      await expect(
-        submitRoundSummary('round-1', 'user-1', { content: 'Summary' })
-      ).rejects.toThrow('round summary phase');
+      await expect(submitRoundSummary('round-1', 'user-1', { content: 'Summary' })).rejects.toThrow(
+        'round summary phase'
+      );
     });
 
     it('should throw if summary already exists', async () => {
@@ -216,9 +240,9 @@ describe('Round Service', () => {
         summary: { id: 'existing-summary' },
       });
 
-      await expect(
-        submitRoundSummary('round-1', 'user-1', { content: 'Summary' })
-      ).rejects.toThrow('already submitted');
+      await expect(submitRoundSummary('round-1', 'user-1', { content: 'Summary' })).rejects.toThrow(
+        'already submitted'
+      );
     });
 
     it('should create summary with computed statistics', async () => {
@@ -291,11 +315,15 @@ describe('Round Service', () => {
 
       expect(mockLogGameEvent).toHaveBeenCalledTimes(2);
       expect(mockLogGameEvent).toHaveBeenCalledWith(
-        'game-1', 'user-1', 'ROUND_SUMMARY_SUBMITTED',
+        'game-1',
+        'user-1',
+        'ROUND_SUMMARY_SUBMITTED',
         expect.objectContaining({ roundId: 'round-1', roundNumber: 1 })
       );
       expect(mockLogGameEvent).toHaveBeenCalledWith(
-        'game-1', null, 'ROUND_STARTED',
+        'game-1',
+        null,
+        'ROUND_STARTED',
         expect.objectContaining({ roundNumber: 2 })
       );
     });
@@ -344,7 +372,11 @@ describe('Round Service', () => {
 
     it('should return the summary when found', async () => {
       mockDb.round.findUnique.mockResolvedValue({ id: 'round-1', gameId: 'game-1' });
-      const mockSummary = { id: 'summary-1', content: 'Great round!', author: { user: { displayName: 'Player 1' } } };
+      const mockSummary = {
+        id: 'summary-1',
+        content: 'Great round!',
+        author: { user: { displayName: 'Player 1' } },
+      };
       mockDb.roundSummary.findUnique.mockResolvedValue(mockSummary);
 
       const result = await getRoundSummary('round-1', 'user-1');

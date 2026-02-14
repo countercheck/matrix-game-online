@@ -195,7 +195,11 @@ function Toolbar({ editor, disabled }: ToolbarProps) {
 
           try {
             const parsed = new URL(trimmedUrl);
-            if (parsed.protocol === 'http:' || parsed.protocol === 'https:' || parsed.protocol === 'mailto:') {
+            if (
+              parsed.protocol === 'http:' ||
+              parsed.protocol === 'https:' ||
+              parsed.protocol === 'mailto:'
+            ) {
               editor.chain().focus().setLink({ href: trimmedUrl }).run();
             }
           } catch {
@@ -251,8 +255,7 @@ export function RichTextEditor({
         HTMLAttributes: {
           class: 'text-primary underline',
         },
-        validate: (href) =>
-          /^https?:\/\//.test(href) || /^mailto:/.test(href),
+        validate: (href) => /^https?:\/\//.test(href) || /^mailto:/.test(href),
       }),
       Placeholder.configure({
         placeholder: placeholder || 'Write something...',

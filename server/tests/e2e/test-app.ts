@@ -15,10 +15,12 @@ export function createTestApp() {
   app.use(securityHeaders);
 
   // CORS
-  app.use(cors({
-    origin: '*',
-    credentials: true,
-  }));
+  app.use(
+    cors({
+      origin: '*',
+      credentials: true,
+    })
+  );
 
   // Body parsing
   app.use(express.json({ limit: '10kb' }));

@@ -1,4 +1,5 @@
 # Entity Relationship Diagram (ERD)
+
 ## Mosaic Strict Matrix Game - Database Schema v1.0
 
 **Document Version:** 1.0  
@@ -11,13 +12,16 @@
 This ERD defines the database schema for the Mosaic Strict Matrix Game web application v1.0. The schema supports asynchronous play-by-post action resolution mechanics for multiple concurrent games.
 
 ### 1.1 Design Principles
+
 - **Server as source of truth**: All game state stored server-side
 - **Auditability**: Complete history of all actions and state changes
 - **Concurrency**: Support multiple games and players simultaneously
 - **Scalability**: Optimized for read-heavy operations (viewing > acting)
 
 ### 1.2 Database Technology
+
 **Recommended**: PostgreSQL 14+
+
 - ACID compliance for game state consistency
 - JSON support for flexible data storage
 - Strong typing and constraints
@@ -37,21 +41,21 @@ erDiagram
     User ||--o{ Vote : casts
     User ||--o{ Narration : writes
     User ||--o{ RoundSummary : writes
-    
+
     Game ||--|{ GamePlayer : has
     Game ||--o{ Round : contains
     Game ||--o{ GameEvent : logs
-    
+
     Round ||--o{ Action : contains
     Round ||--o| RoundSummary : concludes_with
-    
+
     Action ||--o{ Argument : has
     Action ||--o{ Vote : receives
     Action ||--o{ TokenDraw : resolves_to
     Action ||--o| Narration : concludes_with
-    
+
     TokenDraw ||--o{ DrawnToken : contains
-    
+
     User {
         uuid id PK
         string email UK
@@ -63,7 +67,7 @@ erDiagram
         timestamp updated_at
         timestamp last_login
     }
-    
+
     Game {
         uuid id PK
         string name
@@ -80,7 +84,7 @@ erDiagram
         timestamp started_at
         timestamp completed_at
     }
-    
+
     Round {
         uuid id PK
         uuid game_id FK
@@ -91,7 +95,7 @@ erDiagram
         timestamp started_at
         timestamp completed_at
     }
-    
+
     RoundSummary {
         uuid id PK
         uuid round_id FK
@@ -100,7 +104,7 @@ erDiagram
         jsonb outcomes
         timestamp created_at
     }
-    
+
     GamePlayer {
         uuid id PK
         uuid game_id FK
@@ -112,7 +116,7 @@ erDiagram
         timestamp joined_at
         timestamp last_seen_at
     }
-    
+
     Action {
         uuid id PK
         uuid game_id FK
@@ -128,7 +132,7 @@ erDiagram
         timestamp resolved_at
         timestamp completed_at
     }
-    
+
     Argument {
         uuid id PK
         uuid action_id FK
@@ -138,7 +142,7 @@ erDiagram
         int sequence
         timestamp created_at
     }
-    
+
     Vote {
         uuid id PK
         uuid action_id FK
@@ -148,7 +152,7 @@ erDiagram
         int failure_tokens
         timestamp cast_at
     }
-    
+
     TokenDraw {
         uuid id PK
         uuid action_id FK
@@ -161,14 +165,14 @@ erDiagram
         string result_type
         timestamp drawn_at
     }
-    
+
     DrawnToken {
         uuid id PK
         uuid token_draw_id FK
         int draw_sequence
         string token_type
     }
-    
+
     Narration {
         uuid id PK
         uuid action_id FK
@@ -176,7 +180,7 @@ erDiagram
         text content
         timestamp created_at
     }
-    
+
     GameEvent {
         uuid id PK
         uuid game_id FK
@@ -197,24 +201,26 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique user identifier |
-| email | VARCHAR(255) | NOT NULL, UNIQUE | User's email address |
-| password_hash | VARCHAR(255) | NOT NULL | Bcrypt hashed password |
-| display_name | VARCHAR(50) | NOT NULL | Name shown to other players |
-| avatar_url | VARCHAR(500) | NULL | URL to user avatar (gravatar, etc.) |
-| notification_preferences | JSONB | NOT NULL, DEFAULT '{}' | Email, push notification settings |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Account creation time |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last profile update |
-| last_login | TIMESTAMP | NULL | Last successful login |
+| Column                   | Type         | Constraints             | Description                         |
+| ------------------------ | ------------ | ----------------------- | ----------------------------------- |
+| id                       | UUID         | PK                      | Unique user identifier              |
+| email                    | VARCHAR(255) | NOT NULL, UNIQUE        | User's email address                |
+| password_hash            | VARCHAR(255) | NOT NULL                | Bcrypt hashed password              |
+| display_name             | VARCHAR(50)  | NOT NULL                | Name shown to other players         |
+| avatar_url               | VARCHAR(500) | NULL                    | URL to user avatar (gravatar, etc.) |
+| notification_preferences | JSONB        | NOT NULL, DEFAULT '{}'  | Email, push notification settings   |
+| created_at               | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Account creation time               |
+| updated_at               | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Last profile update                 |
+| last_login               | TIMESTAMP    | NULL                    | Last successful login               |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - UNIQUE INDEX (email)
 - INDEX (created_at)
 
 **Business Rules:**
+
 - Email must be verified before user can create games
 - Display name must be unique within a game (enforced at application level)
 - Password must meet minimum security requirements (8+ chars, mixed case, numbers)
@@ -227,30 +233,32 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique game identifier |
-| name | VARCHAR(100) | NOT NULL | Game/session name |
-| description | TEXT | NULL | Optional setting/context |
-| creator_id | UUID | NOT NULL, FK → User.id | User who created the game |
-| status | VARCHAR(20) | NOT NULL | LOBBY, ACTIVE, PAUSED, COMPLETED |
-| current_phase | VARCHAR(20) | NOT NULL | WAITING, PROPOSAL, ARGUMENTATION, VOTING, RESOLUTION, NARRATION, ROUND_SUMMARY |
-| current_round_id | UUID | NULL, FK → Round.id | Active round |
-| current_action_id | UUID | NULL, FK → Action.id | Active action being resolved |
-| player_count | INT | NOT NULL, DEFAULT 0 | Number of active players |
-| settings | JSONB | NOT NULL, DEFAULT '{}' | Game configuration options |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Game creation time |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last state change |
-| started_at | TIMESTAMP | NULL | When game moved from LOBBY to ACTIVE |
-| completed_at | TIMESTAMP | NULL | When game was completed |
+| Column            | Type         | Constraints             | Description                                                                    |
+| ----------------- | ------------ | ----------------------- | ------------------------------------------------------------------------------ |
+| id                | UUID         | PK                      | Unique game identifier                                                         |
+| name              | VARCHAR(100) | NOT NULL                | Game/session name                                                              |
+| description       | TEXT         | NULL                    | Optional setting/context                                                       |
+| creator_id        | UUID         | NOT NULL, FK → User.id  | User who created the game                                                      |
+| status            | VARCHAR(20)  | NOT NULL                | LOBBY, ACTIVE, PAUSED, COMPLETED                                               |
+| current_phase     | VARCHAR(20)  | NOT NULL                | WAITING, PROPOSAL, ARGUMENTATION, VOTING, RESOLUTION, NARRATION, ROUND_SUMMARY |
+| current_round_id  | UUID         | NULL, FK → Round.id     | Active round                                                                   |
+| current_action_id | UUID         | NULL, FK → Action.id    | Active action being resolved                                                   |
+| player_count      | INT          | NOT NULL, DEFAULT 0     | Number of active players                                                       |
+| settings          | JSONB        | NOT NULL, DEFAULT '{}'  | Game configuration options                                                     |
+| created_at        | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Game creation time                                                             |
+| updated_at        | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Last state change                                                              |
+| started_at        | TIMESTAMP    | NULL                    | When game moved from LOBBY to ACTIVE                                           |
+| completed_at      | TIMESTAMP    | NULL                    | When game was completed                                                        |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - INDEX (creator_id)
 - INDEX (status, current_phase)
 - INDEX (created_at)
 
 **Settings JSONB Structure:**
+
 ```json
 {
   "argument_limit": 3,
@@ -262,6 +270,7 @@ erDiagram
 ```
 
 **Business Rules:**
+
 - Status transitions: LOBBY → ACTIVE → (PAUSED ↔ ACTIVE) → COMPLETED
 - Requires minimum 2 players in ACTIVE status
 - Cannot delete game with ACTIVE status (must complete or abandon)
@@ -274,23 +283,25 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique round identifier |
-| game_id | UUID | NOT NULL, FK → Game.id | Game this round belongs to |
-| round_number | INT | NOT NULL | Round sequence (1, 2, 3...) |
-| status | VARCHAR(20) | NOT NULL | IN_PROGRESS, COMPLETED |
-| actions_completed | INT | NOT NULL, DEFAULT 0 | Number of completed actions |
-| total_actions_required | INT | NOT NULL | Total actions needed (= player count) |
-| started_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When round began |
-| completed_at | TIMESTAMP | NULL | When all actions finished |
+| Column                 | Type        | Constraints             | Description                           |
+| ---------------------- | ----------- | ----------------------- | ------------------------------------- |
+| id                     | UUID        | PK                      | Unique round identifier               |
+| game_id                | UUID        | NOT NULL, FK → Game.id  | Game this round belongs to            |
+| round_number           | INT         | NOT NULL                | Round sequence (1, 2, 3...)           |
+| status                 | VARCHAR(20) | NOT NULL                | IN_PROGRESS, COMPLETED                |
+| actions_completed      | INT         | NOT NULL, DEFAULT 0     | Number of completed actions           |
+| total_actions_required | INT         | NOT NULL                | Total actions needed (= player count) |
+| started_at             | TIMESTAMP   | NOT NULL, DEFAULT NOW() | When round began                      |
+| completed_at           | TIMESTAMP   | NULL                    | When all actions finished             |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - UNIQUE INDEX (game_id, round_number)
 - INDEX (game_id, status)
 
 **Business Rules:**
+
 - round_number auto-increments per game
 - total_actions_required = number of active players when round starts
 - Each active player must initiate exactly one action per round
@@ -305,35 +316,34 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique summary identifier |
-| round_id | UUID | NOT NULL, UNIQUE, FK → Round.id | Round being summarized |
-| author_id | UUID | NOT NULL, FK → GamePlayer.id | Player who wrote summary |
-| content | TEXT | NOT NULL | Narrative summary of round |
-| outcomes | JSONB | NOT NULL, DEFAULT '{}' | Structured outcome data |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When summary was created |
+| Column     | Type      | Constraints                     | Description                |
+| ---------- | --------- | ------------------------------- | -------------------------- |
+| id         | UUID      | PK                              | Unique summary identifier  |
+| round_id   | UUID      | NOT NULL, UNIQUE, FK → Round.id | Round being summarized     |
+| author_id  | UUID      | NOT NULL, FK → GamePlayer.id    | Player who wrote summary   |
+| content    | TEXT      | NOT NULL                        | Narrative summary of round |
+| outcomes   | JSONB     | NOT NULL, DEFAULT '{}'          | Structured outcome data    |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW()         | When summary was created   |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - UNIQUE INDEX (round_id)
 - INDEX (author_id)
 
 **Outcomes JSONB Structure:**
+
 ```json
 {
   "total_triumphs": 2,
   "total_disasters": 1,
   "net_momentum": 4,
-  "key_events": [
-    "Fortress captured",
-    "Alliance formed",
-    "Ambush failed"
-  ]
+  "key_events": ["Fortress captured", "Alliance formed", "Ambush failed"]
 }
 ```
 
 **Business Rules:**
+
 - One summary per round
 - Content: 1-2000 chars
 - Author can be any player (configurable: host only, rotating, collaborative)
@@ -347,25 +357,27 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique record identifier |
-| game_id | UUID | NOT NULL, FK → Game.id | Game being played |
-| user_id | UUID | NOT NULL, FK → User.id | Player's user account |
-| player_name | VARCHAR(50) | NOT NULL | Display name in this game |
-| join_order | INT | NOT NULL | Order of joining (for tiebreakers) |
-| is_host | BOOLEAN | NOT NULL, DEFAULT FALSE | Game creator/host flag |
-| is_active | BOOLEAN | NOT NULL, DEFAULT TRUE | Player still participating |
-| joined_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When player joined |
-| last_seen_at | TIMESTAMP | NULL | Last activity timestamp |
+| Column       | Type        | Constraints             | Description                        |
+| ------------ | ----------- | ----------------------- | ---------------------------------- |
+| id           | UUID        | PK                      | Unique record identifier           |
+| game_id      | UUID        | NOT NULL, FK → Game.id  | Game being played                  |
+| user_id      | UUID        | NOT NULL, FK → User.id  | Player's user account              |
+| player_name  | VARCHAR(50) | NOT NULL                | Display name in this game          |
+| join_order   | INT         | NOT NULL                | Order of joining (for tiebreakers) |
+| is_host      | BOOLEAN     | NOT NULL, DEFAULT FALSE | Game creator/host flag             |
+| is_active    | BOOLEAN     | NOT NULL, DEFAULT TRUE  | Player still participating         |
+| joined_at    | TIMESTAMP   | NOT NULL, DEFAULT NOW() | When player joined                 |
+| last_seen_at | TIMESTAMP   | NULL                    | Last activity timestamp            |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - UNIQUE INDEX (game_id, user_id)
 - INDEX (game_id, is_active)
 - INDEX (user_id)
 
 **Business Rules:**
+
 - Only one host per game (first player or transferred)
 - player_name must be unique within game
 - join_order determines tiebreaking in future features
@@ -379,23 +391,24 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique action identifier |
-| game_id | UUID | NOT NULL, FK → Game.id | Game this action belongs to |
-| round_id | UUID | NOT NULL, FK → Round.id | Round this action belongs to |
-| initiator_id | UUID | NOT NULL, FK → GamePlayer.id | Player who proposed action |
-| sequence_number | INT | NOT NULL | Action number in game (1, 2, 3...) |
-| action_description | TEXT | NOT NULL | What is being attempted |
-| desired_outcome | TEXT | NOT NULL | What initiator hopes happens |
-| status | VARCHAR(20) | NOT NULL | PROPOSED, ARGUING, VOTING, RESOLVED, NARRATED |
-| proposed_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When action was proposed |
-| argumentation_started_at | TIMESTAMP | NULL | When argumentation phase began |
-| voting_started_at | TIMESTAMP | NULL | When voting phase began |
-| resolved_at | TIMESTAMP | NULL | When tokens were drawn |
-| completed_at | TIMESTAMP | NULL | When narration finished |
+| Column                   | Type        | Constraints                  | Description                                   |
+| ------------------------ | ----------- | ---------------------------- | --------------------------------------------- |
+| id                       | UUID        | PK                           | Unique action identifier                      |
+| game_id                  | UUID        | NOT NULL, FK → Game.id       | Game this action belongs to                   |
+| round_id                 | UUID        | NOT NULL, FK → Round.id      | Round this action belongs to                  |
+| initiator_id             | UUID        | NOT NULL, FK → GamePlayer.id | Player who proposed action                    |
+| sequence_number          | INT         | NOT NULL                     | Action number in game (1, 2, 3...)            |
+| action_description       | TEXT        | NOT NULL                     | What is being attempted                       |
+| desired_outcome          | TEXT        | NOT NULL                     | What initiator hopes happens                  |
+| status                   | VARCHAR(20) | NOT NULL                     | PROPOSED, ARGUING, VOTING, RESOLVED, NARRATED |
+| proposed_at              | TIMESTAMP   | NOT NULL, DEFAULT NOW()      | When action was proposed                      |
+| argumentation_started_at | TIMESTAMP   | NULL                         | When argumentation phase began                |
+| voting_started_at        | TIMESTAMP   | NULL                         | When voting phase began                       |
+| resolved_at              | TIMESTAMP   | NULL                         | When tokens were drawn                        |
+| completed_at             | TIMESTAMP   | NULL                         | When narration finished                       |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - UNIQUE INDEX (game_id, sequence_number)
 - INDEX (game_id, status)
@@ -403,6 +416,7 @@ erDiagram
 - INDEX (initiator_id)
 
 **Business Rules:**
+
 - sequence_number auto-increments per game
 - Each player can only initiate one action per round
 - Status progression: PROPOSED → ARGUING → VOTING → RESOLVED → NARRATED
@@ -419,22 +433,24 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique argument identifier |
-| action_id | UUID | NOT NULL, FK → Action.id | Action being argued |
-| player_id | UUID | NOT NULL, FK → GamePlayer.id | Player making argument |
-| argument_type | VARCHAR(20) | NOT NULL | INITIATOR_FOR, FOR, AGAINST, CLARIFICATION |
-| content | TEXT | NOT NULL | Argument text |
-| sequence | INT | NOT NULL | Order within this action |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When argument was made |
+| Column        | Type        | Constraints                  | Description                                |
+| ------------- | ----------- | ---------------------------- | ------------------------------------------ |
+| id            | UUID        | PK                           | Unique argument identifier                 |
+| action_id     | UUID        | NOT NULL, FK → Action.id     | Action being argued                        |
+| player_id     | UUID        | NOT NULL, FK → GamePlayer.id | Player making argument                     |
+| argument_type | VARCHAR(20) | NOT NULL                     | INITIATOR_FOR, FOR, AGAINST, CLARIFICATION |
+| content       | TEXT        | NOT NULL                     | Argument text                              |
+| sequence      | INT         | NOT NULL                     | Order within this action                   |
+| created_at    | TIMESTAMP   | NOT NULL, DEFAULT NOW()      | When argument was made                     |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - INDEX (action_id, sequence)
 - INDEX (player_id)
 
 **Business Rules:**
+
 - INITIATOR_FOR: Initiator's initial arguments (up to 3)
 - FOR/AGAINST: Other players' arguments
 - CLARIFICATION: Initiator's response after others argue (max 1)
@@ -450,22 +466,24 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique vote identifier |
-| action_id | UUID | NOT NULL, FK → Action.id | Action being voted on |
-| player_id | UUID | NOT NULL, FK → GamePlayer.id | Player voting |
-| vote_type | VARCHAR(20) | NOT NULL | LIKELY_SUCCESS, LIKELY_FAILURE, UNCERTAIN |
-| success_tokens | INT | NOT NULL | Number of success tokens added (0, 1, or 2) |
-| failure_tokens | INT | NOT NULL | Number of failure tokens added (0, 1, or 2) |
-| cast_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When vote was cast |
+| Column         | Type        | Constraints                  | Description                                 |
+| -------------- | ----------- | ---------------------------- | ------------------------------------------- |
+| id             | UUID        | PK                           | Unique vote identifier                      |
+| action_id      | UUID        | NOT NULL, FK → Action.id     | Action being voted on                       |
+| player_id      | UUID        | NOT NULL, FK → GamePlayer.id | Player voting                               |
+| vote_type      | VARCHAR(20) | NOT NULL                     | LIKELY_SUCCESS, LIKELY_FAILURE, UNCERTAIN   |
+| success_tokens | INT         | NOT NULL                     | Number of success tokens added (0, 1, or 2) |
+| failure_tokens | INT         | NOT NULL                     | Number of failure tokens added (0, 1, or 2) |
+| cast_at        | TIMESTAMP   | NOT NULL, DEFAULT NOW()      | When vote was cast                          |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - UNIQUE INDEX (action_id, player_id)
 - INDEX (action_id)
 
 **Business Rules:**
+
 - One vote per player per action
 - Vote types map to tokens:
   - LIKELY_SUCCESS: success_tokens=2, failure_tokens=0
@@ -482,24 +500,26 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique draw identifier |
-| action_id | UUID | NOT NULL, UNIQUE, FK → Action.id | Action being resolved |
-| total_success_tokens | INT | NOT NULL | Total success in pool before draw |
-| total_failure_tokens | INT | NOT NULL | Total failure in pool before draw |
-| random_seed | VARCHAR(255) | NOT NULL | Seed for RNG (for verification) |
-| drawn_success | INT | NOT NULL | Success tokens drawn (0-3) |
-| drawn_failure | INT | NOT NULL | Failure tokens drawn (0-3) |
-| result_value | INT | NOT NULL | Numeric result (-3 to +3) |
-| result_type | VARCHAR(20) | NOT NULL | DISASTER, FAILURE_BUT, SUCCESS_BUT, TRIUMPH |
-| drawn_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When draw occurred |
+| Column               | Type         | Constraints                      | Description                                 |
+| -------------------- | ------------ | -------------------------------- | ------------------------------------------- |
+| id                   | UUID         | PK                               | Unique draw identifier                      |
+| action_id            | UUID         | NOT NULL, UNIQUE, FK → Action.id | Action being resolved                       |
+| total_success_tokens | INT          | NOT NULL                         | Total success in pool before draw           |
+| total_failure_tokens | INT          | NOT NULL                         | Total failure in pool before draw           |
+| random_seed          | VARCHAR(255) | NOT NULL                         | Seed for RNG (for verification)             |
+| drawn_success        | INT          | NOT NULL                         | Success tokens drawn (0-3)                  |
+| drawn_failure        | INT          | NOT NULL                         | Failure tokens drawn (0-3)                  |
+| result_value         | INT          | NOT NULL                         | Numeric result (-3 to +3)                   |
+| result_type          | VARCHAR(20)  | NOT NULL                         | DISASTER, FAILURE_BUT, SUCCESS_BUT, TRIUMPH |
+| drawn_at             | TIMESTAMP    | NOT NULL, DEFAULT NOW()          | When draw occurred                          |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - UNIQUE INDEX (action_id)
 
 **Business Rules:**
+
 - drawn_success + drawn_failure = 3 (always draw 3 tokens)
 - total_success = 1 + sum(votes.success_tokens)
 - total_failure = 1 + sum(votes.failure_tokens)
@@ -518,18 +538,20 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique record identifier |
-| token_draw_id | UUID | NOT NULL, FK → TokenDraw.id | Parent draw |
-| draw_sequence | INT | NOT NULL | Order drawn (1, 2, 3) |
-| token_type | VARCHAR(10) | NOT NULL | SUCCESS or FAILURE |
+| Column        | Type        | Constraints                 | Description              |
+| ------------- | ----------- | --------------------------- | ------------------------ |
+| id            | UUID        | PK                          | Unique record identifier |
+| token_draw_id | UUID        | NOT NULL, FK → TokenDraw.id | Parent draw              |
+| draw_sequence | INT         | NOT NULL                    | Order drawn (1, 2, 3)    |
+| token_type    | VARCHAR(10) | NOT NULL                    | SUCCESS or FAILURE       |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - INDEX (token_draw_id, draw_sequence)
 
 **Business Rules:**
+
 - Exactly 3 records per TokenDraw
 - draw_sequence: 1, 2, 3
 - Maintains complete audit trail of draw
@@ -542,20 +564,22 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique narration identifier |
-| action_id | UUID | NOT NULL, UNIQUE, FK → Action.id | Action being narrated |
-| author_id | UUID | NOT NULL, FK → GamePlayer.id | Player writing narration |
-| content | TEXT | NOT NULL | Narrative text |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When narration was written |
+| Column     | Type      | Constraints                      | Description                 |
+| ---------- | --------- | -------------------------------- | --------------------------- |
+| id         | UUID      | PK                               | Unique narration identifier |
+| action_id  | UUID      | NOT NULL, UNIQUE, FK → Action.id | Action being narrated       |
+| author_id  | UUID      | NOT NULL, FK → GamePlayer.id     | Player writing narration    |
+| content    | TEXT      | NOT NULL                         | Narrative text              |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW()          | When narration was written  |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - UNIQUE INDEX (action_id)
 - INDEX (author_id)
 
 **Business Rules:**
+
 - One narration per action
 - Content: 1-1000 chars
 - Typically author is initiator (configurable)
@@ -569,22 +593,24 @@ erDiagram
 
 **Attributes:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PK | Unique event identifier |
-| game_id | UUID | NOT NULL, FK → Game.id | Game where event occurred |
-| user_id | UUID | NULL, FK → User.id | User who triggered event (null for system events) |
-| event_type | VARCHAR(50) | NOT NULL | Type of event |
-| event_data | JSONB | NOT NULL, DEFAULT '{}' | Additional event details |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | When event occurred |
+| Column     | Type        | Constraints             | Description                                       |
+| ---------- | ----------- | ----------------------- | ------------------------------------------------- |
+| id         | UUID        | PK                      | Unique event identifier                           |
+| game_id    | UUID        | NOT NULL, FK → Game.id  | Game where event occurred                         |
+| user_id    | UUID        | NULL, FK → User.id      | User who triggered event (null for system events) |
+| event_type | VARCHAR(50) | NOT NULL                | Type of event                                     |
+| event_data | JSONB       | NOT NULL, DEFAULT '{}'  | Additional event details                          |
+| created_at | TIMESTAMP   | NOT NULL, DEFAULT NOW() | When event occurred                               |
 
 **Indexes:**
+
 - PRIMARY KEY (id)
 - INDEX (game_id, created_at)
 - INDEX (event_type)
 - GIN INDEX (event_data) - for JSON queries
 
 **Event Types:**
+
 - GAME_CREATED
 - GAME_STARTED
 - PLAYER_JOINED
@@ -602,6 +628,7 @@ erDiagram
 - GAME_COMPLETED
 
 **event_data Structure (varies by type):**
+
 ```json
 {
   "player_name": "Alice",
@@ -619,67 +646,82 @@ erDiagram
 ### 4.1 One-to-Many Relationships
 
 **User → GamePlayer** (1:N)
+
 - A user can participate in multiple games
 - Each game participation is a separate GamePlayer record
 
 **User → Action** (1:N)
+
 - A user can initiate multiple actions (across different games)
 - Tracked via initiator_id FK
 
 **Game → GamePlayer** (1:N)
+
 - A game has multiple players
 - Cascade delete: Deleting game removes all GamePlayer records
 
 **Game → Round** (1:N)
+
 - A game contains multiple sequential rounds
 - Cascade delete: Deleting game removes all rounds
 
 **Game → Action** (1:N)
+
 - A game contains multiple sequential actions (across all rounds)
 - Kept for convenient querying
 - Cascade delete: Deleting game removes all actions
 
 **Round → Action** (1:N)
+
 - A round contains one action per active player
 - Cascade delete: Deleting round removes its actions
 
 **Action → Argument** (1:N)
+
 - An action can have many arguments from different players
 - Cascade delete: Deleting action removes arguments
 
 **Action → Vote** (1:N)
+
 - An action receives one vote from each player
 - Cascade delete: Deleting action removes votes
 
 **TokenDraw → DrawnToken** (1:3)
+
 - Each draw contains exactly 3 drawn tokens
 - Cascade delete: Deleting draw removes drawn tokens
 
 ### 4.2 One-to-One Relationships
 
 **Action → TokenDraw** (1:1)
+
 - Each action has exactly one token draw resolution
 - Nullable until action reaches RESOLVED status
 
 **Action → Narration** (1:1)
+
 - Each action has exactly one narration
 - Nullable until action reaches NARRATED status
 
 **Round → RoundSummary** (1:1)
+
 - Each round has exactly one summary
 - Nullable until round is completed
 
 **Game → Round (current)** (1:0..1)
+
 - Game references its currently active round
 - Nullable when no round in progress
 
 **Game → Action (current)** (1:0..1)
+
 - Game references its currently active action
 - Nullable when no action in progress
 
 ### 4.3 Many-to-Many Relationships
 
 **User ↔ Game** (via GamePlayer)
+
 - Users can join multiple games
 - Games can have multiple users
 - GamePlayer provides join table with additional attributes
@@ -691,6 +733,7 @@ erDiagram
 ### 5.1 Referential Integrity
 
 **ON DELETE CASCADE:**
+
 - Game → GamePlayer
 - Game → Round
 - Game → Action
@@ -704,21 +747,23 @@ erDiagram
 - Game → GameEvent
 
 **ON DELETE RESTRICT:**
+
 - User → Game (creator_id) - cannot delete user who created active games
 - User → GamePlayer - cannot delete user participating in active games
 
 **ON DELETE SET NULL:**
+
 - GameEvent.user_id - preserve event log even if user deleted
 
 ### 5.2 Check Constraints
 
 ```sql
 -- Vote tokens must sum to 2
-ALTER TABLE Vote ADD CONSTRAINT chk_vote_tokens 
+ALTER TABLE Vote ADD CONSTRAINT chk_vote_tokens
   CHECK (success_tokens + failure_tokens = 2);
 
 -- Draw tokens must sum to 3
-ALTER TABLE TokenDraw ADD CONSTRAINT chk_draw_tokens 
+ALTER TABLE TokenDraw ADD CONSTRAINT chk_draw_tokens
   CHECK (drawn_success + drawn_failure = 3);
 
 -- Result value must match drawn tokens
@@ -769,17 +814,20 @@ ALTER TABLE DrawnToken ADD CONSTRAINT chk_draw_sequence
 ### 6.1 Query Patterns
 
 **High-frequency reads:**
+
 - Get games for user
 - Get current game state
 - Get action history for game
 - Get pending actions for player
 
 **Medium-frequency reads:**
+
 - Get arguments for action
 - Get votes for action
 - Get game events
 
 **Write operations:**
+
 - Create action (moderate)
 - Add argument (moderate)
 - Cast vote (moderate)
@@ -791,9 +839,10 @@ ALTER TABLE DrawnToken ADD CONSTRAINT chk_draw_sequence
 **Primary indexes (listed in entity specs above)**
 
 **Additional composite indexes:**
+
 ```sql
 -- Find games needing player action
-CREATE INDEX idx_game_player_action ON Game (current_phase, status) 
+CREATE INDEX idx_game_player_action ON Game (current_phase, status)
   WHERE current_action_id IS NOT NULL;
 
 -- Find player's pending votes
@@ -815,10 +864,12 @@ CREATE INDEX idx_user_active_games ON GamePlayer (user_id, is_active)
 For high-volume deployments, consider:
 
 **GameEvent Partitioning:**
+
 - Partition by created_at (monthly or quarterly)
 - Archive old events to cold storage
 
 **Action Partitioning:**
+
 - Partition by game_id (hash partitioning)
 - For very large deployments
 
@@ -827,12 +878,14 @@ For high-volume deployments, consider:
 ## 8. Backup & Archival
 
 **Backup Strategy:**
+
 - Full database backup: Daily
 - Incremental backup: Hourly
 - Transaction log backup: Every 15 minutes
 - Retention: 30 days hot, 1 year cold
 
 **Archival:**
+
 - Completed games older than 90 days → cold storage
 - User data: Retain indefinitely (GDPR: allow deletion on request)
 - Event logs: Aggregate and compress after 1 year
@@ -846,6 +899,7 @@ For high-volume deployments, consider:
 Use migration tool (e.g., Alembic, Flyway, or raw SQL)
 
 **Migration Order:**
+
 1. Create User table
 2. Create Game table
 3. Create GamePlayer table
@@ -860,6 +914,7 @@ Use migration tool (e.g., Alembic, Flyway, or raw SQL)
 ### 9.2 Data Migrations
 
 **Seed Data:**
+
 - No seed data required for production
 - Test environments: Create sample users, games
 
@@ -870,7 +925,7 @@ Use migration tool (e.g., Alembic, Flyway, or raw SQL)
 ### 10.1 Get User's Active Games
 
 ```sql
-SELECT g.id, g.name, g.status, g.current_phase, 
+SELECT g.id, g.name, g.status, g.current_phase,
        gp.player_name, gp.is_host,
        g.updated_at
 FROM Game g
@@ -1000,15 +1055,18 @@ ORDER BY r.round_number ASC;
 ### 11.1 Anticipated Changes (v2+)
 
 **Initiative Auction:**
+
 - New table: `InitiativePoints`
 - New table: `InitiativeBid`
 - Fields in GamePlayer: `current_initiative_points`
 
 **Secret Actions:**
+
 - New table: `SecretAction`
 - Field in Action: `is_secret`, `trigger_conditions`
 
 **Spectator Mode:**
+
 - New field in GamePlayer: `role` (PLAYER, SPECTATOR)
 
 ### 11.2 Versioning

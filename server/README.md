@@ -30,13 +30,13 @@ npm run dev
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start with hot reload |
-| `npm run build` | Build for production |
-| `npm start` | Run production build |
-| `npm test` | Run all tests |
-| `npm run lint` | Run ESLint |
+| Command         | Description           |
+| --------------- | --------------------- |
+| `npm run dev`   | Start with hot reload |
+| `npm run build` | Build for production  |
+| `npm start`     | Run production build  |
+| `npm test`      | Run all tests         |
+| `npm run lint`  | Run ESLint            |
 
 ## Project Structure
 
@@ -66,13 +66,13 @@ tests/
 
 ## API Routes
 
-| Prefix | Description |
-|--------|-------------|
-| `/api/auth` | Authentication (register, login) |
-| `/api/users` | User profile management |
-| `/api/games` | Game CRUD and actions |
-| `/api/actions` | Action resolution flow |
-| `/api/rounds` | Round management |
+| Prefix         | Description                      |
+| -------------- | -------------------------------- |
+| `/api/auth`    | Authentication (register, login) |
+| `/api/users`   | User profile management          |
+| `/api/games`   | Game CRUD and actions            |
+| `/api/actions` | Action resolution flow           |
+| `/api/rounds`  | Round management                 |
 
 See [API Documentation](../docs/API.md) for full details.
 
@@ -119,12 +119,12 @@ npx prisma studio
 
 See `.env.example` for all options. Key variables:
 
-| Variable | Description |
-|----------|-------------|
+| Variable       | Description                  |
+| -------------- | ---------------------------- |
 | `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Secret for signing tokens |
-| `APP_URL` | Frontend URL (for CORS) |
-| `EMAIL_*` | SMTP configuration |
+| `JWT_SECRET`   | Secret for signing tokens    |
+| `APP_URL`      | Frontend URL (for CORS)      |
+| `EMAIL_*`      | SMTP configuration           |
 
 ## Testing
 

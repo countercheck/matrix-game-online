@@ -26,13 +26,13 @@ Open http://localhost:5173
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Build for production |
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `npm run dev`     | Start dev server         |
+| `npm run build`   | Build for production     |
 | `npm run preview` | Preview production build |
-| `npm test` | Run tests |
-| `npm run lint` | Run ESLint |
+| `npm test`        | Run tests                |
+| `npm run lint`    | Run ESLint               |
 
 ## Project Structure
 
@@ -71,17 +71,20 @@ src/
 ## Key Features
 
 ### Authentication
+
 - JWT-based auth with context provider
 - Protected routes
 - Auto-redirect on auth state change
 
 ### Game Flow
+
 - Game creation with personas
 - Lobby with real-time player updates
 - Full action resolution cycle:
   - Proposal → Argumentation → Voting → Resolution → Narration
 
 ### UI/UX
+
 - Dark mode support
 - Loading skeletons
 - Error boundaries
@@ -97,7 +100,7 @@ Uses TanStack Query for server state:
 const { data, isLoading } = useQuery({
   queryKey: ['game', gameId],
   queryFn: () => api.get(`/games/${gameId}`),
-  refetchInterval: 5000,  // Polling for updates
+  refetchInterval: 5000, // Polling for updates
 });
 
 // Mutations
@@ -115,11 +118,7 @@ Uses Tailwind CSS with custom configuration:
 // Using the cn utility for conditional classes
 import { cn } from '../utils/cn';
 
-<div className={cn(
-  'p-4 rounded-lg',
-  isActive && 'bg-primary',
-  isDisabled && 'opacity-50'
-)} />
+<div className={cn('p-4 rounded-lg', isActive && 'bg-primary', isDisabled && 'opacity-50')} />;
 ```
 
 ## Testing
@@ -132,6 +131,7 @@ Component.test.tsx
 ```
 
 Run tests:
+
 ```bash
 # All tests
 npm test
@@ -159,6 +159,7 @@ VITE_API_URL=https://your-api-domain.com npm run build
 ```
 
 The client will automatically append `/api` to the URL. For example:
+
 - `VITE_API_URL=https://api.example.com` → API calls go to `https://api.example.com/api/auth/register`
 
 If `VITE_API_URL` is not set, the client will use relative paths (`/api`), which works when the client and server are served from the same domain.

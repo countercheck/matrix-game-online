@@ -61,12 +61,23 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
   const [expandedArguments, setExpandedArguments] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [editingAction, setEditingAction] = useState<HistoryAction | null>(null);
-  const [editingArgument, setEditingArgument] = useState<{ actionId: string; argument: HistoryArgument } | null>(null);
-  const [editingNarration, setEditingNarration] = useState<{ actionId: string; content: string } | null>(null);
+  const [editingArgument, setEditingArgument] = useState<{
+    actionId: string;
+    argument: HistoryArgument;
+  } | null>(null);
+  const [editingNarration, setEditingNarration] = useState<{
+    actionId: string;
+    content: string;
+  } | null>(null);
 
   const editActionMutation = useMutation({
-    mutationFn: ({ actionId, data }: { actionId: string; data: { actionDescription?: string; desiredOutcome?: string } }) =>
-      api.put(`/actions/${actionId}`, data),
+    mutationFn: ({
+      actionId,
+      data,
+    }: {
+      actionId: string;
+      data: { actionDescription?: string; desiredOutcome?: string };
+    }) => api.put(`/actions/${actionId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game-history', gameId] });
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
@@ -74,8 +85,15 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
   });
 
   const editArgumentMutation = useMutation({
-    mutationFn: ({ actionId, argumentId, content }: { actionId: string; argumentId: string; content: string }) =>
-      api.put(`/actions/${actionId}/arguments/${argumentId}`, { content }),
+    mutationFn: ({
+      actionId,
+      argumentId,
+      content,
+    }: {
+      actionId: string;
+      argumentId: string;
+      content: string;
+    }) => api.put(`/actions/${actionId}/arguments/${argumentId}`, { content }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game-history', gameId] });
     },
@@ -231,9 +249,7 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate">{action.actionDescription}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {action.initiator.playerName}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{action.initiator.playerName}</p>
                 </div>
                 <span
                   className={`text-xs font-medium ${getResultColor(action.tokenDraw?.resultType)}`}
@@ -315,7 +331,11 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                       {action.voteTotals.totalFailureTokens} Failure
                     </span>
                     <span className="text-muted-foreground">
-                      ({action.voteTotals.voteCount} votes{action.voteTotals.skippedVotes ? `, ${action.voteTotals.skippedVotes} auto-filled` : ''})
+                      ({action.voteTotals.voteCount} votes
+                      {action.voteTotals.skippedVotes
+                        ? `, ${action.voteTotals.skippedVotes} auto-filled`
+                        : ''}
+                      )
                     </span>
                   </div>
                 )}
@@ -326,9 +346,7 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setExpandedArguments(
-                          expandedArguments === action.id ? null : action.id
-                        );
+                        setExpandedArguments(expandedArguments === action.id ? null : action.id);
                       }}
                       className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
                     >
@@ -389,7 +407,10 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setEditingNarration({ actionId: action.id, content: action.narration!.content });
+                            setEditingNarration({
+                              actionId: action.id,
+                              content: action.narration!.content,
+                            });
                           }}
                           className="text-xs text-primary hover:underline"
                           title="Edit narration (host)"
@@ -456,11 +477,12 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
           }}
           initialContent={editingArgument.argument.content}
           argumentType={
-            editingArgument.argument.argumentType === 'INITIATOR_FOR' || editingArgument.argument.argumentType === 'FOR'
+            editingArgument.argument.argumentType === 'INITIATOR_FOR' ||
+            editingArgument.argument.argumentType === 'FOR'
               ? 'FOR'
               : editingArgument.argument.argumentType === 'AGAINST'
-              ? 'AGAINST'
-              : undefined
+                ? 'AGAINST'
+                : undefined
           }
         />
       )}
@@ -471,7 +493,10 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
           isOpen={!!editingNarration}
           onClose={() => setEditingNarration(null)}
           onSave={async ({ content }) => {
-            await editNarrationMutation.mutateAsync({ actionId: editingNarration.actionId, content });
+            await editNarrationMutation.mutateAsync({
+              actionId: editingNarration.actionId,
+              content,
+            });
           }}
           initialContent={editingNarration.content}
         />

@@ -174,8 +174,8 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
               netResult > 0
                 ? 'text-green-600 dark:text-green-400'
                 : netResult < 0
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-muted-foreground'
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-muted-foreground'
             }`}
           >
             {netResult > 0 ? '+' : ''}
@@ -190,8 +190,8 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
                 npcMomentum > 0
                   ? 'text-red-600 dark:text-red-400'
                   : npcMomentum < 0
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-muted-foreground'
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-muted-foreground'
               }`}
             >
               {npcMomentum > 0 ? '+' : ''}
@@ -199,8 +199,11 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
             </div>
             <div className="text-sm text-amber-700 dark:text-amber-300">{npcPlayer.playerName}</div>
             {npcRoundResult !== 0 && (
-              <div className={`text-xs mt-1 ${npcRoundResult > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                ({npcRoundResult > 0 ? '+' : ''}{npcRoundResult} this round)
+              <div
+                className={`text-xs mt-1 ${npcRoundResult > 0 ? 'text-red-500' : 'text-green-500'}`}
+              >
+                ({npcRoundResult > 0 ? '+' : ''}
+                {npcRoundResult} this round)
               </div>
             )}
           </div>
@@ -237,7 +240,9 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
                   )}
                 </div>
                 <div className="text-right shrink-0">
-                  <div className={`text-sm font-medium ${getResultColor(action.tokenDraw?.resultType)}`}>
+                  <div
+                    className={`text-sm font-medium ${getResultColor(action.tokenDraw?.resultType)}`}
+                  >
                     {getResultLabel(action.tokenDraw?.resultType)}
                   </div>
                   {action.tokenDraw && (

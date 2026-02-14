@@ -4,8 +4,8 @@ import { RichTextEditor } from '../ui/RichTextEditor';
 interface EditPersonaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { 
-    name?: string; 
+  onSave: (data: {
+    name?: string;
     description?: string | null;
     npcActionDescription?: string | null;
     npcDesiredOutcome?: string | null;
@@ -20,15 +20,12 @@ interface EditPersonaModalProps {
   };
 }
 
-export function EditPersonaModal({
-  isOpen,
-  onClose,
-  onSave,
-  persona,
-}: EditPersonaModalProps) {
+export function EditPersonaModal({ isOpen, onClose, onSave, persona }: EditPersonaModalProps) {
   const [name, setName] = useState(persona.name);
   const [description, setDescription] = useState(persona.description || '');
-  const [npcActionDescription, setNpcActionDescription] = useState(persona.npcActionDescription || '');
+  const [npcActionDescription, setNpcActionDescription] = useState(
+    persona.npcActionDescription || ''
+  );
   const [npcDesiredOutcome, setNpcDesiredOutcome] = useState(persona.npcDesiredOutcome || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,16 +43,16 @@ export function EditPersonaModal({
         description?: string | null;
         npcActionDescription?: string | null;
         npcDesiredOutcome?: string | null;
-      } = { 
-        name, 
+      } = {
+        name,
         description: description || null,
       };
-      
+
       if (persona.isNpc) {
         data.npcActionDescription = npcActionDescription || null;
         data.npcDesiredOutcome = npcDesiredOutcome || null;
       }
-      
+
       await onSave(data);
       onClose();
     } catch (err: unknown) {
@@ -79,10 +76,7 @@ export function EditPersonaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={handleClose}
-      />
+      <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
       <div className="relative bg-background border rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4">

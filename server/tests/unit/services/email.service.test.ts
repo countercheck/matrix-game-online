@@ -25,9 +25,7 @@ describe('Email Service', () => {
       const originalEnv = process.env.EMAIL_ENABLED;
       process.env.EMAIL_ENABLED = 'false';
 
-      const { sendEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
+      const { sendEmail } = await import('../../../src/services/email.service.js');
 
       const result = await sendEmail({
         to: 'test@example.com',
@@ -44,9 +42,7 @@ describe('Email Service', () => {
       const originalEnv = process.env.EMAIL_ENABLED;
       process.env.EMAIL_ENABLED = 'false';
 
-      const { sendEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
+      const { sendEmail } = await import('../../../src/services/email.service.js');
 
       await sendEmail({
         to: 'test@example.com',
@@ -54,9 +50,7 @@ describe('Email Service', () => {
         text: 'Test message',
       });
 
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('Test Subject')
-      );
+      expect(mockLogger.debug).toHaveBeenCalledWith(expect.stringContaining('Test Subject'));
 
       process.env.EMAIL_ENABLED = originalEnv;
     });
@@ -67,9 +61,7 @@ describe('Email Service', () => {
       const originalEnv = process.env.EMAIL_ENABLED;
       process.env.EMAIL_ENABLED = 'true';
 
-      const { sendEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
+      const { sendEmail } = await import('../../../src/services/email.service.js');
 
       const result = await sendEmail({
         to: 'test@example.com',
@@ -86,9 +78,7 @@ describe('Email Service', () => {
       const originalEnv = process.env.EMAIL_ENABLED;
       process.env.EMAIL_ENABLED = 'true';
 
-      const { sendEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
+      const { sendEmail } = await import('../../../src/services/email.service.js');
 
       await sendEmail({
         to: 'test@example.com',
@@ -107,9 +97,8 @@ describe('Email Service', () => {
       const originalEnv = process.env.EMAIL_ENABLED;
       process.env.EMAIL_ENABLED = 'false';
 
-      const { initializeEmailService, sendEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
+      const { initializeEmailService, sendEmail } =
+        await import('../../../src/services/email.service.js');
 
       await initializeEmailService();
 
@@ -132,18 +121,18 @@ describe('Email Service', () => {
       const originalEnv = process.env.EMAIL_ENABLED;
       process.env.EMAIL_ENABLED = 'false';
 
-      const { sendGameInviteEmail, sendGameStartedEmail } = await import(
-        '../../../src/services/email.service.js'
-      );
+      const { sendGameInviteEmail, sendGameStartedEmail } =
+        await import('../../../src/services/email.service.js');
 
       const inviteResult = await sendGameInviteEmail(
-        'test@example.com', 'Test Game', 'Host', 'game-1'
+        'test@example.com',
+        'Test Game',
+        'Host',
+        'game-1'
       );
       expect(inviteResult).toBe(false);
 
-      const startResult = await sendGameStartedEmail(
-        'test@example.com', 'Test Game', 'game-1'
-      );
+      const startResult = await sendGameStartedEmail('test@example.com', 'Test Game', 'game-1');
       expect(startResult).toBe(false);
 
       process.env.EMAIL_ENABLED = originalEnv;

@@ -274,8 +274,7 @@ export async function sendNarrationNeededEmail(
   resultValue: number
 ): Promise<boolean> {
   const gameUrl = `${APP_URL}/games/${gameId}`;
-  const resultText =
-    resultValue > 0 ? `+${resultValue}` : resultValue.toString();
+  const resultText = resultValue > 0 ? `+${resultValue}` : resultValue.toString();
   const subject = `Narrate the outcome in "${gameName}" (${resultType})`;
   const text = `The tokens have been drawn in "${gameName}". Result: ${resultType} (${resultText}). Narrate what happens: ${gameUrl}`;
   const html = wrapInTemplate(
@@ -388,10 +387,7 @@ export async function sendTimeoutOccurredEmail(
   return sendEmail({ to, subject, text, html });
 }
 
-export async function sendPasswordResetEmail(
-  to: string,
-  resetUrl: string
-): Promise<boolean> {
+export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<boolean> {
   const subject = 'Password Reset Request';
   const text = `You requested a password reset. Click the link to reset your password: ${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.`;
   const html = wrapInTemplate(

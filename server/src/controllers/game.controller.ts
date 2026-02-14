@@ -14,11 +14,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { getUploadsDir } from '../config/uploads.js';
 
-export async function createGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function createGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
     const data = createGameSchema.parse(req.body);
@@ -29,11 +25,7 @@ export async function createGame(
   }
 }
 
-export async function getGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -44,11 +36,7 @@ export async function getGame(
   }
 }
 
-export async function updateGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function updateGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -59,11 +47,7 @@ export async function updateGame(
   }
 }
 
-export async function joinGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function joinGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -110,11 +94,7 @@ export async function updatePersona(
   }
 }
 
-export async function leaveGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function leaveGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -125,11 +105,7 @@ export async function leaveGame(
   }
 }
 
-export async function deleteGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function deleteGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -140,11 +116,7 @@ export async function deleteGame(
   }
 }
 
-export async function startGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function startGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -155,11 +127,7 @@ export async function startGame(
   }
 }
 
-export async function getPlayers(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getPlayers(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -185,11 +153,7 @@ export async function getGameHistory(
   }
 }
 
-export async function getRounds(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getRounds(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -230,7 +194,8 @@ export async function uploadGameImage(
     }
 
     // Build the public URL for the image
-    const storageUrl = process.env.STORAGE_URL || `http://localhost:${process.env.PORT || 3000}/uploads`;
+    const storageUrl =
+      process.env.STORAGE_URL || `http://localhost:${process.env.PORT || 3000}/uploads`;
     const normalizedStorageUrl = storageUrl.replace(/\/+$/, '');
     const imageUrl = `${normalizedStorageUrl}/${req.file.filename}`;
 
@@ -267,11 +232,7 @@ export async function skipProposals(
   }
 }
 
-export async function exportGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function exportGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const gameId = req.params.gameId as string;
     const userId = req.user!.id;
@@ -330,7 +291,9 @@ export async function importGame(
     } else if (req.body?.yaml) {
       yamlString = req.body.yaml;
     } else {
-      throw new BadRequestError('Request body must contain YAML content (as raw text or { yaml: "..." })');
+      throw new BadRequestError(
+        'Request body must contain YAML content (as raw text or { yaml: "..." })'
+      );
     }
 
     const game = await exportService.importGameFromYaml(yamlString, userId);
@@ -339,4 +302,3 @@ export async function importGame(
     next(error);
   }
 }
-

@@ -3,7 +3,12 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { db } from '../config/database.js';
 import { BadRequestError, UnauthorizedError, ConflictError } from '../middleware/errorHandler.js';
-import type { RegisterInput, LoginInput, ForgotPasswordInput, ResetPasswordInput } from '../utils/validators.js';
+import type {
+  RegisterInput,
+  LoginInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from '../utils/validators.js';
 import { sendPasswordResetEmail } from './email.service.js';
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
@@ -113,11 +118,7 @@ function generateToken(userId: string, email: string): string {
   // Default to 7 days expiry
   const expirySeconds = parseExpiry(process.env.JWT_EXPIRY || '7d');
 
-  return jwt.sign(
-    { userId, email },
-    secret,
-    { expiresIn: expirySeconds }
-  );
+  return jwt.sign({ userId, email }, secret, { expiresIn: expirySeconds });
 }
 
 // Parse expiry string like '7d', '24h', '60m' to seconds
@@ -130,11 +131,16 @@ function parseExpiry(expiry: string): number {
   const value = parseInt(match[1], 10);
   const unit = match[2];
   switch (unit) {
-    case 's': return value;
-    case 'm': return value * 60;
-    case 'h': return value * 60 * 60;
-    case 'd': return value * 24 * 60 * 60;
-    default: return 7 * 24 * 60 * 60;
+    case 's':
+      return value;
+    case 'm':
+      return value * 60;
+    case 'h':
+      return value * 60 * 60;
+    case 'd':
+      return value * 24 * 60 * 60;
+    default:
+      return 7 * 24 * 60 * 60;
   }
 }
 
@@ -142,9 +148,11 @@ function parseExpiry(expiry: string): number {
  * Request a password reset. Generates a reset token and sends an email.
  * Always returns success to prevent email enumeration attacks.
  */
-export async function requestPasswordReset(data: ForgotPasswordInput): Promise<{ message: string }> {
+export async function requestPasswordReset(
+  data: ForgotPasswordInput
+): Promise<{ message: string }> {
   const APP_URL = process.env.APP_URL || 'http://localhost:5173';
-  
+
   // Find user by email (only select needed fields)
   const user = await db.user.findUnique({
     where: { email: data.email },
@@ -187,7 +195,7 @@ export async function requestPasswordReset(data: ForgotPasswordInput): Promise<{
 export async function resetPassword(data: ResetPasswordInput): Promise<{ message: string }> {
   // Hash the provided token to match against stored hash
   const resetTokenHash = crypto.createHash('sha256').update(data.token).digest('hex');
-  
+
   // Find user by unique reset token hash
   const user = await db.user.findUnique({
     where: {

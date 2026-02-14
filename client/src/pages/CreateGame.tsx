@@ -57,7 +57,7 @@ export default function CreateGame() {
     mutationFn: (data: CreateGameData) => api.post('/games', data),
     onSuccess: async (response) => {
       const gameId = response.data.data.id;
-      
+
       // Upload image if one was selected
       if (imageFile) {
         try {
@@ -74,7 +74,7 @@ export default function CreateGame() {
           // Continue anyway - game was created successfully
         }
       }
-      
+
       navigate(`/game/${gameId}/lobby`);
     },
     onError: (err: { response?: { data?: { error?: { message?: string } } } }) => {
@@ -104,7 +104,7 @@ export default function CreateGame() {
       }
 
       setImageFile(file);
-      
+
       // Create preview using URL.createObjectURL for better memory efficiency
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
@@ -124,7 +124,13 @@ export default function CreateGame() {
     if (personas.length < 20) {
       setPersonas([
         ...personas,
-        { name: '', description: '', isNpc: false, npcActionDescription: '', npcDesiredOutcome: '' },
+        {
+          name: '',
+          description: '',
+          isNpc: false,
+          npcActionDescription: '',
+          npcDesiredOutcome: '',
+        },
       ]);
     }
   };
@@ -190,9 +196,7 @@ export default function CreateGame() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-            {error}
-          </div>
+          <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>
         )}
 
         <div className="space-y-2">
@@ -231,7 +235,7 @@ export default function CreateGame() {
           <label htmlFor="image" className="text-sm font-medium">
             Game Image (Optional)
           </label>
-          
+
           {imagePreview ? (
             <div className="relative">
               <img
@@ -271,13 +275,11 @@ export default function CreateGame() {
                 }}
               >
                 <div className="space-y-2">
-                  <div className="text-4xl" aria-hidden="true">📷</div>
-                  <p className="text-sm text-muted-foreground">
-                    Click to upload an image
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    JPEG, PNG, GIF, or WebP (max 5MB)
-                  </p>
+                  <div className="text-4xl" aria-hidden="true">
+                    📷
+                  </div>
+                  <p className="text-sm text-muted-foreground">Click to upload an image</p>
+                  <p className="text-xs text-muted-foreground">JPEG, PNG, GIF, or WebP (max 5MB)</p>
                 </div>
               </label>
             </div>
@@ -302,13 +304,16 @@ export default function CreateGame() {
           {showPersonas && (
             <div className="p-4 border-t space-y-4">
               <p className="text-sm text-muted-foreground">
-                Define character personas that players can claim when joining the game.
-                You can mark one persona as an NPC — it will always go last and automatically
-                propose an action each round.
+                Define character personas that players can claim when joining the game. You can mark
+                one persona as an NPC — it will always go last and automatically propose an action
+                each round.
               </p>
 
               {personas.map((persona, index) => (
-                <div key={index} className={`p-3 border rounded-md space-y-2 ${persona.isNpc ? 'bg-primary/10 border-primary/30' : 'bg-muted/30'}`}>
+                <div
+                  key={index}
+                  className={`p-3 border rounded-md space-y-2 ${persona.isNpc ? 'bg-primary/10 border-primary/30' : 'bg-muted/30'}`}
+                >
                   <div className="flex gap-2">
                     <input
                       type="text"

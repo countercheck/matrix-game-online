@@ -2,11 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as roundService from '../services/round.service.js';
 import { roundSummarySchema, updateRoundSummarySchema } from '../utils/validators.js';
 
-export async function getRound(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getRound(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const roundId = req.params.roundId as string;
     const userId = req.user!.id;

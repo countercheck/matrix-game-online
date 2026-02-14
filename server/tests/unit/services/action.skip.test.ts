@@ -43,7 +43,11 @@ vi.mock('../../../src/services/game.service.js', () => ({
 
 import { db } from '../../../src/config/database.js';
 import * as actionService from '../../../src/services/action.service.js';
-import { NotFoundError, ForbiddenError, BadRequestError } from '../../../src/middleware/errorHandler.js';
+import {
+  NotFoundError,
+  ForbiddenError,
+  BadRequestError,
+} from '../../../src/middleware/errorHandler.js';
 
 describe('Action Service - Skip Functionality', () => {
   beforeEach(() => {
@@ -152,9 +156,7 @@ describe('Action Service - Skip Functionality', () => {
         gameId: 'game-1',
         status: 'VOTING',
         actionDescription: 'Test action',
-        votes: [
-          { playerId: 'player-1', voteType: 'LIKELY_SUCCESS' },
-        ],
+        votes: [{ playerId: 'player-1', voteType: 'LIKELY_SUCCESS' }],
         initiator: {
           userId: 'user-1',
         },
@@ -162,9 +164,30 @@ describe('Action Service - Skip Functionality', () => {
           id: 'game-1',
           name: 'Test Game',
           players: [
-            { id: 'player-1', userId: 'user-1', isHost: true, isActive: true, isNpc: false, playerName: 'Player 1' },
-            { id: 'player-2', userId: 'user-2', isHost: false, isActive: true, isNpc: false, playerName: 'Player 2' },
-            { id: 'player-3', userId: 'user-3', isHost: false, isActive: true, isNpc: false, playerName: 'Player 3' },
+            {
+              id: 'player-1',
+              userId: 'user-1',
+              isHost: true,
+              isActive: true,
+              isNpc: false,
+              playerName: 'Player 1',
+            },
+            {
+              id: 'player-2',
+              userId: 'user-2',
+              isHost: false,
+              isActive: true,
+              isNpc: false,
+              playerName: 'Player 2',
+            },
+            {
+              id: 'player-3',
+              userId: 'user-3',
+              isHost: false,
+              isActive: true,
+              isNpc: false,
+              playerName: 'Player 3',
+            },
           ],
         },
       };
@@ -233,8 +256,22 @@ describe('Action Service - Skip Functionality', () => {
           id: 'game-1',
           name: 'Test Game',
           players: [
-            { id: 'player-1', userId: 'user-1', isHost: true, isActive: true, isNpc: false, playerName: 'Player 1' },
-            { id: 'player-2', userId: 'user-2', isHost: false, isActive: true, isNpc: false, playerName: 'Player 2' },
+            {
+              id: 'player-1',
+              userId: 'user-1',
+              isHost: true,
+              isActive: true,
+              isNpc: false,
+              playerName: 'Player 1',
+            },
+            {
+              id: 'player-2',
+              userId: 'user-2',
+              isHost: false,
+              isActive: true,
+              isNpc: false,
+              playerName: 'Player 2',
+            },
           ],
         },
       };
@@ -264,9 +301,7 @@ describe('Action Service - Skip Functionality', () => {
         gameId: 'game-1',
         status: 'VOTING',
         actionDescription: 'Test action',
-        votes: [
-          { playerId: 'player-1', voteType: 'LIKELY_SUCCESS' },
-        ],
+        votes: [{ playerId: 'player-1', voteType: 'LIKELY_SUCCESS' }],
         initiator: {
           userId: 'user-1',
         },
@@ -274,9 +309,30 @@ describe('Action Service - Skip Functionality', () => {
           id: 'game-1',
           name: 'Test Game',
           players: [
-            { id: 'player-1', userId: 'user-1', isHost: true, isActive: true, isNpc: false, playerName: 'Player 1' },
-            { id: 'player-2', userId: 'user-2', isHost: false, isActive: true, isNpc: false, playerName: 'Player 2' },
-            { id: 'player-npc', userId: 'npc-user', isHost: false, isActive: true, isNpc: true, playerName: 'NPC' },
+            {
+              id: 'player-1',
+              userId: 'user-1',
+              isHost: true,
+              isActive: true,
+              isNpc: false,
+              playerName: 'Player 1',
+            },
+            {
+              id: 'player-2',
+              userId: 'user-2',
+              isHost: false,
+              isActive: true,
+              isNpc: false,
+              playerName: 'Player 2',
+            },
+            {
+              id: 'player-npc',
+              userId: 'npc-user',
+              isHost: false,
+              isActive: true,
+              isNpc: true,
+              playerName: 'NPC',
+            },
           ],
         },
       };
@@ -395,9 +451,7 @@ describe('Action Service - Skip Functionality', () => {
           roundNumber: 1,
         },
         currentAction: null,
-        players: [
-          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
-        ],
+        players: [{ id: 'player-1', userId: 'user-1', isHost: true, isActive: true }],
       };
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
@@ -425,9 +479,7 @@ describe('Action Service - Skip Functionality', () => {
           id: 'round-1',
         },
         currentAction: { id: 'action-1' },
-        players: [
-          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
-        ],
+        players: [{ id: 'player-1', userId: 'user-1', isHost: true, isActive: true }],
       };
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
@@ -477,7 +529,7 @@ describe('Action Service - Skip Functionality', () => {
         ],
       };
 
-      const skippedVotesCount = actionWithSkippedVoting.votes.filter(v => v.wasSkipped).length;
+      const skippedVotesCount = actionWithSkippedVoting.votes.filter((v) => v.wasSkipped).length;
       expect(actionWithSkippedVoting.votingWasSkipped).toBe(true);
       expect(skippedVotesCount).toBe(2);
     });

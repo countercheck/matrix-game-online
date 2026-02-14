@@ -15,23 +15,19 @@ describe('Game E2E Tests', () => {
     await cleanDatabase();
 
     // Create two test users
-    const user1Response = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'player1@example.com',
-        password: 'Password123!',
-        displayName: 'Player One',
-      });
+    const user1Response = await request(app).post('/api/auth/register').send({
+      email: 'player1@example.com',
+      password: 'Password123!',
+      displayName: 'Player One',
+    });
     user1Token = user1Response.body.data.token;
     user1Id = user1Response.body.data.user.id;
 
-    const user2Response = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'player2@example.com',
-        password: 'Password123!',
-        displayName: 'Player Two',
-      });
+    const user2Response = await request(app).post('/api/auth/register').send({
+      email: 'player2@example.com',
+      password: 'Password123!',
+      displayName: 'Player Two',
+    });
     user2Token = user2Response.body.data.token;
     user2Id = user2Response.body.data.user.id;
   });
@@ -94,11 +90,9 @@ describe('Game E2E Tests', () => {
     });
 
     it('should reject game creation without authentication', async () => {
-      const response = await request(app)
-        .post('/api/games')
-        .send({
-          name: 'Unauthorized Game',
-        });
+      const response = await request(app).post('/api/games').send({
+        name: 'Unauthorized Game',
+      });
 
       expect(response.status).toBe(401);
     });
@@ -359,13 +353,11 @@ describe('Game E2E Tests', () => {
         .set('Authorization', `Bearer ${user1Token}`);
 
       // Create third user
-      const user3Response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'player3@example.com',
-          password: 'Password123!',
-          displayName: 'Player Three',
-        });
+      const user3Response = await request(app).post('/api/auth/register').send({
+        email: 'player3@example.com',
+        password: 'Password123!',
+        displayName: 'Player Three',
+      });
 
       // Try to view as non-member
       const response = await request(app)
@@ -454,7 +446,7 @@ describe('Game E2E Tests', () => {
       });
       expect(dbGame?.playerCount).toBe(1);
 
-      const player2 = dbGame?.players.find(p => p.userId === user2Id);
+      const player2 = dbGame?.players.find((p) => p.userId === user2Id);
       expect(player2?.isActive).toBe(false);
     });
 

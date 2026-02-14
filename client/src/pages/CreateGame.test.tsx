@@ -26,7 +26,7 @@ describe('CreateGame Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPost.mockReset();
-    
+
     // Mock URL.createObjectURL for image preview
     globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
     globalThis.URL.revokeObjectURL = vi.fn();

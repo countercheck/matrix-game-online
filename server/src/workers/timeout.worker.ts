@@ -34,9 +34,7 @@ export async function runTimeoutCheck(): Promise<void> {
       logger.info(`Timeout check: processed ${results.length} timeouts`);
     }
   } catch (error) {
-    logger.error(
-      `Timeout check failed: ${error instanceof Error ? error.message : String(error)}`
-    );
+    logger.error(`Timeout check failed: ${error instanceof Error ? error.message : String(error)}`);
   } finally {
     isRunning = false;
   }

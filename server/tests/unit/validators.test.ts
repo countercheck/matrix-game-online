@@ -217,15 +217,21 @@ describe('Validators', () => {
 
   describe('argumentSchema', () => {
     it('should accept valid FOR argument', () => {
-      expect(() => argumentSchema.parse({ argumentType: 'FOR', content: 'This is a good idea' })).not.toThrow();
+      expect(() =>
+        argumentSchema.parse({ argumentType: 'FOR', content: 'This is a good idea' })
+      ).not.toThrow();
     });
 
     it('should accept valid AGAINST argument', () => {
-      expect(() => argumentSchema.parse({ argumentType: 'AGAINST', content: 'This is risky' })).not.toThrow();
+      expect(() =>
+        argumentSchema.parse({ argumentType: 'AGAINST', content: 'This is risky' })
+      ).not.toThrow();
     });
 
     it('should accept valid CLARIFICATION', () => {
-      expect(() => argumentSchema.parse({ argumentType: 'CLARIFICATION', content: 'To clarify...' })).not.toThrow();
+      expect(() =>
+        argumentSchema.parse({ argumentType: 'CLARIFICATION', content: 'To clarify...' })
+      ).not.toThrow();
     });
 
     it('should reject invalid argument type', () => {
@@ -237,7 +243,9 @@ describe('Validators', () => {
     });
 
     it('should reject content over 900 chars', () => {
-      expect(() => argumentSchema.parse({ argumentType: 'FOR', content: 'a'.repeat(901) })).toThrow();
+      expect(() =>
+        argumentSchema.parse({ argumentType: 'FOR', content: 'a'.repeat(901) })
+      ).toThrow();
     });
   });
 
@@ -261,7 +269,9 @@ describe('Validators', () => {
 
   describe('narrationSchema', () => {
     it('should accept valid narration', () => {
-      expect(() => narrationSchema.parse({ content: 'The fortress fell after a fierce battle...' })).not.toThrow();
+      expect(() =>
+        narrationSchema.parse({ content: 'The fortress fell after a fierce battle...' })
+      ).not.toThrow();
     });
 
     it('should reject empty narration', () => {
@@ -279,7 +289,9 @@ describe('Validators', () => {
 
   describe('personaSchema', () => {
     it('should accept valid persona', () => {
-      expect(() => personaSchema.parse({ name: 'Hero', description: 'A brave warrior' })).not.toThrow();
+      expect(() =>
+        personaSchema.parse({ name: 'Hero', description: 'A brave warrior' })
+      ).not.toThrow();
     });
 
     it('should accept NPC persona with action description', () => {

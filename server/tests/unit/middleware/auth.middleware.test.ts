@@ -50,9 +50,7 @@ describe('Auth Middleware', () => {
 
       await authenticateToken(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'No token provided' })
-      );
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'No token provided' }));
     });
 
     it('should return 401 if token is invalid', async () => {
@@ -68,9 +66,7 @@ describe('Auth Middleware', () => {
 
       await authenticateToken(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Invalid token' })
-      );
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'Invalid token' }));
     });
 
     it('should set req.user on valid token', async () => {
@@ -261,9 +257,7 @@ describe('Auth Middleware', () => {
 
       await middleware(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Action not found' })
-      );
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'Action not found' }));
     });
 
     it('should call next if user is initiator', async () => {

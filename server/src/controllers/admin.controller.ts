@@ -21,11 +21,7 @@ function getClientIp(req: Request): string | undefined {
 // Dashboard
 // ============================================================================
 
-export async function getDashboard(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const stats = await adminService.getDashboardStats();
     res.json(stats);
@@ -38,11 +34,7 @@ export async function getDashboard(
 // User Management
 // ============================================================================
 
-export async function listUsers(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function listUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const query = listUsersQuerySchema.parse(req.query);
     const result = await adminService.listUsers(query);
@@ -84,11 +76,7 @@ export async function updateUserRole(
   }
 }
 
-export async function banUser(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function banUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { userId } = req.params;
     const data = banUserSchema.parse(req.body);
@@ -102,11 +90,7 @@ export async function banUser(
   }
 }
 
-export async function unbanUser(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function unbanUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { userId } = req.params;
     const adminId = req.user!.id;
@@ -123,11 +107,7 @@ export async function unbanUser(
 // Game Management
 // ============================================================================
 
-export async function listGames(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function listGames(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const query = listGamesQuerySchema.parse(req.query);
     const result = await adminService.listGames(query);
@@ -151,11 +131,7 @@ export async function getGameDetails(
   }
 }
 
-export async function deleteGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function deleteGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { gameId } = req.params;
     const adminId = req.user!.id;
@@ -168,11 +144,7 @@ export async function deleteGame(
   }
 }
 
-export async function pauseGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function pauseGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { gameId } = req.params;
     const adminId = req.user!.id;
@@ -185,11 +157,7 @@ export async function pauseGame(
   }
 }
 
-export async function resumeGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function resumeGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { gameId } = req.params;
     const adminId = req.user!.id;
@@ -202,22 +170,13 @@ export async function resumeGame(
   }
 }
 
-export async function removePlayer(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function removePlayer(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { gameId, playerId } = req.params;
     const adminId = req.user!.id;
     const ipAddress = getClientIp(req);
 
-    const result = await adminService.removePlayerFromGame(
-      adminId,
-      gameId!,
-      playerId!,
-      ipAddress
-    );
+    const result = await adminService.removePlayerFromGame(adminId, gameId!, playerId!, ipAddress);
     res.json(result);
   } catch (error) {
     next(error);

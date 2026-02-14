@@ -314,9 +314,7 @@ async function processVotingTimeout(
 
   // Find players who haven't voted
   const votedPlayerIds = action.votes.map((v) => v.playerId);
-  const playersWhoHaventVoted = action.game.players.filter(
-    (p) => !votedPlayerIds.includes(p.id)
-  );
+  const playersWhoHaventVoted = action.game.players.filter((p) => !votedPlayerIds.includes(p.id));
 
   // Create auto-votes for missing players (UNCERTAIN = 1 success, 1 failure)
   if (playersWhoHaventVoted.length > 0) {
@@ -330,9 +328,7 @@ async function processVotingTimeout(
       })),
     });
 
-    logger.info(
-      `Auto-cast ${playersWhoHaventVoted.length} UNCERTAIN votes for action ${actionId}`
-    );
+    logger.info(`Auto-cast ${playersWhoHaventVoted.length} UNCERTAIN votes for action ${actionId}`);
   }
 
   // Update action to resolved

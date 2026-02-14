@@ -12,13 +12,11 @@ describe('Auth E2E Tests', () => {
 
   describe('User Registration', () => {
     it('should register a new user successfully', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'newuser@example.com',
-          password: 'SecurePass123!',
-          displayName: 'New User',
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: 'newuser@example.com',
+        password: 'SecurePass123!',
+        displayName: 'New User',
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
@@ -39,22 +37,18 @@ describe('Auth E2E Tests', () => {
 
     it('should reject registration with existing email', async () => {
       // First registration
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'duplicate@example.com',
-          password: 'SecurePass123!',
-          displayName: 'First User',
-        });
+      await request(app).post('/api/auth/register').send({
+        email: 'duplicate@example.com',
+        password: 'SecurePass123!',
+        displayName: 'First User',
+      });
 
       // Second registration with same email
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'duplicate@example.com',
-          password: 'AnotherPass123!',
-          displayName: 'Second User',
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: 'duplicate@example.com',
+        password: 'AnotherPass123!',
+        displayName: 'Second User',
+      });
 
       expect(response.status).toBe(409);
       expect(response.body.success).toBe(false);
@@ -62,51 +56,43 @@ describe('Auth E2E Tests', () => {
     });
 
     it('should reject registration with invalid email', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'not-an-email',
-          password: 'SecurePass123!',
-          displayName: 'Test User',
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: 'not-an-email',
+        password: 'SecurePass123!',
+        displayName: 'Test User',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject registration with short password', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'test@example.com',
-          password: 'short',
-          displayName: 'Test User',
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: 'test@example.com',
+        password: 'short',
+        displayName: 'Test User',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject registration without display name', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'test@example.com',
-          password: 'SecurePass123!',
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: 'test@example.com',
+        password: 'SecurePass123!',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject registration with empty display name', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'test@example.com',
-          password: 'SecurePass123!',
-          displayName: '',
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: 'test@example.com',
+        password: 'SecurePass123!',
+        displayName: '',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -122,18 +108,14 @@ describe('Auth E2E Tests', () => {
 
     beforeEach(async () => {
       // Create a test user
-      await request(app)
-        .post('/api/auth/register')
-        .send(testUser);
+      await request(app).post('/api/auth/register').send(testUser);
     });
 
     it('should login with valid credentials', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testUser.email,
-          password: testUser.password,
-        });
+      const response = await request(app).post('/api/auth/login').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -145,12 +127,10 @@ describe('Auth E2E Tests', () => {
     });
 
     it('should reject login with wrong password', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testUser.email,
-          password: 'WrongPassword123!',
-        });
+      const response = await request(app).post('/api/auth/login').send({
+        email: testUser.email,
+        password: 'WrongPassword123!',
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -158,46 +138,38 @@ describe('Auth E2E Tests', () => {
     });
 
     it('should reject login with non-existent email', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'nonexistent@example.com',
-          password: 'SomePassword123!',
-        });
+      const response = await request(app).post('/api/auth/login').send({
+        email: 'nonexistent@example.com',
+        password: 'SomePassword123!',
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject login without email', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          password: 'SomePassword123!',
-        });
+      const response = await request(app).post('/api/auth/login').send({
+        password: 'SomePassword123!',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should reject login without password', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testUser.email,
-        });
+      const response = await request(app).post('/api/auth/login').send({
+        email: testUser.email,
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should update lastLogin on successful login', async () => {
-      await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testUser.email,
-          password: testUser.password,
-        });
+      await request(app).post('/api/auth/login').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
 
       const dbUser = await testDb.user.findUnique({
         where: { email: testUser.email },
@@ -210,13 +182,11 @@ describe('Auth E2E Tests', () => {
   describe('Token Verification', () => {
     it('should access protected route with valid token', async () => {
       // Register and get token
-      const registerResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'protected@example.com',
-          password: 'SecurePass123!',
-          displayName: 'Protected User',
-        });
+      const registerResponse = await request(app).post('/api/auth/register').send({
+        email: 'protected@example.com',
+        password: 'SecurePass123!',
+        displayName: 'Protected User',
+      });
 
       const token = registerResponse.body.data.token;
 
@@ -231,8 +201,7 @@ describe('Auth E2E Tests', () => {
     });
 
     it('should reject protected route without token', async () => {
-      const response = await request(app)
-        .get('/api/users/me');
+      const response = await request(app).get('/api/users/me');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);

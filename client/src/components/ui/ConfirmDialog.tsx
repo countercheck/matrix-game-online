@@ -41,15 +41,12 @@ export function ConfirmDialog({
     variant === 'danger'
       ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
       : variant === 'warning'
-      ? 'bg-yellow-600 text-white hover:bg-yellow-700'
-      : 'bg-primary text-primary-foreground hover:bg-primary/90';
+        ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+        : 'bg-primary text-primary-foreground hover:bg-primary/90';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={isLoading ? undefined : onClose}
-      />
+      <div className="absolute inset-0 bg-black/50" onClick={isLoading ? undefined : onClose} />
       <div className="relative bg-background border rounded-lg shadow-xl w-full max-w-md">
         <div className="p-6">
           <h2 className="text-lg font-semibold mb-2">{title}</h2>

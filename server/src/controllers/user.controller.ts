@@ -2,11 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as userService from '../services/user.service.js';
 import { updateProfileSchema, notificationPreferencesSchema } from '../utils/validators.js';
 
-export async function getProfile(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
     const profile = await userService.getProfile(userId);
@@ -31,11 +27,7 @@ export async function updateProfile(
   }
 }
 
-export async function getUserGames(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getUserGames(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
     const games = await userService.getUserGames(userId);

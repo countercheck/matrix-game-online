@@ -22,11 +22,7 @@ function getRoleLevel(role: UserRole): number {
  * @param minimumRole - The minimum role required to access the route
  */
 export function requireRole(...allowedRoles: UserRole[]) {
-  return async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new UnauthorizedError('Authentication required');

@@ -70,9 +70,7 @@ describe('Timeout Worker', () => {
 
       await runTimeoutCheck();
 
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('1 errors')
-      );
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('1 errors'));
     });
 
     it('should handle processAllTimeouts errors gracefully', async () => {
@@ -80,9 +78,7 @@ describe('Timeout Worker', () => {
 
       await runTimeoutCheck();
 
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Database error')
-      );
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Database error'));
     });
 
     it('should not run concurrently (skip if already running)', async () => {
@@ -126,9 +122,7 @@ describe('Timeout Worker', () => {
       startTimeoutWorker();
 
       expect(isTimeoutWorkerRunning()).toBe(true);
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Starting timeout worker')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Starting timeout worker'));
     });
 
     it('should warn if worker already running', () => {
@@ -140,9 +134,7 @@ describe('Timeout Worker', () => {
       startTimeoutWorker();
       startTimeoutWorker(); // Try to start again
 
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('already running')
-      );
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('already running'));
     });
 
     it('should use default interval if not specified', () => {
@@ -154,9 +146,7 @@ describe('Timeout Worker', () => {
       startTimeoutWorker();
 
       // Default is 5 minutes (300000ms = 300s)
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('300s interval')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('300s interval'));
     });
 
     it('should use custom interval if specified', () => {
@@ -167,9 +157,7 @@ describe('Timeout Worker', () => {
 
       startTimeoutWorker({ intervalMs: 60000 }); // 1 minute
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('60s interval')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('60s interval'));
     });
   });
 
@@ -185,18 +173,14 @@ describe('Timeout Worker', () => {
 
       stopTimeoutWorker();
       expect(isTimeoutWorkerRunning()).toBe(false);
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Stopping timeout worker')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Stopping timeout worker'));
     });
 
     it('should handle stop when not running (no-op)', () => {
       stopTimeoutWorker();
       // Should not throw or log stopping message
       expect(isTimeoutWorkerRunning()).toBe(false);
-      expect(logger.info).not.toHaveBeenCalledWith(
-        expect.stringContaining('Stopping')
-      );
+      expect(logger.info).not.toHaveBeenCalledWith(expect.stringContaining('Stopping'));
     });
   });
 

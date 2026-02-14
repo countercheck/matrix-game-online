@@ -49,13 +49,15 @@ function createTestApp() {
     };
 
     games.set(gameId, game);
-    players.set(gameId, [{
-      id: `player-${Date.now()}`,
-      userId: req.user.id,
-      playerName: req.user.displayName,
-      isHost: true,
-      isActive: true,
-    }]);
+    players.set(gameId, [
+      {
+        id: `player-${Date.now()}`,
+        userId: req.user.id,
+        playerName: req.user.displayName,
+        isHost: true,
+        isActive: true,
+      },
+    ]);
 
     res.status(201).json({ success: true, data: { ...game, players: players.get(gameId) } });
   });
@@ -228,7 +230,9 @@ function createTestApp() {
 
     const game = games.get(req.params.gameId);
     if (!game || game.deletedAt) {
-      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Game not found' } });
+      return res
+        .status(404)
+        .json({ success: false, error: { code: 'NOT_FOUND', message: 'Game not found' } });
     }
 
     const gamePlayers = players.get(req.params.gameId) || [];
@@ -290,7 +294,11 @@ players: []
 rounds: []
 `;
 
-    const safeName = game.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'game';
+    const safeName =
+      game.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || 'game';
     const date = new Date().toISOString().split('T')[0];
     const filename = `${safeName}-export-${date}.yaml`;
 
@@ -317,7 +325,7 @@ rounds: []
     try {
       const lines = yamlContent.split('\n');
       const hasGame = lines.some((line: string) => line.trim().startsWith('game:'));
-      
+
       if (!hasGame) {
         return res.status(400).json({
           success: false,
@@ -339,7 +347,10 @@ rounds: []
       if (personasSection && personasSection.includes('- "')) {
         return res.status(400).json({
           success: false,
-          error: { code: 'BAD_REQUEST', message: 'Invalid YAML: persona at index 1 must be an object' },
+          error: {
+            code: 'BAD_REQUEST',
+            message: 'Invalid YAML: persona at index 1 must be an object',
+          },
         });
       }
 
@@ -360,13 +371,15 @@ rounds: []
       };
 
       games.set(gameId, newGame);
-      players.set(gameId, [{
-        id: `player-${Date.now()}`,
-        userId: req.user.id,
-        playerName: req.user.displayName,
-        isHost: true,
-        isActive: true,
-      }]);
+      players.set(gameId, [
+        {
+          id: `player-${Date.now()}`,
+          userId: req.user.id,
+          playerName: req.user.displayName,
+          isHost: true,
+          isActive: true,
+        },
+      ]);
 
       res.status(201).json({ success: true, data: newGame });
     } catch (error) {
@@ -390,11 +403,9 @@ describe('Game Routes', () => {
     players = new Map();
     currentUser = { id: 'user-1', email: 'test@example.com', displayName: 'Test User' };
     app = createTestApp();
-    
+
     // Create a test game for image upload tests
-    const res = await request(app)
-      .post('/api/games')
-      .send({ name: 'Test Game' });
+    const res = await request(app).post('/api/games').send({ name: 'Test Game' });
     game = res.body.data;
     authToken = 'mock-token'; // Mock token for tests
   });
@@ -414,9 +425,7 @@ describe('Game Routes', () => {
     });
 
     it('should reject game without name', async () => {
-      const response = await request(app)
-        .post('/api/games')
-        .send({ description: 'No name' });
+      const response = await request(app).post('/api/games').send({ description: 'No name' });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -424,9 +433,7 @@ describe('Game Routes', () => {
 
     it('should reject unauthenticated request', async () => {
       currentUser = null;
-      const response = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const response = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       expect(response.status).toBe(401);
     });
@@ -435,9 +442,7 @@ describe('Game Routes', () => {
   describe('GET /api/games/:gameId', () => {
     it('should get game by id', async () => {
       // Create game first
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -459,9 +464,7 @@ describe('Game Routes', () => {
   describe('POST /api/games/:gameId/join', () => {
     it('should allow joining a game in lobby', async () => {
       // Create game as user 1
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -480,9 +483,7 @@ describe('Game Routes', () => {
 
     it('should reject joining already started game', async () => {
       // Create and start game
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -503,16 +504,12 @@ describe('Game Routes', () => {
     });
 
     it('should reject double joining', async () => {
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
       // Try to join own game
-      const response = await request(app)
-        .post(`/api/games/${gameId}/join`)
-        .send({});
+      const response = await request(app).post(`/api/games/${gameId}/join`).send({});
 
       expect(response.status).toBe(409);
       expect(response.body.error.code).toBe('CONFLICT');
@@ -522,9 +519,7 @@ describe('Game Routes', () => {
   describe('POST /api/games/:gameId/start', () => {
     it('should start game with enough players', async () => {
       // Create game
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -542,9 +537,7 @@ describe('Game Routes', () => {
     });
 
     it('should reject starting with only 1 player', async () => {
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -556,9 +549,7 @@ describe('Game Routes', () => {
 
     it('should reject non-host starting game', async () => {
       // Create game as user 1
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -577,9 +568,7 @@ describe('Game Routes', () => {
   describe('POST /api/games/:gameId/leave', () => {
     it('should allow leaving a game', async () => {
       // Create game
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -595,9 +584,7 @@ describe('Game Routes', () => {
     });
 
     it('should reject leaving game not in', async () => {
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -643,8 +630,7 @@ describe('Game Routes', () => {
     });
 
     it('should reject upload without a file', async () => {
-      const response = await request(app)
-        .post(`/api/games/${game.id}/image`);
+      const response = await request(app).post(`/api/games/${game.id}/image`);
 
       expect(response.status).toBe(400);
     });
@@ -653,9 +639,7 @@ describe('Game Routes', () => {
   describe('DELETE /api/games/:gameId', () => {
     it('should allow host to delete a game in lobby status', async () => {
       // Create game as host
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -669,9 +653,7 @@ describe('Game Routes', () => {
 
     it('should reject deletion by non-host player', async () => {
       // Create game as user 1
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -690,9 +672,7 @@ describe('Game Routes', () => {
 
     it('should reject deletion when game has started', async () => {
       // Create game as user 1
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -723,9 +703,7 @@ describe('Game Routes', () => {
 
     it('should return 404 for already deleted game', async () => {
       // Create game
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -744,9 +722,7 @@ describe('Game Routes', () => {
   describe('GET /api/games/:gameId/export', () => {
     it('should export game as YAML with correct content-type and content-disposition', async () => {
       // Create game
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 
@@ -776,9 +752,7 @@ describe('Game Routes', () => {
 
     it('should require membership to export', async () => {
       // Create game as user 1
-      const createRes = await request(app)
-        .post('/api/games')
-        .send({ name: 'Test Game' });
+      const createRes = await request(app).post('/api/games').send({ name: 'Test Game' });
 
       const gameId = createRes.body.data.id;
 

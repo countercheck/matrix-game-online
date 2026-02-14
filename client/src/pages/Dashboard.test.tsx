@@ -25,7 +25,7 @@ vi.mock('../services/api', () => ({
 // Mock download utility
 const mockDownloadBlob = vi.fn();
 vi.mock('../utils/download', () => ({
-  downloadBlob: (blob: Blob, filename: string, contentDisposition?: string) => 
+  downloadBlob: (blob: Blob, filename: string, contentDisposition?: string) =>
     mockDownloadBlob(blob, filename, contentDisposition),
 }));
 
@@ -114,16 +114,16 @@ describe('Dashboard Page', () => {
     await waitFor(() => {
       // Check that markdown is rendered, not raw syntax
       expect(screen.getByText(/A game with/i)).toBeInTheDocument();
-      
+
       // Verify bold and italic elements are present
       const boldElement = container.querySelector('strong');
       const italicElement = container.querySelector('em');
-      
+
       expect(boldElement).toBeInTheDocument();
       expect(boldElement?.textContent).toBe('bold text');
       expect(italicElement).toBeInTheDocument();
       expect(italicElement?.textContent).toBe('italic text');
-      
+
       // Verify raw markdown syntax is NOT displayed
       expect(screen.queryByText(/\*\*bold text\*\*/)).not.toBeInTheDocument();
       expect(screen.queryByText(/\*italic text\*/)).not.toBeInTheDocument();
@@ -153,11 +153,11 @@ describe('Dashboard Page', () => {
     await waitFor(() => {
       // Verify links are rendered as plain text (span) not anchors
       const anchorElements = container.querySelectorAll('article a');
-      
+
       // Should not have any <a> elements inside the article (game card)
       // The outer Link is present, but no nested links in description
       expect(anchorElements.length).toBe(0);
-      
+
       // Verify the link text is still present
       expect(screen.getByText(/this link/i)).toBeInTheDocument();
     });
@@ -260,7 +260,7 @@ describe('Dashboard Page', () => {
     // Find the RichTextDisplay wrapper within the game card
     const proseElement = container.querySelector('.prose');
     expect(proseElement).toBeInTheDocument();
-    
+
     // Verify the wrapper className doesn't override non-paragraph markdown elements
     // The bug was that [&_h2]:text-muted-foreground etc. were neutralizing distinct styling
     const className = proseElement?.className || '';
@@ -298,7 +298,7 @@ describe('Dashboard Page', () => {
 
   it('should call export API with correct parameters when export button is clicked', async () => {
     const user = userEvent.setup();
-    
+
     mockGet.mockResolvedValue({
       data: {
         data: [
@@ -349,7 +349,7 @@ describe('Dashboard Page', () => {
 
   it('should display error message when export fails', async () => {
     const user = userEvent.setup();
-    
+
     mockGet.mockResolvedValue({
       data: {
         data: [
@@ -395,7 +395,7 @@ describe('Dashboard Page', () => {
 
   it('should dismiss export error when dismiss button is clicked', async () => {
     const user = userEvent.setup();
-    
+
     mockGet.mockResolvedValue({
       data: {
         data: [

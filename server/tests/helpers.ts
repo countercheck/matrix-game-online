@@ -2,11 +2,13 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from './setup.js';
 
-export async function createTestUser(overrides: Partial<{
-  email: string;
-  displayName: string;
-  password: string;
-}> = {}) {
+export async function createTestUser(
+  overrides: Partial<{
+    email: string;
+    displayName: string;
+    password: string;
+  }> = {}
+) {
   const password = overrides.password || 'TestPassword123';
   const passwordHash = await bcrypt.hash(password, 10);
 
@@ -22,18 +24,19 @@ export async function createTestUser(overrides: Partial<{
 }
 
 export function generateToken(userId: string, email: string): string {
-  return jwt.sign(
-    { userId, email },
-    process.env.JWT_SECRET || 'test-secret-key',
-    { expiresIn: '1h' }
-  );
+  return jwt.sign({ userId, email }, process.env.JWT_SECRET || 'test-secret-key', {
+    expiresIn: '1h',
+  });
 }
 
-export async function createTestGame(creatorId: string, overrides: Partial<{
-  name: string;
-  description: string;
-  status: 'LOBBY' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
-}> = {}) {
+export async function createTestGame(
+  creatorId: string,
+  overrides: Partial<{
+    name: string;
+    description: string;
+    status: 'LOBBY' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
+  }> = {}
+) {
   const creator = await prisma.user.findUnique({ where: { id: creatorId } });
 
   const game = await prisma.game.create({

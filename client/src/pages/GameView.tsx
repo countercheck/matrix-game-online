@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
@@ -86,6 +86,7 @@ export default function GameView() {
   const { user } = useAuth();
   const [showRoundHistory, setShowRoundHistory] = useState(false);
   const [expandedPersona, setExpandedPersona] = useState<string | null>(null);
+  const [isTimeoutExpired, setIsTimeoutExpired] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
@@ -94,6 +95,27 @@ export default function GameView() {
   });
 
   const game = data?.data;
+
+  // Get timeout hours for the current phase (before early returns to avoid hook issues)
+  const phaseTimeoutMap: Record<string, number | undefined> = game ? {
+    PROPOSAL: game.settings.proposalTimeoutHours,
+    ARGUMENTATION: game.settings.argumentationTimeoutHours,
+    VOTING: game.settings.votingTimeoutHours,
+    NARRATION: game.settings.narrationTimeoutHours,
+  } : {};
+  const currentTimeoutHours = game ? phaseTimeoutMap[game.currentPhase] : undefined;
+
+  // Check if timeout is expired (for host notification)
+  useEffect(() => {
+    if (!game || !currentTimeoutHours || currentTimeoutHours === -1 || !game.phaseStartedAt) {
+      return;
+    }
+    const deadline = new Date(game.phaseStartedAt).getTime() + currentTimeoutHours * 3600000;
+    const checkTimeout = () => setIsTimeoutExpired(Date.now() >= deadline);
+    checkTimeout();
+    const interval = setInterval(checkTimeout, 1000);
+    return () => clearInterval(interval);
+  }, [game, currentTimeoutHours, game?.phaseStartedAt]);
 
   if (isLoading) {
     return (
@@ -143,22 +165,6 @@ export default function GameView() {
 
   const currentUserId = user?.id || '';
   const myPlayer = game.myPlayer;
-
-  // Get timeout hours for the current phase
-  const phaseTimeoutMap: Record<string, number | undefined> = {
-    PROPOSAL: game.settings.proposalTimeoutHours,
-    ARGUMENTATION: game.settings.argumentationTimeoutHours,
-    VOTING: game.settings.votingTimeoutHours,
-    NARRATION: game.settings.narrationTimeoutHours,
-  };
-  const currentTimeoutHours = phaseTimeoutMap[game.currentPhase];
-
-  // Check if timeout is expired (for host notification)
-  const isTimeoutExpired = (() => {
-    if (!currentTimeoutHours || currentTimeoutHours === -1 || !game.phaseStartedAt) return false;
-    const deadline = new Date(game.phaseStartedAt).getTime() + currentTimeoutHours * 3600000;
-    return Date.now() >= deadline;
-  })();
 
   // Render phase-specific content
   const renderPhaseContent = () => {

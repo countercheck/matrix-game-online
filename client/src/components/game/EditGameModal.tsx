@@ -1,12 +1,29 @@
 import { useState } from 'react';
 import { RichTextEditor } from '../ui/RichTextEditor';
 
+const TIMEOUT_OPTIONS = [
+  { label: 'No limit', value: -1 },
+  { label: '1 hour', value: 1 },
+  { label: '4 hours', value: 4 },
+  { label: '8 hours', value: 8 },
+  { label: '12 hours', value: 12 },
+  { label: '24 hours', value: 24 },
+  { label: '48 hours', value: 48 },
+  { label: '72 hours', value: 72 },
+  { label: '1 week', value: 168 },
+];
+
 interface EditGameModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { name: string; description: string | null }) => Promise<void>;
+  onSave: (data: {
+    name: string;
+    description: string | null;
+    settings?: Record<string, unknown>;
+  }) => Promise<void>;
   initialName: string;
   initialDescription: string;
+  initialSettings?: Record<string, unknown>;
 }
 
 export function EditGameModal({
@@ -15,9 +32,22 @@ export function EditGameModal({
   onSave,
   initialName,
   initialDescription,
+  initialSettings,
 }: EditGameModalProps) {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
+  const [proposalTimeout, setProposalTimeout] = useState(
+    (initialSettings?.proposalTimeoutHours as number | undefined) ?? -1
+  );
+  const [argumentationTimeout, setArgumentationTimeout] = useState(
+    (initialSettings?.argumentationTimeoutHours as number | undefined) ?? -1
+  );
+  const [votingTimeout, setVotingTimeout] = useState(
+    (initialSettings?.votingTimeoutHours as number | undefined) ?? -1
+  );
+  const [narrationTimeout, setNarrationTimeout] = useState(
+    (initialSettings?.narrationTimeoutHours as number | undefined) ?? -1
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,9 +59,26 @@ export function EditGameModal({
     setIsLoading(true);
 
     try {
+      // Merge with existing settings to preserve other fields
+      const mergedSettings: Record<string, unknown> = initialSettings
+        ? {
+            ...initialSettings,
+            proposalTimeoutHours: proposalTimeout,
+            argumentationTimeoutHours: argumentationTimeout,
+            votingTimeoutHours: votingTimeout,
+            narrationTimeoutHours: narrationTimeout,
+          }
+        : {
+            proposalTimeoutHours: proposalTimeout,
+            argumentationTimeoutHours: argumentationTimeout,
+            votingTimeoutHours: votingTimeout,
+            narrationTimeoutHours: narrationTimeout,
+          };
+
       await onSave({
         name,
         description: description.trim() || null,
+        settings: mergedSettings,
       });
       onClose();
     } catch (err: unknown) {
@@ -46,6 +93,10 @@ export function EditGameModal({
     if (!isLoading) {
       setName(initialName);
       setDescription(initialDescription);
+      setProposalTimeout((initialSettings?.proposalTimeoutHours as number | undefined) ?? -1);
+      setArgumentationTimeout((initialSettings?.argumentationTimeoutHours as number | undefined) ?? -1);
+      setVotingTimeout((initialSettings?.votingTimeoutHours as number | undefined) ?? -1);
+      setNarrationTimeout((initialSettings?.narrationTimeoutHours as number | undefined) ?? -1);
       setError('');
       onClose();
     }
@@ -96,6 +147,40 @@ export function EditGameModal({
                 rows={10}
               />
             </div>
+
+            {/* Phase Timeouts */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">Phase Timeouts</h3>
+              <p className="text-xs text-muted-foreground">
+                Set time limits for each phase. Changes take effect immediately.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <TimeoutSelect
+                  label="Proposal"
+                  value={proposalTimeout}
+                  onChange={setProposalTimeout}
+                  disabled={isLoading}
+                />
+                <TimeoutSelect
+                  label="Argumentation"
+                  value={argumentationTimeout}
+                  onChange={setArgumentationTimeout}
+                  disabled={isLoading}
+                />
+                <TimeoutSelect
+                  label="Voting"
+                  value={votingTimeout}
+                  onChange={setVotingTimeout}
+                  disabled={isLoading}
+                />
+                <TimeoutSelect
+                  label="Narration"
+                  value={narrationTimeout}
+                  onChange={setNarrationTimeout}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 px-6 pb-6">
@@ -117,6 +202,36 @@ export function EditGameModal({
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+function TimeoutSelect({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        disabled={disabled}
+        className="w-full px-2 py-1.5 border rounded-md bg-background text-sm disabled:opacity-50"
+      >
+        {TIMEOUT_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

@@ -649,3 +649,84 @@ Create a new game from an exported YAML file. Imports game name, description, se
 - `401 Unauthorized` - Not authenticated
 
 ---
+
+### GET /games/:gameId/timeout-status
+Get the current timeout status for a game's phase, including the time remaining.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "phase": "PROPOSAL",
+    "startedAt": "2026-02-14T20:00:00.000Z",
+    "timeoutAt": "2026-02-15T20:00:00.000Z",
+    "isTimedOut": false,
+    "remainingMs": 3600000,
+    "isInfinite": false
+  }
+}
+```
+
+**Response when no timeout configured or phase not started:** `200 OK`
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+**Fields:**
+- `phase`: The current game phase
+- `startedAt`: When the current phase started (ISO timestamp)
+- `timeoutAt`: When the phase will timeout (ISO timestamp, null if infinite)
+- `isTimedOut`: Whether the phase has already timed out
+- `remainingMs`: Milliseconds remaining before timeout (0 if timed out)
+- `isInfinite`: Whether the timeout is infinite (no timeout configured)
+
+**Errors:**
+- `403 Forbidden` - Not a member of the game
+- `404 Not Found` - Game not found
+
+---
+
+### POST /games/:gameId/extend-timeout
+Reset the timeout for the current phase, restarting the current phase timer. Only available to the game host.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Timeout extended"
+  }
+}
+```
+
+**Errors:**
+- `403 Forbidden` - Not the game host
+- `404 Not Found` - Game not found
+
+---
+
+### POST /games/:gameId/skip-proposals
+Skip remaining proposals in the current round and move to round summary. Only available to the game host when in PROPOSAL phase. At least one action must be proposed.
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Remaining proposals skipped, moved to round summary",
+    "completedActions": 3
+  }
+}
+```
+
+**Errors:**
+- `403 Forbidden` - Not the game host
+- `404 Not Found` - Game not found
+- `400 Bad Request` - Not in PROPOSAL phase or no actions proposed yet
+
+---
+

@@ -305,6 +305,7 @@ describe('Round Service', () => {
           currentRoundId: 'new-round-id',
           currentPhase: 'PROPOSAL',
           currentActionId: null,
+          phaseStartedAt: expect.any(Date),
         },
       });
     });

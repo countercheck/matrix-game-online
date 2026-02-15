@@ -137,9 +137,25 @@ describe('Validators', () => {
     it('should reject invalid timeout hours', () => {
       const data = {
         name: 'Test Game',
-        settings: { argumentationTimeoutHours: 100 },
+        settings: { argumentationTimeoutHours: 169 },
       };
       expect(() => createGameSchema.parse(data)).toThrow();
+    });
+
+    it('should accept timeout hours up to 168 (1 week)', () => {
+      const data = {
+        name: 'Test Game',
+        settings: { argumentationTimeoutHours: 168 },
+      };
+      expect(() => createGameSchema.parse(data)).not.toThrow();
+    });
+
+    it('should accept timeout hours of 100', () => {
+      const data = {
+        name: 'Test Game',
+        settings: { argumentationTimeoutHours: 100 },
+      };
+      expect(() => createGameSchema.parse(data)).not.toThrow();
     });
   });
 

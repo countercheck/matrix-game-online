@@ -67,14 +67,16 @@ describe('CreateGame Page', () => {
     await user.click(screen.getByRole('button', { name: /create game/i }));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith(
-        '/games',
-        {
-          name: 'Test Game',
-          description: undefined,
+      expect(mockPost).toHaveBeenCalledWith('/games', {
+        name: 'Test Game',
+        description: undefined,
+        settings: {
+          proposalTimeoutHours: -1,
+          argumentationTimeoutHours: -1,
+          votingTimeoutHours: -1,
+          narrationTimeoutHours: -1,
         },
-        undefined
-      );
+      }, undefined);
     });
   });
 
@@ -177,15 +179,16 @@ describe('CreateGame Page', () => {
     });
 
     // Verify first call is game creation
-    expect(mockPost).toHaveBeenNthCalledWith(
-      1,
-      '/games',
-      {
-        name: 'Test Game',
-        description: undefined,
+    expect(mockPost).toHaveBeenNthCalledWith(1, '/games', {
+      name: 'Test Game',
+      description: undefined,
+      settings: {
+        proposalTimeoutHours: -1,
+        argumentationTimeoutHours: -1,
+        votingTimeoutHours: -1,
+        narrationTimeoutHours: -1,
       },
-      undefined
-    );
+    }, undefined);
 
     // Verify second call is image upload with FormData and Content-Type undefined
     const secondCall = mockPost.mock.calls[1];
@@ -200,5 +203,102 @@ describe('CreateGame Page', () => {
     // Verify the FormData contains the image file
     const formData = secondCall[1] as FormData;
     expect(formData.get('image')).toBe(imageFile);
+  });
+
+  it('should render phase timeouts section', () => {
+    render(<CreateGame />);
+
+    expect(screen.getByRole('button', { name: /phase timeouts/i })).toBeInTheDocument();
+  });
+
+  it('should expand and collapse timeout section on click', async () => {
+    const user = userEvent.setup();
+    render(<CreateGame />);
+
+    const timeoutButton = screen.getByRole('button', { name: /phase timeouts/i });
+    
+    // Section should be collapsed initially
+    expect(screen.queryByText(/time for players to propose actions/i)).not.toBeInTheDocument();
+
+    // Click to expand
+    await user.click(timeoutButton);
+    expect(screen.getByText(/time for players to propose actions/i)).toBeInTheDocument();
+    
+    // Click to collapse
+    await user.click(timeoutButton);
+    expect(screen.queryByText(/time for players to propose actions/i)).not.toBeInTheDocument();
+  });
+
+  it('should show "No limits" status when all timeouts are set to -1', () => {
+    render(<CreateGame />);
+
+    expect(screen.getByText('No limits')).toBeInTheDocument();
+  });
+
+  it('should show "Configured" status when any timeout is not -1', async () => {
+    const user = userEvent.setup();
+    render(<CreateGame />);
+
+    const timeoutButton = screen.getByRole('button', { name: /phase timeouts/i });
+    await user.click(timeoutButton);
+
+    // Find and change one of the timeout selects
+    const selects = screen.getAllByRole('combobox');
+    const proposalSelect = selects[0]; // First select should be Proposal
+    await user.selectOptions(proposalSelect, '24');
+
+    expect(screen.getByText('Configured')).toBeInTheDocument();
+  });
+
+  it('should include timeout settings in POST request', async () => {
+    mockPost.mockResolvedValue({
+      data: { data: { id: 'game-123' } },
+    });
+    const user = userEvent.setup();
+    render(<CreateGame />);
+
+    // Expand timeout section
+    await user.click(screen.getByRole('button', { name: /phase timeouts/i }));
+
+    // Set some timeout values - use getAllByRole to get all selects
+    const selects = screen.getAllByRole('combobox');
+    const proposalSelect = selects[0]; // First is Proposal
+    const argumentationSelect = selects[1]; // Second is Argumentation
+    
+    await user.selectOptions(proposalSelect, '24');
+    await user.selectOptions(argumentationSelect, '48');
+
+    // Fill in game name and submit
+    await user.type(screen.getByLabelText(/game name/i), 'Test Game');
+    await user.click(screen.getByRole('button', { name: /create game/i }));
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith('/games', {
+        name: 'Test Game',
+        description: undefined,
+        settings: {
+          proposalTimeoutHours: 24,
+          argumentationTimeoutHours: 48,
+          votingTimeoutHours: -1,
+          narrationTimeoutHours: -1,
+        },
+      }, undefined);
+    });
+  });
+
+  it('should render all four timeout selects when expanded', async () => {
+    const user = userEvent.setup();
+    render(<CreateGame />);
+
+    await user.click(screen.getByRole('button', { name: /phase timeouts/i }));
+
+    const selects = screen.getAllByRole('combobox');
+    expect(selects.length).toBe(4);
+    
+    // Verify the labels are present
+    expect(screen.getByText('Proposal')).toBeInTheDocument();
+    expect(screen.getByText('Argumentation')).toBeInTheDocument();
+    expect(screen.getByText('Voting')).toBeInTheDocument();
+    expect(screen.getByText('Narration')).toBeInTheDocument();
   });
 });

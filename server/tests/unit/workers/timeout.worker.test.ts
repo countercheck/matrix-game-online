@@ -37,8 +37,7 @@ describe('Timeout Worker', () => {
   describe('runTimeoutCheck', () => {
     it('should call processAllTimeouts', async () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
+        results: [],
         errors: [],
       });
 
@@ -49,24 +48,24 @@ describe('Timeout Worker', () => {
 
     it('should log when timeouts are processed', async () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [
-          { actionId: 'a1', gameId: 'g1', phase: 'ARGUMENTATION', playersAffected: 0 },
+        results: [
+          { actionId: 'a1', gameId: 'g1', phase: 'ARGUMENTATION', playersAffected: 2 },
+          { gameId: 'g2', phase: 'PROPOSAL', playersAffected: 0, hostNotified: true },
         ],
-        votingTimeouts: [{ actionId: 'a2', gameId: 'g1', phase: 'VOTING', playersAffected: 2 }],
         errors: [],
       });
 
       await runTimeoutCheck();
 
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('1 argumentation'));
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('1 voting'));
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('processed 2 timeouts')
+      );
     });
 
     it('should log warning when there are errors', async () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
-        errors: [{ actionId: 'a1', error: 'test error' }],
+        results: [],
+        errors: [{ gameId: 'g1', error: 'test error' }],
       });
 
       await runTimeoutCheck();
@@ -82,19 +81,6 @@ describe('Timeout Worker', () => {
       expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Database error'));
     });
 
-    it('should pass config to processAllTimeouts', async () => {
-      vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
-        errors: [],
-      });
-
-      const config = { argumentationTimeoutMs: 1000 };
-      await runTimeoutCheck(config);
-
-      expect(processAllTimeouts).toHaveBeenCalledWith(config);
-    });
-
     it('should not run concurrently (skip if already running)', async () => {
       let resolveFirst: () => void;
       const firstCallPromise = new Promise<void>((resolve) => {
@@ -104,11 +90,10 @@ describe('Timeout Worker', () => {
       vi.mocked(processAllTimeouts)
         .mockImplementationOnce(async () => {
           await firstCallPromise;
-          return { argumentationTimeouts: [], votingTimeouts: [], errors: [] };
+          return { results: [], errors: [] };
         })
         .mockResolvedValue({
-          argumentationTimeouts: [],
-          votingTimeouts: [],
+          results: [],
           errors: [],
         });
 
@@ -130,8 +115,7 @@ describe('Timeout Worker', () => {
   describe('startTimeoutWorker', () => {
     it('should start the worker and set running state', () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
+        results: [],
         errors: [],
       });
 
@@ -143,8 +127,7 @@ describe('Timeout Worker', () => {
 
     it('should warn if worker already running', () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
+        results: [],
         errors: [],
       });
 
@@ -156,8 +139,7 @@ describe('Timeout Worker', () => {
 
     it('should use default interval if not specified', () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
+        results: [],
         errors: [],
       });
 
@@ -169,8 +151,7 @@ describe('Timeout Worker', () => {
 
     it('should use custom interval if specified', () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
+        results: [],
         errors: [],
       });
 
@@ -183,8 +164,7 @@ describe('Timeout Worker', () => {
   describe('stopTimeoutWorker', () => {
     it('should stop the worker and clear running state', () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
+        results: [],
         errors: [],
       });
 
@@ -211,8 +191,7 @@ describe('Timeout Worker', () => {
 
     it('should return true when running', () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
+        results: [],
         errors: [],
       });
 
@@ -222,8 +201,7 @@ describe('Timeout Worker', () => {
 
     it('should return false after stopped', () => {
       vi.mocked(processAllTimeouts).mockResolvedValue({
-        argumentationTimeouts: [],
-        votingTimeouts: [],
+        results: [],
         errors: [],
       });
 

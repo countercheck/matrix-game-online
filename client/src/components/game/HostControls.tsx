@@ -7,9 +7,16 @@ interface HostControlsProps {
   currentPhase: string;
   currentActionId?: string;
   isHost: boolean;
+  timeoutExpired?: boolean;
 }
 
-export function HostControls({ gameId, currentPhase, currentActionId, isHost }: HostControlsProps) {
+export function HostControls({
+  gameId,
+  currentPhase,
+  currentActionId,
+  isHost,
+  timeoutExpired,
+}: HostControlsProps) {
   const queryClient = useQueryClient();
   const [confirmSkip, setConfirmSkip] = useState<string | null>(null);
 
@@ -34,6 +41,13 @@ export function HostControls({ gameId, currentPhase, currentActionId, isHost }: 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
       setConfirmSkip(null);
+    },
+  });
+
+  const extendTimeoutMutation = useMutation({
+    mutationFn: () => api.post(`/games/${gameId}/extend-timeout`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
     },
   });
 
@@ -94,7 +108,12 @@ export function HostControls({ gameId, currentPhase, currentActionId, isHost }: 
 
   const skipButton = renderSkipButton();
 
-  if (!skipButton) {
+  // Show timeout alert for proposal/narration phases
+  const showTimeoutAlert =
+    timeoutExpired &&
+    (currentPhase === 'PROPOSAL' || currentPhase === 'NARRATION');
+
+  if (!skipButton && !showTimeoutAlert) {
     return null;
   }
 
@@ -111,6 +130,42 @@ export function HostControls({ gameId, currentPhase, currentActionId, isHost }: 
         </svg>
         Host Controls
       </h3>
+
+      {showTimeoutAlert && (
+        <div className="mb-3 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md space-y-2">
+          <p className="text-sm font-medium text-red-700 dark:text-red-300">
+            {currentPhase === 'PROPOSAL' ? 'Proposal' : 'Narration'} phase has timed out
+          </p>
+          <p className="text-xs text-red-600 dark:text-red-400">
+            {currentPhase === 'PROPOSAL' 
+              ? 'You can extend the time or skip this phase.'
+              : 'You can extend the time to allow more narration.'}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => extendTimeoutMutation.mutate()}
+              disabled={extendTimeoutMutation.isPending}
+              className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50"
+            >
+              {extendTimeoutMutation.isPending ? 'Extending...' : 'Extend Time'}
+            </button>
+            {currentPhase === 'PROPOSAL' && (
+              <button
+                onClick={() => setConfirmSkip('proposals')}
+                className="px-3 py-1.5 text-sm border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"
+              >
+                Skip Phase
+              </button>
+            )}
+          </div>
+          {extendTimeoutMutation.error && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              Failed to extend timeout
+            </p>
+          )}
+        </div>
+      )}
+
       {skipButton}
     </div>
   );

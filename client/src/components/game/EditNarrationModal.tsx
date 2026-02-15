@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RichTextEditor } from '../ui/RichTextEditor';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface EditNarrationModalProps {
   isOpen: boolean;
@@ -29,8 +30,7 @@ export function EditNarrationModal({
       await onSave({ content });
       onClose();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(error.response?.data?.error?.message || 'Failed to update narration');
+      setError(getApiErrorMessage(err, 'Failed to update narration'));
     } finally {
       setIsLoading(false);
     }

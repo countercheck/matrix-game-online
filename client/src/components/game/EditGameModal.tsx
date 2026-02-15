@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RichTextEditor } from '../ui/RichTextEditor';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const TIMEOUT_OPTIONS = [
   { label: 'No limit', value: -1 },
@@ -82,8 +83,7 @@ export function EditGameModal({
       });
       onClose();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(error.response?.data?.error?.message || 'Failed to update game');
+      setError(getApiErrorMessage(err, 'Failed to update game'));
     } finally {
       setIsLoading(false);
     }

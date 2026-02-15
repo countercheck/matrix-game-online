@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RichTextEditor } from '../ui/RichTextEditor';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface EditPersonaModalProps {
   isOpen: boolean;
@@ -56,8 +57,7 @@ export function EditPersonaModal({ isOpen, onClose, onSave, persona }: EditPerso
       await onSave(data);
       onClose();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(error.response?.data?.error?.message || 'Failed to update persona');
+      setError(getApiErrorMessage(err, 'Failed to update persona'));
     } finally {
       setIsLoading(false);
     }

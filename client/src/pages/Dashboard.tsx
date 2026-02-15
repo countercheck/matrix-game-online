@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { SkeletonGameCard } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 import { downloadBlob } from '../utils/download';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface Game {
   id: string;
@@ -45,18 +46,7 @@ export default function Dashboard() {
       const newGame = res.data.data;
       navigate(`/game/${newGame.id}/lobby`);
     } catch (err: unknown) {
-      const message =
-        err && typeof err === 'object' && 'response' in err
-          ? (() => {
-              const responseData = (
-                err as {
-                  response?: { data?: { error?: { message?: string }; message?: string } };
-                }
-              ).response?.data;
-              return responseData?.error?.message || responseData?.message || 'Import failed';
-            })()
-          : 'Import failed';
-      setImportError(message);
+      setImportError(getApiErrorMessage(err, 'Import failed'));
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -81,18 +71,7 @@ export default function Dashboard() {
 
       downloadBlob(blob, `${gameName}-export.yaml`, contentDisposition);
     } catch (err: unknown) {
-      const message =
-        err && typeof err === 'object' && 'response' in err
-          ? (() => {
-              const responseData = (
-                err as {
-                  response?: { data?: { error?: { message?: string }; message?: string } };
-                }
-              ).response?.data;
-              return responseData?.error?.message || responseData?.message || 'Export failed';
-            })()
-          : 'Export failed';
-      setExportError(message);
+      setExportError(getApiErrorMessage(err, 'Export failed'));
     }
   };
 

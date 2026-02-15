@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RichTextEditor } from '../ui/RichTextEditor';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface EditRoundSummaryModalProps {
   isOpen: boolean;
@@ -29,8 +30,7 @@ export function EditRoundSummaryModal({
       await onSave({ content });
       onClose();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(error.response?.data?.error?.message || 'Failed to update round summary');
+      setError(getApiErrorMessage(err, 'Failed to update round summary'));
     } finally {
       setIsLoading(false);
     }

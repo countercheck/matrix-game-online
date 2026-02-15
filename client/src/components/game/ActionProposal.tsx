@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextEditor } from '../ui';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface ActionProposalProps {
   gameId: string;
@@ -31,8 +32,7 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
       onProposed?.();
     },
     onError: (err: unknown) => {
-      const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Failed to propose action');
+      setError(getApiErrorMessage(err, 'Failed to propose action'));
     },
   });
 

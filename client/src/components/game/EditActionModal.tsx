@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RichTextEditor } from '../ui/RichTextEditor';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface EditActionModalProps {
   isOpen: boolean;
@@ -43,8 +44,7 @@ export function EditActionModal({
       await onSave(data);
       onClose();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(error.response?.data?.error?.message || 'Failed to update action');
+      setError(getApiErrorMessage(err, 'Failed to update action'));
     } finally {
       setIsLoading(false);
     }

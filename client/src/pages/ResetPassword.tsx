@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -74,8 +75,7 @@ export default function ResetPassword() {
         navigate('/login');
       }, 2000);
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Failed to reset password');
+      setError(getApiErrorMessage(err, 'Failed to reset password'));
     } finally {
       setIsLoading(false);
     }

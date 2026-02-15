@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { RichTextEditor, RichTextDisplay } from '../ui';
 import { formatRelativeTime } from '../../utils/formatTime';
 import { EditNarrationModal } from './EditNarrationModal';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface Action {
   id: string;
@@ -192,8 +193,7 @@ export function NarrationForm({
       setError('');
     },
     onError: (err: unknown) => {
-      const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Failed to submit narration');
+      setError(getApiErrorMessage(err, 'Failed to submit narration'));
     },
   });
 

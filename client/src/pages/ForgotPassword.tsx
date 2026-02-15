@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -19,8 +20,7 @@ export default function ForgotPassword() {
       setMessage(response.data.data.message);
       setEmail('');
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Failed to send reset email');
+      setError(getApiErrorMessage(err, 'Failed to send reset email'));
     } finally {
       setIsLoading(false);
     }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay, RichTextEditor } from '../ui';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface RoundSummaryProps {
   gameId: string;
@@ -69,8 +70,8 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
       queryClient.invalidateQueries({ queryKey: ['round', roundId] });
     },
-    onError: (err: Error & { response?: { data?: { error?: { message?: string } } } }) => {
-      setError(err.response?.data?.error?.message || 'Failed to submit summary');
+    onError: (err: unknown) => {
+      setError(getApiErrorMessage(err, 'Failed to submit summary'));
     },
   });
 

@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface Persona {
   id: string;
@@ -48,8 +49,8 @@ export default function JoinGame() {
     onSuccess: () => {
       navigate(`/game/${gameId}/lobby`);
     },
-    onError: (err: { response?: { data?: { error?: { message?: string } } } }) => {
-      setError(err.response?.data?.error?.message || 'Failed to join game');
+    onError: (err: unknown) => {
+      setError(getApiErrorMessage(err, 'Failed to join game'));
     },
   });
 

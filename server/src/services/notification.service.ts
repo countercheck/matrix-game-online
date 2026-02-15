@@ -87,10 +87,7 @@ async function getGamePlayersWithPrefs(gameId: string) {
 /**
  * Notify all players that a game has started.
  */
-export async function notifyGameStarted(
-  gameId: string,
-  gameName: string
-): Promise<void> {
+export async function notifyGameStarted(gameId: string, gameName: string): Promise<void> {
   try {
     const players = await getGamePlayersWithPrefs(gameId);
 
@@ -162,12 +159,7 @@ export async function notifyVotingStarted(
         player.user.notificationPreferences as Record<string, unknown>
       );
       if (shouldNotify(prefs, 'votingStarted')) {
-        await sendVotingStartedEmail(
-          player.user.email,
-          gameName,
-          gameId,
-          actionDescription
-        );
+        await sendVotingStartedEmail(player.user.email, gameName, gameId, actionDescription);
       }
     }
 
@@ -198,12 +190,7 @@ export async function notifyResolutionReady(
       user.notificationPreferences as Record<string, unknown>
     );
     if (shouldNotify(prefs, 'resolutionReady')) {
-      await sendResolutionReadyEmail(
-        user.email,
-        gameName,
-        gameId,
-        actionDescription
-      );
+      await sendResolutionReadyEmail(user.email, gameName, gameId, actionDescription);
     }
 
     logger.info(`Sent resolution ready notification for game ${gameId}`);
@@ -235,13 +222,7 @@ export async function notifyNarrationNeeded(
     );
     if (shouldNotify(prefs, 'resolutionReady')) {
       // Using resolutionReady preference for narration too
-      await sendNarrationNeededEmail(
-        user.email,
-        gameName,
-        gameId,
-        resultType,
-        resultValue
-      );
+      await sendNarrationNeededEmail(user.email, gameName, gameId, resultType, resultValue);
     }
 
     logger.info(`Sent narration needed notification for game ${gameId}`);
@@ -330,13 +311,7 @@ export async function notifyTimeoutWarning(
         user.notificationPreferences as Record<string, unknown>
       );
       if (shouldNotify(prefs, 'timeoutWarnings')) {
-        await sendTimeoutWarningEmail(
-          user.email,
-          gameName,
-          gameId,
-          phase,
-          hoursRemaining
-        );
+        await sendTimeoutWarningEmail(user.email, gameName, gameId, phase, hoursRemaining);
       }
     }
 
@@ -364,13 +339,7 @@ export async function notifyTimeoutOccurred(
       );
       if (shouldNotify(prefs, 'timeoutWarnings')) {
         const wasAutoVoted = autoVotedUserIds.includes(player.userId);
-        await sendTimeoutOccurredEmail(
-          player.user.email,
-          gameName,
-          gameId,
-          phase,
-          wasAutoVoted
-        );
+        await sendTimeoutOccurredEmail(player.user.email, gameName, gameId, phase, wasAutoVoted);
       }
     }
 

@@ -74,7 +74,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Try Again
               </button>
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => (window.location.href = '/')}
                 className="px-4 py-2 border rounded-md hover:bg-muted"
               >
                 Go to Dashboard

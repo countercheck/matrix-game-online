@@ -29,7 +29,12 @@ interface VotingPanelProps {
 
 type VoteType = 'LIKELY_SUCCESS' | 'LIKELY_FAILURE' | 'UNCERTAIN';
 
-const voteOptions: { type: VoteType; label: string; description: string; colorKey: 'success' | 'uncertain' | 'failure' }[] = [
+const voteOptions: {
+  type: VoteType;
+  label: string;
+  description: string;
+  colorKey: 'success' | 'uncertain' | 'failure';
+}[] = [
   {
     type: 'LIKELY_SUCCESS',
     label: 'Likely to Succeed',
@@ -58,7 +63,11 @@ const getVoteStyles = (colorKey: 'success' | 'uncertain' | 'failure', isSelected
       unselected: 'border-muted hover:border-vote-success/50',
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clipRule="evenodd"
+          />
         </svg>
       ),
     },
@@ -67,7 +76,11 @@ const getVoteStyles = (colorKey: 'success' | 'uncertain' | 'failure', isSelected
       unselected: 'border-muted hover:border-vote-uncertain/50',
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+            clipRule="evenodd"
+          />
         </svg>
       ),
     },
@@ -76,7 +89,11 @@ const getVoteStyles = (colorKey: 'success' | 'uncertain' | 'failure', isSelected
       unselected: 'border-muted hover:border-vote-failure/50',
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+            clipRule="evenodd"
+          />
         </svg>
       ),
     },
@@ -101,8 +118,7 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
   const voteInfo = voteData?.data;
 
   const voteMutation = useMutation({
-    mutationFn: (voteType: VoteType) =>
-      api.post(`/actions/${action.id}/votes`, { voteType }),
+    mutationFn: (voteType: VoteType) => api.post(`/actions/${action.id}/votes`, { voteType }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['votes', action.id] });
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
@@ -156,12 +172,7 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
       {hasVoted ? (
         <div className="p-6 border rounded-lg text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-vote-success-bg text-vote-success mb-3">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -177,13 +188,11 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
               {voteInfo?.myVote?.voteType === 'LIKELY_SUCCESS'
                 ? 'Likely to Succeed'
                 : voteInfo?.myVote?.voteType === 'LIKELY_FAILURE'
-                ? 'Likely to Fail'
-                : 'Uncertain'}
+                  ? 'Likely to Fail'
+                  : 'Uncertain'}
             </span>
           </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Waiting for other players to vote...
-          </p>
+          <p className="text-sm text-muted-foreground mt-2">Waiting for other players to vote...</p>
         </div>
       ) : (
         <div className="p-6 border rounded-lg space-y-4">
@@ -209,7 +218,8 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
             aria-describedby="vote-description"
           >
             <p id="vote-description" className="sr-only">
-              Select one option to cast your vote. Your vote affects the token pool for the resolution draw.
+              Select one option to cast your vote. Your vote affects the token pool for the
+              resolution draw.
             </p>
             {voteOptions.map((option) => {
               const voteStyle = getVoteStyles(option.colorKey, selectedVote === option.type);
@@ -225,7 +235,15 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className={option.colorKey === 'success' ? 'text-vote-success' : option.colorKey === 'failure' ? 'text-vote-failure' : 'text-vote-uncertain'}>
+                      <span
+                        className={
+                          option.colorKey === 'success'
+                            ? 'text-vote-success'
+                            : option.colorKey === 'failure'
+                              ? 'text-vote-failure'
+                              : 'text-vote-uncertain'
+                        }
+                      >
                         {voteStyle.icon}
                       </span>
                       <span className="font-medium">{option.label}</span>
@@ -233,20 +251,50 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
                     <div className="flex items-center gap-1" aria-hidden="true">
                       {option.type === 'LIKELY_SUCCESS' && (
                         <>
-                          <span className="w-4 h-4 rounded-full bg-vote-success flex items-center justify-center text-white text-xs font-bold" title="Success token">S</span>
-                          <span className="w-4 h-4 rounded-full bg-vote-success flex items-center justify-center text-white text-xs font-bold" title="Success token">S</span>
+                          <span
+                            className="w-4 h-4 rounded-full bg-vote-success flex items-center justify-center text-white text-xs font-bold"
+                            title="Success token"
+                          >
+                            S
+                          </span>
+                          <span
+                            className="w-4 h-4 rounded-full bg-vote-success flex items-center justify-center text-white text-xs font-bold"
+                            title="Success token"
+                          >
+                            S
+                          </span>
                         </>
                       )}
                       {option.type === 'UNCERTAIN' && (
                         <>
-                          <span className="w-4 h-4 rounded-full bg-vote-success flex items-center justify-center text-white text-xs font-bold" title="Success token">S</span>
-                          <span className="w-4 h-4 rounded-full bg-vote-failure flex items-center justify-center text-white text-xs font-bold" title="Failure token">F</span>
+                          <span
+                            className="w-4 h-4 rounded-full bg-vote-success flex items-center justify-center text-white text-xs font-bold"
+                            title="Success token"
+                          >
+                            S
+                          </span>
+                          <span
+                            className="w-4 h-4 rounded-full bg-vote-failure flex items-center justify-center text-white text-xs font-bold"
+                            title="Failure token"
+                          >
+                            F
+                          </span>
                         </>
                       )}
                       {option.type === 'LIKELY_FAILURE' && (
                         <>
-                          <span className="w-4 h-4 rounded-full bg-vote-failure flex items-center justify-center text-white text-xs font-bold" title="Failure token">F</span>
-                          <span className="w-4 h-4 rounded-full bg-vote-failure flex items-center justify-center text-white text-xs font-bold" title="Failure token">F</span>
+                          <span
+                            className="w-4 h-4 rounded-full bg-vote-failure flex items-center justify-center text-white text-xs font-bold"
+                            title="Failure token"
+                          >
+                            F
+                          </span>
+                          <span
+                            className="w-4 h-4 rounded-full bg-vote-failure flex items-center justify-center text-white text-xs font-bold"
+                            title="Failure token"
+                          >
+                            F
+                          </span>
                         </>
                       )}
                     </div>

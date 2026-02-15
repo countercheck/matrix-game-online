@@ -65,11 +65,7 @@ export async function authenticateToken(
  * Extracts gameId from params and verifies user is an active player.
  */
 export function requireGameMember(gameIdParam = 'gameId') {
-  return async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const gameId = req.params[gameIdParam];
       const userId = req.user?.id;
@@ -104,11 +100,7 @@ export function requireGameMember(gameIdParam = 'gameId') {
  * Must be used after requireGameMember.
  */
 export function requireGameHost(gameIdParam = 'gameId') {
-  return async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const gameId = req.params[gameIdParam];
       const userId = req.user?.id;
@@ -146,11 +138,7 @@ export function requireGameHost(gameIdParam = 'gameId') {
  * Verifies user is the initiator of the specified action.
  */
 export function requireActionInitiator(actionIdParam = 'actionId') {
-  return async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const actionId = req.params[actionIdParam];
       const userId = req.user?.id;

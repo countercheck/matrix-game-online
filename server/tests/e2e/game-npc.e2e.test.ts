@@ -23,23 +23,19 @@ describe('Game with NPC Persona E2E Tests', () => {
     npcUserId = npcUser!.id;
 
     // Create two test users
-    const user1Response = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'player1@example.com',
-        password: 'Password123!',
-        displayName: 'Player One',
-      });
+    const user1Response = await request(app).post('/api/auth/register').send({
+      email: 'player1@example.com',
+      password: 'Password123!',
+      displayName: 'Player One',
+    });
     user1Token = user1Response.body.data.token;
     user1Id = user1Response.body.data.user.id;
 
-    const user2Response = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'player2@example.com',
-        password: 'Password123!',
-        displayName: 'Player Two',
-      });
+    const user2Response = await request(app).post('/api/auth/register').send({
+      email: 'player2@example.com',
+      password: 'Password123!',
+      displayName: 'Player Two',
+    });
     user2Token = user2Response.body.data.token;
     // user2Id not needed yet but user2 must be registered for the game
   });
@@ -71,7 +67,7 @@ describe('Game with NPC Persona E2E Tests', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(response.body.data.personas).toHaveLength(2);
-      
+
       const npcPersona = response.body.data.personas.find((p: any) => p.isNpc);
       expect(npcPersona).toBeDefined();
       expect(npcPersona.name).toBe('Dragon');
@@ -127,7 +123,7 @@ describe('Game with NPC Persona E2E Tests', () => {
       // Verify NPC player was created
       const dbGame = await testDb.game.findUnique({
         where: { id: gameId },
-        include: { 
+        include: {
           players: {
             include: {
               persona: true,
@@ -137,19 +133,19 @@ describe('Game with NPC Persona E2E Tests', () => {
       });
 
       expect(dbGame).not.toBeNull();
-      
+
       // Should have 3 players: user1, user2, and NPC
       expect(dbGame?.players).toHaveLength(3);
-      
-      const npcPlayer = dbGame?.players.find(p => p.isNpc);
+
+      const npcPlayer = dbGame?.players.find((p) => p.isNpc);
       expect(npcPlayer).toBeDefined();
       expect(npcPlayer?.userId).toBe(npcUserId);
       expect(npcPlayer?.playerName).toBe('Dragon');
       expect(npcPlayer?.isHost).toBe(false);
       expect(npcPlayer?.persona?.isNpc).toBe(true);
-      
+
       // NPC should have highest join order (goes last)
-      const maxJoinOrder = Math.max(...dbGame!.players.map(p => p.joinOrder));
+      const maxJoinOrder = Math.max(...dbGame!.players.map((p) => p.joinOrder));
       expect(npcPlayer?.joinOrder).toBe(maxJoinOrder);
     });
 
@@ -241,8 +237,8 @@ describe('Game with NPC Persona E2E Tests', () => {
         include: { players: true },
       });
 
-      const creatorPlayer = dbGame?.players.find(p => p.userId === user1Id);
-      const npcPlayer = dbGame?.players.find(p => p.isNpc);
+      const creatorPlayer = dbGame?.players.find((p) => p.userId === user1Id);
+      const npcPlayer = dbGame?.players.find((p) => p.isNpc);
 
       expect(creatorPlayer).toBeDefined();
       expect(npcPlayer).toBeDefined();

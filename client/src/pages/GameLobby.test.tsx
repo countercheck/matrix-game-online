@@ -31,7 +31,6 @@ vi.mock('../services/api', () => ({
   },
 }));
 
-
 describe('GameLobby Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,9 +51,7 @@ describe('GameLobby Page', () => {
           id: 'game-123',
           name: 'Test Game',
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -96,9 +93,7 @@ describe('GameLobby Page', () => {
           id: 'game-123',
           name: 'Test Game',
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Player One', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Player One', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -119,9 +114,7 @@ describe('GameLobby Page', () => {
           id: 'game-123',
           name: 'Test Game',
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -140,9 +133,7 @@ describe('GameLobby Page', () => {
           id: 'game-123',
           name: 'Test Game',
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -217,9 +208,7 @@ describe('GameLobby Page', () => {
           id: 'game-123',
           name: 'Test Game',
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -239,9 +228,7 @@ describe('GameLobby Page', () => {
           id: 'game-123',
           name: 'Test Game',
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -261,9 +248,7 @@ describe('GameLobby Page', () => {
           name: 'Test Game',
           description: 'A game with **bold text** and *italic text*.',
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -273,16 +258,16 @@ describe('GameLobby Page', () => {
     await waitFor(() => {
       // Check that markdown is rendered, not raw syntax
       expect(screen.getByText(/A game with/i)).toBeInTheDocument();
-      
+
       // Verify bold and italic elements are present (not raw ** or *)
       const boldElement = container.querySelector('strong');
       const italicElement = container.querySelector('em');
-      
+
       expect(boldElement).toBeInTheDocument();
       expect(boldElement?.textContent).toBe('bold text');
       expect(italicElement).toBeInTheDocument();
       expect(italicElement?.textContent).toBe('italic text');
-      
+
       // Verify raw markdown syntax is NOT present
       expect(screen.queryByText(/\*\*bold text\*\*/)).not.toBeInTheDocument();
       expect(screen.queryByText(/\*italic text\*/)).not.toBeInTheDocument();
@@ -297,9 +282,7 @@ describe('GameLobby Page', () => {
           name: 'Test Game',
           description: null,
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -321,9 +304,7 @@ describe('GameLobby Page', () => {
           name: 'Test Game',
           description: '## Heading\n\nParagraph with [link](https://example.com)',
           status: 'LOBBY',
-          players: [
-            { id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } },
-          ],
+          players: [{ id: 'p1', playerName: 'Host', isHost: true, user: { id: 'user-1' } }],
         },
       },
     });
@@ -333,7 +314,7 @@ describe('GameLobby Page', () => {
     await waitFor(() => {
       const proseElement = container.querySelector('.prose');
       expect(proseElement).toBeInTheDocument();
-      
+
       // Verify the wrapper className doesn't override non-paragraph markdown elements
       // The bug was that [&_h2]:text-muted-foreground etc. were neutralizing distinct styling
       const className = proseElement?.className || '';

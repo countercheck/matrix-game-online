@@ -56,9 +56,7 @@ export async function getRound(roundId: string, userId: string) {
       totalRequired: round.totalActionsRequired,
       remaining: round.totalActionsRequired - round.actionsCompleted,
       isComplete: round.actionsCompleted >= round.totalActionsRequired,
-      percentage: Math.round(
-        (round.actionsCompleted / round.totalActionsRequired) * 100
-      ),
+      percentage: Math.round((round.actionsCompleted / round.totalActionsRequired) * 100),
     },
     playersWhoProposed: playersWhoProposed.map((p) => ({
       id: p.id,
@@ -75,11 +73,7 @@ export async function getRound(roundId: string, userId: string) {
   };
 }
 
-export async function submitRoundSummary(
-  roundId: string,
-  userId: string,
-  data: RoundSummaryInput
-) {
+export async function submitRoundSummary(roundId: string, userId: string, data: RoundSummaryInput) {
   const round = await db.round.findUnique({
     where: { id: roundId },
     include: {
@@ -173,9 +167,7 @@ export async function submitRoundSummary(
   });
 
   // Notify players about new round
-  notifyNewRound(round.gameId, round.game.name, nextRound.roundNumber).catch(
-    () => {}
-  );
+  notifyNewRound(round.gameId, round.game.name, nextRound.roundNumber).catch(() => {});
 
   return {
     summary,
@@ -282,6 +274,7 @@ async function createNextRound(gameId: string, roundNumber: number) {
       currentRoundId: newRound.id,
       currentPhase: 'PROPOSAL',
       currentActionId: null,
+      phaseStartedAt: new Date(),
     },
   });
 

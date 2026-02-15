@@ -38,6 +38,10 @@ interface Game {
   personas: Persona[];
   settings: {
     personasRequired?: boolean;
+    proposalTimeoutHours?: number;
+    argumentationTimeoutHours?: number;
+    votingTimeoutHours?: number;
+    narrationTimeoutHours?: number;
   };
 }
 
@@ -85,7 +89,7 @@ export default function GameLobby() {
   });
 
   const updateGameMutation = useMutation({
-    mutationFn: (data: { name: string; description: string | null }) =>
+    mutationFn: (data: { name: string; description: string | null; settings?: Record<string, unknown> }) =>
       api.put(`/games/${gameId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
@@ -93,16 +97,18 @@ export default function GameLobby() {
   });
 
   const updatePersonaMutation = useMutation({
-    mutationFn: ({ personaId, data }: { 
-      personaId: string; 
-      data: { 
-        name?: string; 
+    mutationFn: ({
+      personaId,
+      data,
+    }: {
+      personaId: string;
+      data: {
+        name?: string;
         description?: string | null;
         npcActionDescription?: string | null;
         npcDesiredOutcome?: string | null;
-      } 
-    }) =>
-      api.put(`/games/${gameId}/personas/${personaId}`, data),
+      };
+    }) => api.put(`/games/${gameId}/personas/${personaId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
     },
@@ -122,9 +128,7 @@ export default function GameLobby() {
   // Check if all players have personas (for start validation warning)
   const playersWithoutPersona = game?.players.filter((p) => !p.persona) || [];
   const canStart =
-    game &&
-    game.players.length >= 2 &&
-    (!personasRequired || playersWithoutPersona.length === 0);
+    game && game.players.length >= 2 && (!personasRequired || playersWithoutPersona.length === 0);
 
   const copyInviteLink = () => {
     navigator.clipboard.writeText(inviteLink);
@@ -200,11 +204,7 @@ export default function GameLobby() {
       {/* Game Image Header */}
       {game.imageUrl && (
         <div className="relative w-full h-48 sm:h-64 rounded-lg overflow-hidden">
-          <img
-            src={game.imageUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+          <img src={game.imageUrl} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
             <h1 className="text-3xl font-bold text-white p-6">{game.name}</h1>
           </div>
@@ -267,7 +267,10 @@ export default function GameLobby() {
         <h2 className="font-semibold">Players ({game.players.length})</h2>
         <ul className="space-y-2">
           {game.players.map((player) => (
-            <li key={player.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+            <li
+              key={player.id}
+              className="flex items-center justify-between p-2 bg-muted rounded-md"
+            >
               <div className="flex items-center gap-2">
                 <span>{player.playerName}</span>
                 {player.persona && (
@@ -301,7 +304,9 @@ export default function GameLobby() {
               <div className="p-3 bg-primary/5 border border-primary/20 rounded-md">
                 <div className="font-medium">{currentPlayer.persona.name}</div>
                 {(() => {
-                  const currentPersona = game.personas.find((p) => p.id === currentPlayer.persona?.id);
+                  const currentPersona = game.personas.find(
+                    (p) => p.id === currentPlayer.persona?.id
+                  );
                   if (!currentPersona?.description) return null;
                   return (
                     <RichTextDisplay
@@ -311,7 +316,7 @@ export default function GameLobby() {
                   );
                 })()}
               </div>
-              
+
               {/* Show available personas for direct swapping */}
               {availablePersonas.length > 0 && (
                 <div className="space-y-2">
@@ -319,7 +324,7 @@ export default function GameLobby() {
                   {availablePersonas.map(renderPersonaButton)}
                 </div>
               )}
-              
+
               {/* Option to clear persona selection */}
               <button
                 onClick={() => selectPersonaMutation.mutate(null)}
@@ -353,8 +358,8 @@ export default function GameLobby() {
                   persona.isNpc
                     ? 'bg-amber-100/50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
                     : persona.claimedBy
-                    ? 'bg-muted/50 text-muted-foreground'
-                    : 'bg-muted'
+                      ? 'bg-muted/50 text-muted-foreground'
+                      : 'bg-muted'
                 }`}
               >
                 <div className="flex justify-between items-center">
@@ -368,7 +373,9 @@ export default function GameLobby() {
                   </span>
                   <div className="flex items-center gap-2">
                     {persona.isNpc ? (
-                      <span className="text-xs text-amber-600 dark:text-amber-400">Auto-controlled</span>
+                      <span className="text-xs text-amber-600 dark:text-amber-400">
+                        Auto-controlled
+                      </span>
                     ) : persona.claimedBy ? (
                       <span className="text-xs">{persona.claimedBy.playerName}</span>
                     ) : (
@@ -472,6 +479,7 @@ export default function GameLobby() {
           }}
           initialName={game.name}
           initialDescription={game.description || ''}
+          initialSettings={game.settings}
         />
       )}
 

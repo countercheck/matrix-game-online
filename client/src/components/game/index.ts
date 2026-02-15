@@ -9,6 +9,7 @@ export { RoundSummary } from './RoundSummary';
 export { GameHistory } from './GameHistory';
 export { RoundHistory } from './RoundHistory';
 export { HostControls } from './HostControls';
+export { PhaseCountdown } from './PhaseCountdown';
 export { EditActionModal } from './EditActionModal';
 export { EditArgumentModal } from './EditArgumentModal';
 export { EditNarrationModal } from './EditNarrationModal';

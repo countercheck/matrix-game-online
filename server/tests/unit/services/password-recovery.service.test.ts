@@ -134,7 +134,7 @@ describe('Password Recovery Service', () => {
       const futureDate = new Date(Date.now() + 3600000); // 1 hour from now
       // The token hash that would be stored in DB
       const tokenHash = crypto.createHash('sha256').update('valid-token').digest('hex');
-      
+
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',
@@ -208,7 +208,7 @@ describe('Password Recovery Service', () => {
     it('should clear reset token after successful reset', async () => {
       const futureDate = new Date(Date.now() + 3600000);
       const tokenHash = crypto.createHash('sha256').update('valid-token').digest('hex');
-      
+
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',

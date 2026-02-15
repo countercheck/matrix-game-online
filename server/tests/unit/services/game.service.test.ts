@@ -35,7 +35,11 @@ vi.mock('../../../src/config/database.js', () => ({
 
 import { db } from '../../../src/config/database.js';
 import * as gameService from '../../../src/services/game.service.js';
-import { NotFoundError, ForbiddenError, BadRequestError } from '../../../src/middleware/errorHandler.js';
+import {
+  NotFoundError,
+  ForbiddenError,
+  BadRequestError,
+} from '../../../src/middleware/errorHandler.js';
 
 // Game state machine logic
 type GamePhase =
@@ -231,8 +235,7 @@ describe('Game Service', () => {
         { id: '2', userId: 'user-2', isHost: false },
       ];
 
-      const isHost = (userId: string) =>
-        players.some(p => p.userId === userId && p.isHost);
+      const isHost = (userId: string) => players.some((p) => p.userId === userId && p.isHost);
 
       expect(isHost('user-1')).toBe(true);
       expect(isHost('user-2')).toBe(false);
@@ -246,8 +249,7 @@ describe('Game Service', () => {
         { id: '3', userId: 'user-3', isActive: false },
       ];
 
-      const isMember = (userId: string) =>
-        players.some(p => p.userId === userId && p.isActive);
+      const isMember = (userId: string) => players.some((p) => p.userId === userId && p.isActive);
 
       expect(isMember('user-1')).toBe(true);
       expect(isMember('user-2')).toBe(true);
@@ -272,8 +274,7 @@ describe('Game Service', () => {
     });
 
     it('should validate argument limit range', () => {
-      const validateArgumentLimit = (limit: number) =>
-        limit >= 1 && limit <= 10;
+      const validateArgumentLimit = (limit: number) => limit >= 1 && limit <= 10;
 
       expect(validateArgumentLimit(1)).toBe(true);
       expect(validateArgumentLimit(3)).toBe(true);
@@ -283,8 +284,7 @@ describe('Game Service', () => {
     });
 
     it('should validate timeout hours range', () => {
-      const validateTimeoutHours = (hours: number) =>
-        hours >= 1 && hours <= 72;
+      const validateTimeoutHours = (hours: number) => hours >= 1 && hours <= 72;
 
       expect(validateTimeoutHours(1)).toBe(true);
       expect(validateTimeoutHours(24)).toBe(true);
@@ -302,8 +302,8 @@ describe('Game Service', () => {
         { id: '3', userId: 'user-3', isNpc: true, isActive: true },
       ];
 
-      const npcPlayer = players.find(p => p.isNpc);
-      const humanPlayers = players.filter(p => !p.isNpc && p.isActive);
+      const npcPlayer = players.find((p) => p.isNpc);
+      const humanPlayers = players.filter((p) => !p.isNpc && p.isActive);
 
       expect(npcPlayer).toBeDefined();
       expect(npcPlayer?.id).toBe('3');
@@ -317,7 +317,7 @@ describe('Game Service', () => {
         { id: '3', name: 'Dragon', isNpc: false },
       ];
 
-      const npcPersonas = personas.filter(p => p.isNpc);
+      const npcPersonas = personas.filter((p) => p.isNpc);
       expect(npcPersonas.length).toBe(1);
     });
 
@@ -328,18 +328,17 @@ describe('Game Service', () => {
         { id: '3', name: 'Merchant', isNpc: false, claimedBy: 'player-1' },
       ];
 
-      const availableForPlayers = personas.filter(p => !p.isNpc && !p.claimedBy);
+      const availableForPlayers = personas.filter((p) => !p.isNpc && !p.claimedBy);
       expect(availableForPlayers.length).toBe(1);
       expect(availableForPlayers[0]?.name).toBe('Hero');
     });
 
     it('should calculate NPC momentum correctly', () => {
-      const calculateMomentum = (results: number[]) =>
-        results.reduce((sum, val) => sum + val, 0);
+      const calculateMomentum = (results: number[]) => results.reduce((sum, val) => sum + val, 0);
 
       // Triumph (+3), Success But (+1), Failure But (-1), Disaster (-3)
-      expect(calculateMomentum([3])).toBe(3);      // One triumph
-      expect(calculateMomentum([3, -3])).toBe(0);  // Balanced
+      expect(calculateMomentum([3])).toBe(3); // One triumph
+      expect(calculateMomentum([3, -3])).toBe(0); // Balanced
       expect(calculateMomentum([3, 1, -1])).toBe(3); // Net positive
       expect(calculateMomentum([-3, -3, -1])).toBe(-7); // Net negative
     });
@@ -380,12 +379,10 @@ describe('Game Service', () => {
         { id: '3', isNpc: true },
       ];
 
-      const humanPlayers = players.filter(p => !p.isNpc);
+      const humanPlayers = players.filter((p) => !p.isNpc);
       const argumentationCompletions = ['1', '2']; // Both humans completed
 
-      const allHumansComplete = humanPlayers.every(p =>
-        argumentationCompletions.includes(p.id)
-      );
+      const allHumansComplete = humanPlayers.every((p) => argumentationCompletions.includes(p.id));
 
       expect(humanPlayers.length).toBe(2);
       expect(allHumansComplete).toBe(true);
@@ -402,9 +399,9 @@ describe('Game Service', () => {
         { playerId: '2', voteType: 'LIKELY_FAILURE' },
       ];
 
-      const humanPlayers = players.filter(p => !p.isNpc);
-      const humanVoteCount = votes.filter(v =>
-        humanPlayers.some(p => p.id === v.playerId)
+      const humanPlayers = players.filter((p) => !p.isNpc);
+      const humanVoteCount = votes.filter((v) =>
+        humanPlayers.some((p) => p.id === v.playerId)
       ).length;
 
       expect(humanPlayers.length).toBe(2);
@@ -435,7 +432,8 @@ describe('Game Service', () => {
 
       // NPC actions can be narrated by any player regardless of narration mode
       const isNpcAction = action.initiator.isNpc;
-      const canNarrate = isNpcAction ||
+      const canNarrate =
+        isNpcAction ||
         narrationMode !== 'initiator_only' ||
         action.initiator.userId === requestingUserId;
 
@@ -522,9 +520,7 @@ describe('Game Service', () => {
         name: 'Test Game',
         status: 'COMPLETED',
         deletedAt: null,
-        players: [
-          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
-        ],
+        players: [{ id: 'player-1', userId: 'user-1', isHost: true, isActive: true }],
       };
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
@@ -550,9 +546,7 @@ describe('Game Service', () => {
         name: 'Test Game',
         status: 'LOBBY',
         deletedAt: new Date(),
-        players: [
-          { id: 'player-1', userId: 'user-1', isHost: true, isActive: true },
-        ],
+        players: [{ id: 'player-1', userId: 'user-1', isHost: true, isActive: true }],
       };
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);

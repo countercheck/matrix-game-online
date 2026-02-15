@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/auth.service.js';
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../utils/validators.js';
+import {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from '../utils/validators.js';
 
-export async function register(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = registerSchema.parse(req.body);
     const result = await authService.register(data);
@@ -16,11 +17,7 @@ export async function register(
   }
 }
 
-export async function login(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = loginSchema.parse(req.body);
     const result = await authService.login(data);
@@ -30,11 +27,7 @@ export async function login(
   }
 }
 
-export async function logout(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function logout(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     // For JWT, logout is typically handled client-side by removing the token
     // Server-side, we could maintain a token blacklist if needed
@@ -44,11 +37,7 @@ export async function logout(
   }
 }
 
-export async function refreshToken(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { refreshToken } = req.body;
     const result = await authService.refreshToken(refreshToken);

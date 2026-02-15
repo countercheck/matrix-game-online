@@ -42,11 +42,7 @@ function sanitizeObject(obj: unknown): unknown {
  * Middleware to sanitize request body, query, and params.
  * Escapes HTML entities to prevent XSS attacks.
  */
-export function sanitizeInput(
-  req: Request,
-  _res: Response,
-  next: NextFunction
-): void {
+export function sanitizeInput(req: Request, _res: Response, next: NextFunction): void {
   if (req.body && typeof req.body === 'object') {
     req.body = sanitizeObject(req.body);
   }
@@ -155,11 +151,7 @@ export const uploadRateLimiter = rateLimit({
  * Security headers middleware.
  * Adds common security headers to all responses.
  */
-export function securityHeaders(
-  _req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function securityHeaders(_req: Request, res: Response, next: NextFunction): void {
   // Prevent clickjacking
   res.setHeader('X-Frame-Options', 'DENY');
 
@@ -184,11 +176,7 @@ export function securityHeaders(
 /**
  * Request logging middleware for security auditing.
  */
-export function requestLogger(
-  req: Request,
-  _res: Response,
-  next: NextFunction
-): void {
+export function requestLogger(req: Request, _res: Response, next: NextFunction): void {
   const logData = {
     method: req.method,
     path: req.path,
@@ -217,11 +205,7 @@ export function requestLogger(
  * Note: The deprecated 'csurf' package is not used. This custom header approach
  * is the recommended pattern for modern SPAs with token-based authentication.
  */
-export function csrfProtection(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function csrfProtection(req: Request, res: Response, next: NextFunction): void {
   // Only check state-changing methods
   const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
 

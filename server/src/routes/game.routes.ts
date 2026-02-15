@@ -18,7 +18,13 @@ router.post('/', authenticateToken, gameController.createGame);
 router.get('/:gameId', authenticateToken, gameController.getGame);
 router.put('/:gameId', authenticateToken, gameController.updateGame);
 router.delete('/:gameId', authenticateToken, gameController.deleteGame);
-router.post('/:gameId/image', authenticateToken, uploadRateLimiter, upload.single('image'), gameController.uploadGameImage);
+router.post(
+  '/:gameId/image',
+  authenticateToken,
+  uploadRateLimiter,
+  upload.single('image'),
+  gameController.uploadGameImage
+);
 router.post('/:gameId/join', authenticateToken, gameController.joinGame);
 router.post('/:gameId/select-persona', authenticateToken, gameController.selectPersona);
 router.put('/:gameId/personas/:personaId', authenticateToken, gameController.updatePersona);
@@ -31,6 +37,10 @@ router.post('/:gameId/actions', authenticateToken, gameController.proposeAction)
 
 // Export/import
 router.get('/:gameId/export', authenticateToken, gameController.exportGame);
+
+// Timeout controls
+router.get('/:gameId/timeout-status', authenticateToken, gameController.getTimeoutStatus);
+router.post('/:gameId/extend-timeout', authenticateToken, gameController.extendTimeout);
 
 // Host skip controls
 router.post('/:gameId/skip-proposals', authenticateToken, gameController.skipProposals);

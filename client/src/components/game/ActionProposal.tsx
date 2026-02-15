@@ -66,8 +66,8 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
       <div className="p-6 border rounded-lg bg-muted/50">
         <h2 className="text-lg font-semibold mb-2">Action Proposed</h2>
         <p className="text-muted-foreground">
-          You have already proposed an action this round. Wait for other players to propose
-          their actions, or for the current action to be resolved.
+          You have already proposed an action this round. Wait for other players to propose their
+          actions, or for the current action to be resolved.
         </p>
       </div>
     );
@@ -78,9 +78,7 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
       <h2 className="text-lg font-semibold">Propose an Action</h2>
 
       {error && (
-        <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-          {error}
-        </div>
+        <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>
       )}
 
       <div className="space-y-2">
@@ -112,11 +110,10 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
       </div>
 
       <div className="space-y-3">
-        <label className="text-sm font-medium">
-          Initial Arguments (why this should succeed)
-        </label>
+        <label className="text-sm font-medium">Initial Arguments (why this should succeed)</label>
         <p className="text-xs text-muted-foreground">
-          Provide 1-3 arguments supporting your action. These will form the initial case for success.
+          Provide 1-3 arguments supporting your action. These will form the initial case for
+          success.
         </p>
         {arguments_.map((arg, index) => (
           <div key={index}>

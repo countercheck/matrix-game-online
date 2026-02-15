@@ -47,11 +47,14 @@ if (typeof document !== 'undefined') {
   document.elementFromPoint = vi.fn(() => null);
 
   // Mock getClientRects for all elements
-  Element.prototype.getClientRects = vi.fn(() => ({
-    length: 0,
-    item: () => null,
-    [Symbol.iterator]: function* () {},
-  } as DOMRectList));
+  Element.prototype.getClientRects = vi.fn(
+    () =>
+      ({
+        length: 0,
+        item: () => null,
+        [Symbol.iterator]: function* () {},
+      }) as DOMRectList
+  );
 
   // Mock getBoundingClientRect for all elements
   Element.prototype.getBoundingClientRect = vi.fn(() => ({
@@ -84,9 +87,12 @@ if (typeof Range !== 'undefined') {
     toJSON: () => {},
   }));
 
-  Range.prototype.getClientRects = vi.fn(() => ({
-    length: 0,
-    item: () => null,
-    [Symbol.iterator]: function* () {},
-  } as DOMRectList));
+  Range.prototype.getClientRects = vi.fn(
+    () =>
+      ({
+        length: 0,
+        item: () => null,
+        [Symbol.iterator]: function* () {},
+      }) as DOMRectList
+  );
 }

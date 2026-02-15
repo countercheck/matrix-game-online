@@ -7,7 +7,11 @@ const router = Router();
 router.get('/:actionId', authenticateToken, actionController.getAction);
 router.post('/:actionId/arguments', authenticateToken, actionController.addArgument);
 router.get('/:actionId/arguments', authenticateToken, actionController.getArguments);
-router.post('/:actionId/complete-argumentation', authenticateToken, actionController.completeArgumentation);
+router.post(
+  '/:actionId/complete-argumentation',
+  authenticateToken,
+  actionController.completeArgumentation
+);
 router.post('/:actionId/votes', authenticateToken, actionController.submitVote);
 router.get('/:actionId/votes', authenticateToken, actionController.getVotes);
 router.post('/:actionId/draw', authenticateToken, actionController.drawTokens);

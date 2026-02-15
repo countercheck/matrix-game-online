@@ -1,12 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import * as actionService from '../services/action.service.js';
-import { argumentSchema, voteSchema, narrationSchema, updateActionSchema, updateArgumentSchema, updateNarrationSchema } from '../utils/validators.js';
+import {
+  argumentSchema,
+  voteSchema,
+  narrationSchema,
+  updateActionSchema,
+  updateArgumentSchema,
+  updateNarrationSchema,
+} from '../utils/validators.js';
 
-export async function getAction(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getAction(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;
@@ -17,11 +20,7 @@ export async function getAction(
   }
 }
 
-export async function addArgument(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function addArgument(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;
@@ -33,11 +32,7 @@ export async function addArgument(
   }
 }
 
-export async function getArguments(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getArguments(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;
@@ -63,11 +58,7 @@ export async function completeArgumentation(
   }
 }
 
-export async function submitVote(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function submitVote(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;
@@ -79,11 +70,7 @@ export async function submitVote(
   }
 }
 
-export async function getVotes(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getVotes(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;
@@ -94,11 +81,7 @@ export async function getVotes(
   }
 }
 
-export async function drawTokens(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function drawTokens(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;
@@ -140,11 +123,7 @@ export async function submitNarration(
   }
 }
 
-export async function getNarration(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getNarration(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;
@@ -170,11 +149,7 @@ export async function skipArgumentation(
   }
 }
 
-export async function skipVoting(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function skipVoting(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;
@@ -185,11 +160,7 @@ export async function skipVoting(
   }
 }
 
-export async function updateAction(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function updateAction(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const actionId = req.params.actionId as string;
     const userId = req.user!.id;

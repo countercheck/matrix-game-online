@@ -29,7 +29,9 @@ function Section({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {isOpen && <div className="px-4 pb-4 space-y-3 text-sm text-muted-foreground">{children}</div>}
+      {isOpen && (
+        <div className="px-4 pb-4 space-y-3 text-sm text-muted-foreground">{children}</div>
+      )}
     </section>
   );
 }
@@ -57,8 +59,8 @@ export default function Help() {
       <Section title="Getting Started">
         <ul className="list-disc pl-5 space-y-2">
           <li>
-            <strong className="text-foreground">Create a game:</strong> Click &quot;Create Game&quot;
-            from the dashboard. Give your game a name and optional description.
+            <strong className="text-foreground">Create a game:</strong> Click &quot;Create
+            Game&quot; from the dashboard. Give your game a name and optional description.
           </li>
           <li>
             <strong className="text-foreground">Invite players:</strong> Share the invite link with
@@ -235,7 +237,9 @@ export default function Help() {
         <dl className="space-y-3">
           <div>
             <dt className="font-semibold text-foreground">Host</dt>
-            <dd>The player who created the game. The host can start the game and manage settings.</dd>
+            <dd>
+              The player who created the game. The host can start the game and manage settings.
+            </dd>
           </div>
           <div>
             <dt className="font-semibold text-foreground">Round</dt>

@@ -74,11 +74,7 @@ describe('Register Page', () => {
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     await waitFor(() => {
-      expect(mockRegister).toHaveBeenCalledWith(
-        'john@example.com',
-        'Password123',
-        'John Doe'
-      );
+      expect(mockRegister).toHaveBeenCalledWith('john@example.com', 'Password123', 'John Doe');
     });
   });
 

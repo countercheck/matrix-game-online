@@ -14,33 +14,39 @@ Thank you for your interest in contributing!
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/countercheck/matrix-game-online.git
    cd matrix-game-online
    ```
 
 2. **Start PostgreSQL** (using Docker)
+
    ```bash
    docker-compose up -d
    ```
 
 3. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 4. **Set up environment**
+
    ```bash
    cp server/.env.example server/.env
    # Edit server/.env with your database credentials
    ```
 
 5. **Run database migrations**
+
    ```bash
    pnpm db:migrate
    ```
 
 6. **Start development servers**
+
    ```bash
    pnpm dev
    ```
@@ -177,12 +183,14 @@ npm test -- --watch
 ## Documentation
 
 Update documentation when:
+
 - Adding new features
 - Changing API endpoints
 - Modifying database schema
 - Updating configuration options
 
 Key documentation files:
+
 - `README.md` - Project overview
 - `docs/API.md` - API reference
 - `docs/DEPLOYMENT.md` - Deployment guide

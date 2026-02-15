@@ -3,7 +3,8 @@ import { z } from 'zod';
 // Auth schemas
 export const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string()
+  password: z
+    .string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -22,7 +23,8 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
-  newPassword: z.string()
+  newPassword: z
+    .string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -47,41 +49,65 @@ export const notificationPreferencesSchema = z.object({
 });
 
 // Persona schema
-export const personaSchema = z.object({
-  name: z.string()
-    .min(1, 'Persona name is required')
-    .max(100, 'Persona name must be 100 characters or less'),
-  description: z.string()
-    .max(1800, 'Persona description must be 1800 characters or less')
-    .optional(),
-  isNpc: z.boolean().default(false),
-  npcActionDescription: z.string()
-    .max(1800, 'NPC action description must be 1800 characters or less')
-    .optional(),
-  npcDesiredOutcome: z.string()
-    .max(1200, 'NPC desired outcome must be 1200 characters or less')
-    .optional(),
-}).superRefine((data, ctx) => {
-  if (data.isNpc) {
-    const desc = data.npcActionDescription;
-    if (!desc || desc.trim().length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['npcActionDescription'],
-        message: 'NPC action description is required and must contain meaningful content when isNpc is true.',
-      });
+export const personaSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, 'Persona name is required')
+      .max(100, 'Persona name must be 100 characters or less'),
+    description: z
+      .string()
+      .max(1800, 'Persona description must be 1800 characters or less')
+      .optional(),
+    isNpc: z.boolean().default(false),
+    npcActionDescription: z
+      .string()
+      .max(1800, 'NPC action description must be 1800 characters or less')
+      .optional(),
+    npcDesiredOutcome: z
+      .string()
+      .max(1200, 'NPC desired outcome must be 1200 characters or less')
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isNpc) {
+      const desc = data.npcActionDescription;
+      if (!desc || desc.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['npcActionDescription'],
+          message:
+            'NPC action description is required and must contain meaningful content when isNpc is true.',
+        });
+      }
     }
-  }
-});
+  });
 
 // Game schemas
 export const createGameSchema = z.object({
-  name: z.string().min(1, 'Game name is required').max(100, 'Game name must be 100 characters or less'),
+  name: z
+    .string()
+    .min(1, 'Game name is required')
+    .max(100, 'Game name must be 100 characters or less'),
   description: z.string().max(3600).optional(),
   settings: z.object({
     argumentLimit: z.number().int().min(1).max(10).default(3),
-    argumentationTimeoutHours: z.number().int().min(1).max(72).default(24),
-    votingTimeoutHours: z.number().int().min(1).max(72).default(24),
+    proposalTimeoutHours: z.union([
+      z.literal(-1),
+      z.number().int().min(1).max(168),
+    ]).default(-1),
+    argumentationTimeoutHours: z.union([
+      z.literal(-1),
+      z.number().int().min(1).max(168),
+    ]).default(-1),
+    votingTimeoutHours: z.union([
+      z.literal(-1),
+      z.number().int().min(1).max(168),
+    ]).default(-1),
+    narrationTimeoutHours: z.union([
+      z.literal(-1),
+      z.number().int().min(1).max(168),
+    ]).default(-1),
     narrationMode: z.enum(['initiator_only', 'collaborative']).default('initiator_only'),
     personasRequired: z.boolean().default(false),
   }).optional(),
@@ -97,48 +123,64 @@ export const selectPersonaSchema = z.object({
   personaId: z.string().uuid('Invalid persona ID').nullable(),
 });
 
-export const updatePersonaSchema = z.object({
-  name: z.string()
-    .min(1, 'Persona name is required')
-    .max(50, 'Persona name must be 50 characters or less')
-    .optional(),
-  description: z.string()
-    .max(1800, 'Persona description must be 1800 characters or less')
-    .optional()
-    .nullable(),
-  npcActionDescription: z.string()
-    .max(1800, 'NPC action description must be 1800 characters or less')
-    .transform(val => val?.trim() || null)
-    .optional()
-    .nullable(),
-  npcDesiredOutcome: z.string()
-    .max(1200, 'NPC desired outcome must be 1200 characters or less')
-    .transform(val => val?.trim() || null)
-    .optional()
-    .nullable(),
-}).refine(
-  (data) =>
-    data.name !== undefined ||
-    data.description !== undefined ||
-    data.npcActionDescription !== undefined ||
-    data.npcDesiredOutcome !== undefined,
-  {
-    message: 'At least one field must be provided to update persona',
-  }
-);
+export const updatePersonaSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, 'Persona name is required')
+      .max(50, 'Persona name must be 50 characters or less')
+      .optional(),
+    description: z
+      .string()
+      .max(1800, 'Persona description must be 1800 characters or less')
+      .optional()
+      .nullable(),
+    npcActionDescription: z
+      .string()
+      .max(1800, 'NPC action description must be 1800 characters or less')
+      .transform((val) => val?.trim() || null)
+      .optional()
+      .nullable(),
+    npcDesiredOutcome: z
+      .string()
+      .max(1200, 'NPC desired outcome must be 1200 characters or less')
+      .transform((val) => val?.trim() || null)
+      .optional()
+      .nullable(),
+  })
+  .refine(
+    (data) =>
+      data.name !== undefined ||
+      data.description !== undefined ||
+      data.npcActionDescription !== undefined ||
+      data.npcDesiredOutcome !== undefined,
+    {
+      message: 'At least one field must be provided to update persona',
+    }
+  );
 
 // Action schemas
 export const actionProposalSchema = z.object({
-  actionDescription: z.string().min(1, 'Action description is required').max(1800, 'Action description must be 1800 characters or less'),
-  desiredOutcome: z.string().min(1, 'Desired outcome is required').max(1200, 'Desired outcome must be 1200 characters or less'),
-  initialArguments: z.array(
-    z.string().min(1).max(900, 'Each argument must be 900 characters or less')
-  ).min(1, 'At least one argument is required').max(3, 'Maximum 3 initial arguments'),
+  actionDescription: z
+    .string()
+    .min(1, 'Action description is required')
+    .max(1800, 'Action description must be 1800 characters or less'),
+  desiredOutcome: z
+    .string()
+    .min(1, 'Desired outcome is required')
+    .max(1200, 'Desired outcome must be 1200 characters or less'),
+  initialArguments: z
+    .array(z.string().min(1).max(900, 'Each argument must be 900 characters or less'))
+    .min(1, 'At least one argument is required')
+    .max(3, 'Maximum 3 initial arguments'),
 });
 
 export const argumentSchema = z.object({
   argumentType: z.enum(['FOR', 'AGAINST', 'CLARIFICATION']),
-  content: z.string().min(1, 'Argument content is required').max(900, 'Argument must be 900 characters or less'),
+  content: z
+    .string()
+    .min(1, 'Argument content is required')
+    .max(900, 'Argument must be 900 characters or less'),
 });
 
 export const voteSchema = z.object({
@@ -146,38 +188,64 @@ export const voteSchema = z.object({
 });
 
 export const narrationSchema = z.object({
-  content: z.string().min(1, 'Narration is required').max(3600, 'Narration must be 3600 characters or less'),
+  content: z
+    .string()
+    .min(1, 'Narration is required')
+    .max(3600, 'Narration must be 3600 characters or less'),
 });
 
 export const roundSummarySchema = z.object({
-  content: z.string().min(1, 'Summary is required').max(7500, 'Summary must be 7500 characters or less'),
-  outcomes: z.object({
-    totalTriumphs: z.number().int().min(0).optional(),
-    totalDisasters: z.number().int().min(0).optional(),
-    netMomentum: z.number().int().optional(),
-    keyEvents: z.array(z.string()).max(10).optional(),
-  }).optional(),
+  content: z
+    .string()
+    .min(1, 'Summary is required')
+    .max(7500, 'Summary must be 7500 characters or less'),
+  outcomes: z
+    .object({
+      totalTriumphs: z.number().int().min(0).optional(),
+      totalDisasters: z.number().int().min(0).optional(),
+      netMomentum: z.number().int().optional(),
+      keyEvents: z.array(z.string()).max(10).optional(),
+    })
+    .optional(),
 });
 
 // Host edit schemas
-export const updateActionSchema = z.object({
-  actionDescription: z.string().min(1, 'Action description is required').max(1800, 'Action description must be 1800 characters or less').optional(),
-  desiredOutcome: z.string().min(1, 'Desired outcome is required').max(1200, 'Desired outcome must be 1200 characters or less').optional(),
-}).refine(
-  (data) => data.actionDescription !== undefined || data.desiredOutcome !== undefined,
-  { message: 'At least one field must be provided' }
-);
+export const updateActionSchema = z
+  .object({
+    actionDescription: z
+      .string()
+      .min(1, 'Action description is required')
+      .max(1800, 'Action description must be 1800 characters or less')
+      .optional(),
+    desiredOutcome: z
+      .string()
+      .min(1, 'Desired outcome is required')
+      .max(1200, 'Desired outcome must be 1200 characters or less')
+      .optional(),
+  })
+  .refine((data) => data.actionDescription !== undefined || data.desiredOutcome !== undefined, {
+    message: 'At least one field must be provided',
+  });
 
 export const updateArgumentSchema = z.object({
-  content: z.string().min(1, 'Argument content is required').max(900, 'Argument must be 900 characters or less'),
+  content: z
+    .string()
+    .min(1, 'Argument content is required')
+    .max(900, 'Argument must be 900 characters or less'),
 });
 
 export const updateNarrationSchema = z.object({
-  content: z.string().min(1, 'Narration is required').max(3600, 'Narration must be 3600 characters or less'),
+  content: z
+    .string()
+    .min(1, 'Narration is required')
+    .max(3600, 'Narration must be 3600 characters or less'),
 });
 
 export const updateRoundSummarySchema = z.object({
-  content: z.string().min(1, 'Summary is required').max(7500, 'Summary must be 7500 characters or less'),
+  content: z
+    .string()
+    .min(1, 'Summary is required')
+    .max(7500, 'Summary must be 7500 characters or less'),
 });
 
 // Type exports

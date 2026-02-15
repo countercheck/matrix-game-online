@@ -1,4 +1,5 @@
 # Technical Specification
+
 ## Mosaic Strict Matrix Game - Web Application v1.0
 
 **Document Version:** 1.0  
@@ -60,6 +61,7 @@
 ### 1.2 Technology Stack
 
 **Frontend:**
+
 - Framework: React 18+ (with TypeScript)
 - Build Tool: Vite
 - State Management: React Query (TanStack Query)
@@ -69,6 +71,7 @@
 - HTTP Client: Axios
 
 **Backend:**
+
 - Runtime: Node.js 20 LTS
 - Framework: Express.js 4.x
 - Language: TypeScript
@@ -78,16 +81,19 @@
 - Email: Nodemailer + SendGrid/AWS SES
 
 **Database:**
+
 - Primary: PostgreSQL 14+
 - Cache: Redis 7+ (optional for v1, recommended for production)
 
 **DevOps:**
+
 - Hosting: Railway, Render, or AWS (EC2 + RDS)
 - CI/CD: GitHub Actions
 - Containerization: Docker + Docker Compose
 - Monitoring: Sentry (errors), LogTail (logs)
 
 **Development:**
+
 - Version Control: Git + GitHub
 - Package Manager: pnpm
 - Code Quality: ESLint, Prettier
@@ -157,16 +163,19 @@ src/
 ### 2.2 State Management Strategy
 
 **React Query for Server State:**
+
 - All API data fetched via React Query
 - Automatic caching, refetching, and invalidation
 - Optimistic updates for better UX
 
 **Context API for Global UI State:**
+
 - Auth context (user, login/logout)
 - Theme context (optional)
 - Notification context
 
 **Local State (useState):**
+
 - Form inputs
 - UI toggles (modals, dropdowns)
 - Ephemeral state
@@ -188,7 +197,7 @@ export function useAction(actionId: string) {
 
 export function useSubmitVote() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: VoteSubmission) => api.submitVote(data),
     onSuccess: (_, variables) => {
@@ -428,6 +437,7 @@ GET    /api/actions/:actionId/narration        Get narration
 ### 3.3 API Response Format
 
 **Success Response:**
+
 ```typescript
 {
   success: true,
@@ -441,6 +451,7 @@ GET    /api/actions/:actionId/narration        Get narration
 ```
 
 **Error Response:**
+
 ```typescript
 {
   success: false,
@@ -502,13 +513,9 @@ export async function proposeAction(req: Request, res: Response) {
 
 ```typescript
 // middleware/auth.middleware.ts
-export async function authenticateToken(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function authenticateToken(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.split(' ')[1];
-  
+
   if (!token) {
     throw new UnauthorizedError('No token provided');
   }
@@ -516,7 +523,7 @@ export async function authenticateToken(
   try {
     const payload = jwt.verify(token, config.jwtSecret) as JWTPayload;
     const user = await userService.findById(payload.userId);
-    
+
     if (!user) {
       throw new UnauthorizedError('User not found');
     }
@@ -529,16 +536,12 @@ export async function authenticateToken(
 }
 
 // Authorization middleware
-export function requireGameMembership(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export function requireGameMembership(req: Request, res: Response, next: NextFunction) {
   const { gameId } = req.params;
   const userId = req.user!.id;
 
   const isMember = await gameService.isPlayerInGame(gameId, userId);
-  
+
   if (!isMember) {
     throw new ForbiddenError('Not a member of this game');
   }
@@ -559,10 +562,7 @@ export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS);
 }
 
-export async function verifyPassword(
-  password: string,
-  hash: string
-): Promise<boolean> {
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
 ```
@@ -591,28 +591,28 @@ interface DrawResult {
 export async function drawTokens(pool: TokenPool): Promise<DrawResult> {
   // Generate random seed for auditability
   const seed = randomBytes(32).toString('hex');
-  
+
   // Create array representing token pool
   const tokens: ('S' | 'F')[] = [
     ...Array(pool.successTokens).fill('S'),
     ...Array(pool.failureTokens).fill('F'),
   ];
-  
+
   // Fisher-Yates shuffle with crypto randomness
   for (let i = tokens.length - 1; i > 0; i--) {
     const j = getSecureRandomInt(0, i + 1);
     [tokens[i], tokens[j]] = [tokens[j], tokens[i]];
   }
-  
+
   // Draw first 3 tokens
   const drawn = tokens.slice(0, 3);
-  const drawnSuccess = drawn.filter(t => t === 'S').length;
+  const drawnSuccess = drawn.filter((t) => t === 'S').length;
   const drawnFailure = 3 - drawnSuccess;
-  
+
   // Calculate result
-  const resultValue = (drawnSuccess * 2) - 3; // Maps to -3, -1, +1, +3
+  const resultValue = drawnSuccess * 2 - 3; // Maps to -3, -1, +1, +3
   const resultType = getResultType(drawnSuccess, drawnFailure);
-  
+
   return {
     drawnSuccess,
     drawnFailure,
@@ -626,13 +626,13 @@ function getSecureRandomInt(min: number, max: number): number {
   const range = max - min + 1;
   const bytesNeeded = Math.ceil(Math.log2(range) / 8);
   const maxValid = Math.floor(256 ** bytesNeeded / range) * range - 1;
-  
+
   let randomInt;
   do {
     const randomBytes = crypto.randomBytes(bytesNeeded);
     randomInt = randomBytes.readUIntBE(0, bytesNeeded);
   } while (randomInt > maxValid);
-  
+
   return min + (randomInt % range);
 }
 
@@ -650,9 +650,9 @@ function getResultType(success: number, failure: number): DrawResult['resultType
 
 ```typescript
 // services/game.service.ts
-type GamePhase = 
+type GamePhase =
   | 'WAITING'
-  | 'PROPOSAL' 
+  | 'PROPOSAL'
   | 'ARGUMENTATION'
   | 'VOTING'
   | 'RESOLUTION'
@@ -669,47 +669,39 @@ const VALID_TRANSITIONS: Record<GamePhase, GamePhase[]> = {
   ROUND_SUMMARY: ['PROPOSAL'], // After summary, start new round
 };
 
-export async function transitionPhase(
-  gameId: string,
-  newPhase: GamePhase
-): Promise<void> {
+export async function transitionPhase(gameId: string, newPhase: GamePhase): Promise<void> {
   const game = await db.game.findUnique({ where: { id: gameId } });
-  
+
   if (!game) {
     throw new NotFoundError('Game not found');
   }
-  
+
   // Validate transition
   const validNextPhases = VALID_TRANSITIONS[game.currentPhase];
   if (!validNextPhases.includes(newPhase)) {
-    throw new BadRequestError(
-      `Cannot transition from ${game.currentPhase} to ${newPhase}`
-    );
+    throw new BadRequestError(`Cannot transition from ${game.currentPhase} to ${newPhase}`);
   }
-  
+
   // Update game
   await db.game.update({
     where: { id: gameId },
-    data: { 
+    data: {
       currentPhase: newPhase,
       updatedAt: new Date(),
     },
   });
-  
+
   // Log event
   await logGameEvent(gameId, 'PHASE_CHANGED', {
     from: game.currentPhase,
     to: newPhase,
   });
-  
+
   // Handle phase-specific logic
   await handlePhaseTransition(gameId, newPhase);
 }
 
-async function handlePhaseTransition(
-  gameId: string,
-  phase: GamePhase
-): Promise<void> {
+async function handlePhaseTransition(gameId: string, phase: GamePhase): Promise<void> {
   switch (phase) {
     case 'ARGUMENTATION':
       await scheduleTimeout(gameId, 'ARGUMENTATION', 24 * 60 * 60 * 1000);
@@ -738,10 +730,10 @@ import { CronJob } from 'cron';
 // Run every 5 minutes
 export const timeoutWorker = new CronJob('*/5 * * * *', async () => {
   console.log('Checking for timed-out phases...');
-  
+
   const now = new Date();
   const timeoutThreshold = 24 * 60 * 60 * 1000; // 24 hours
-  
+
   // Find actions in argumentation that timed out
   const timedOutArgumentation = await db.action.findMany({
     where: {
@@ -752,11 +744,11 @@ export const timeoutWorker = new CronJob('*/5 * * * *', async () => {
     },
     include: { game: true },
   });
-  
+
   for (const action of timedOutArgumentation) {
     await handleArgumentationTimeout(action);
   }
-  
+
   // Find actions in voting that timed out
   const timedOutVoting = await db.action.findMany({
     where: {
@@ -767,7 +759,7 @@ export const timeoutWorker = new CronJob('*/5 * * * *', async () => {
     },
     include: { game: true },
   });
-  
+
   for (const action of timedOutVoting) {
     await handleVotingTimeout(action);
   }
@@ -788,16 +780,14 @@ async function handleVotingTimeout(action: Action): Promise<void> {
     where: { id: action.gameId },
     include: { players: true },
   });
-  
+
   const votes = await db.vote.findMany({
     where: { actionId: action.id },
   });
-  
-  const votedPlayerIds = votes.map(v => v.playerId);
-  const missingPlayers = game.players.filter(
-    p => !votedPlayerIds.includes(p.id)
-  );
-  
+
+  const votedPlayerIds = votes.map((v) => v.playerId);
+  const missingPlayers = game.players.filter((p) => !votedPlayerIds.includes(p.id));
+
   // Cast default "UNCERTAIN" votes for missing players
   for (const player of missingPlayers) {
     await db.vote.create({
@@ -810,7 +800,7 @@ async function handleVotingTimeout(action: Action): Promise<void> {
       },
     });
   }
-  
+
   // Transition to resolution
   await gameService.transitionPhase(action.gameId, 'RESOLUTION');
   await logGameEvent(action.gameId, 'TIMEOUT_TRIGGERED', {
@@ -852,7 +842,7 @@ export async function sendActionRequiredEmail(
     
     Happy gaming!
   `;
-  
+
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: user.email,
@@ -869,18 +859,18 @@ export async function notifyPlayersArgumentationStarted(
 ): Promise<void> {
   const game = await db.game.findUnique({
     where: { id: gameId },
-    include: { 
-      players: { 
+    include: {
+      players: {
         where: { isActive: true },
         include: { user: true },
       },
     },
   });
-  
+
   const action = await db.action.findUnique({
     where: { id: actionId },
   });
-  
+
   for (const player of game.players) {
     if (player.user.notificationPreferences.email !== false) {
       await sendActionRequiredEmail(
@@ -906,20 +896,20 @@ import { z } from 'zod';
 export const createGameSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(1000).optional(),
-  settings: z.object({
-    argumentLimit: z.number().int().min(1).max(10).default(3),
-    argumentationTimeoutHours: z.number().int().min(1).max(72).default(24),
-    votingTimeoutHours: z.number().int().min(1).max(72).default(24),
-    narrationMode: z.enum(['initiator_only', 'collaborative']).default('initiator_only'),
-  }).optional(),
+  settings: z
+    .object({
+      argumentLimit: z.number().int().min(1).max(10).default(3),
+      argumentationTimeoutHours: z.number().int().min(1).max(72).default(24),
+      votingTimeoutHours: z.number().int().min(1).max(72).default(24),
+      narrationMode: z.enum(['initiator_only', 'collaborative']).default('initiator_only'),
+    })
+    .optional(),
 });
 
 export const actionProposalSchema = z.object({
   actionDescription: z.string().min(1).max(500),
   desiredOutcome: z.string().min(1).max(300),
-  initialArguments: z.array(
-    z.string().min(1).max(200)
-  ).min(1).max(3),
+  initialArguments: z.array(z.string().min(1).max(200)).min(1).max(3),
 });
 
 export const argumentSchema = z.object({
@@ -937,12 +927,14 @@ export const narrationSchema = z.object({
 
 export const roundSummarySchema = z.object({
   content: z.string().min(1).max(2000),
-  outcomes: z.object({
-    totalTriumphs: z.number().int().min(0).optional(),
-    totalDisasters: z.number().int().min(0).optional(),
-    netMomentum: z.number().int().optional(),
-    keyEvents: z.array(z.string()).max(10).optional(),
-  }).optional(),
+  outcomes: z
+    .object({
+      totalTriumphs: z.number().int().min(0).optional(),
+      totalDisasters: z.number().int().min(0).optional(),
+      netMomentum: z.number().int().optional(),
+      keyEvents: z.array(z.string()).max(10).optional(),
+    })
+    .optional(),
 });
 
 // Validation middleware
@@ -977,34 +969,34 @@ describe('Token Service', () => {
     it('should draw exactly 3 tokens', async () => {
       const pool = { successTokens: 5, failureTokens: 5 };
       const result = await drawTokens(pool);
-      
+
       expect(result.drawnSuccess + result.drawnFailure).toBe(3);
     });
-    
+
     it('should return TRIUMPH for 3 success tokens', async () => {
       // Mock pool with only success tokens
       const pool = { successTokens: 10, failureTokens: 0 };
       const result = await drawTokens(pool);
-      
+
       expect(result.drawnSuccess).toBe(3);
       expect(result.resultType).toBe('TRIUMPH');
       expect(result.resultValue).toBe(3);
     });
-    
+
     it('should return DISASTER for 3 failure tokens', async () => {
       const pool = { successTokens: 0, failureTokens: 10 };
       const result = await drawTokens(pool);
-      
+
       expect(result.drawnFailure).toBe(3);
       expect(result.resultType).toBe('DISASTER');
       expect(result.resultValue).toBe(-3);
     });
-    
+
     it('should generate unique seeds', async () => {
       const pool = { successTokens: 5, failureTokens: 5 };
       const result1 = await drawTokens(pool);
       const result2 = await drawTokens(pool);
-      
+
       expect(result1.seed).not.toBe(result2.seed);
     });
   });
@@ -1024,34 +1016,30 @@ describe('Action API', () => {
   beforeAll(async () => {
     await setupTestDb();
   });
-  
+
   afterAll(async () => {
     await teardownTestDb();
   });
-  
+
   it('should create action proposal', async () => {
     const game = await createTestGame();
     const user = await createTestUser();
     const token = generateTestToken(user);
-    
+
     const response = await request(app)
       .post(`/api/games/${game.id}/actions`)
       .set('Authorization', `Bearer ${token}`)
       .send({
         actionDescription: 'Attack the enemy fortress',
         desiredOutcome: 'Fortress is captured',
-        initialArguments: [
-          'We have superior numbers',
-          'Element of surprise',
-          'Better equipment',
-        ],
+        initialArguments: ['We have superior numbers', 'Element of surprise', 'Better equipment'],
       });
-    
+
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(response.body.data.status).toBe('ARGUING');
   });
-  
+
   it('should enforce voting after all players vote', async () => {
     // Test implementation...
   });
@@ -1068,53 +1056,53 @@ test('complete action resolution flow', async ({ page, context }) => {
   // Create two users
   const page1 = page;
   const page2 = await context.newPage();
-  
+
   // User 1: Create game
   await page1.goto('/');
   await page1.click('text=Create Game');
   await page1.fill('[name=gameName]', 'Test Game');
   await page1.click('text=Create');
-  
+
   // Get invite link
   const inviteLink = await page1.locator('[data-testid=invite-link]').textContent();
-  
+
   // User 2: Join game
   await page2.goto(inviteLink);
   await page2.fill('[name=playerName]', 'Player 2');
   await page2.click('text=Join');
-  
+
   // User 1: Start game
   await page1.click('text=Start Game');
-  
+
   // User 1: Propose action
   await page1.fill('[name=actionDescription]', 'Attack fortress');
   await page1.fill('[name=desiredOutcome]', 'Victory');
   await page1.fill('[name=argument1]', 'We have numbers');
   await page1.click('text=Propose Action');
-  
+
   // Both users: Add arguments
   await page2.click('text=Add Argument');
   await page2.fill('[name=content]', 'Enemy has fortifications');
   await page2.select('[name=type]', 'AGAINST');
   await page2.click('text=Submit');
   await page2.click('text=Done Arguing');
-  
+
   await page1.click('text=Done Arguing');
-  
+
   // Both users: Vote
   await page1.click('[data-testid=vote-likely-success]');
   await page2.click('[data-testid=vote-uncertain]');
-  
+
   // User 1: Draw tokens
   await page1.click('text=Draw Tokens');
-  
+
   // Verify result displayed
   await expect(page1.locator('[data-testid=result]')).toBeVisible();
-  
+
   // User 1: Narrate
   await page1.fill('[name=narration]', 'We captured the fortress!');
   await page1.click('text=Submit Narration');
-  
+
   // Verify action complete
   await expect(page1.locator('text=Attack fortress')).toBeVisible();
   await expect(page1.locator('text=We captured the fortress!')).toBeVisible();
@@ -1148,7 +1136,7 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
     }
     return obj;
   };
-  
+
   req.body = sanitizeObject(req.body);
   next();
 }
@@ -1208,6 +1196,7 @@ export function addCsrfToken(req: Request, res: Response, next: NextFunction) {
 ### 7.1 Docker Configuration
 
 **Dockerfile:**
+
 ```dockerfile
 # Backend Dockerfile
 FROM node:20-alpine AS builder
@@ -1239,6 +1228,7 @@ CMD ["node", "dist/index.js"]
 ```
 
 **docker-compose.yml:**
+
 ```yaml
 version: '3.8'
 
@@ -1252,12 +1242,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
   api:
     build:
@@ -1272,7 +1262,7 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       - postgres
       - redis
@@ -1282,7 +1272,7 @@ services:
       context: ./client
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - '80:80'
     depends_on:
       - api
 
@@ -1293,6 +1283,7 @@ volumes:
 ### 7.2 Environment Variables
 
 **.env.example:**
+
 ```bash
 # Application
 NODE_ENV=production
@@ -1325,6 +1316,7 @@ RATE_LIMIT_MAX_REQUESTS=100
 ### 7.3 CI/CD Pipeline (GitHub Actions)
 
 **.github/workflows/deploy.yml:**
+
 ```yaml
 name: Deploy
 
@@ -1342,13 +1334,13 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install
-      
+
       - name: Run tests
         run: pnpm test
-      
+
       - name: Run linter
         run: pnpm lint
 
@@ -1357,7 +1349,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Deploy to Railway
         run: |
           npm install -g @railway/cli
@@ -1390,9 +1382,11 @@ export const logger = winston.createLogger({
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple(),
-  }));
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    })
+  );
 }
 
 // Usage
@@ -1413,12 +1407,7 @@ Sentry.init({
 });
 
 // Error handler middleware
-export function sentryErrorHandler(
-  err: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export function sentryErrorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
   Sentry.captureException(err, {
     user: req.user ? { id: req.user.id, email: req.user.email } : undefined,
     extra: {
@@ -1427,7 +1416,7 @@ export function sentryErrorHandler(
       query: req.query,
     },
   });
-  
+
   next(err);
 }
 ```
@@ -1503,11 +1492,7 @@ export async function getCachedGame(gameId: string): Promise<Game | null> {
 }
 
 export async function setCachedGame(game: Game): Promise<void> {
-  await redis.setex(
-    `game:${game.id}`,
-    CACHE_TTL.GAME,
-    JSON.stringify(game)
-  );
+  await redis.setex(`game:${game.id}`, CACHE_TTL.GAME, JSON.stringify(game));
 }
 
 export async function invalidateGameCache(gameId: string): Promise<void> {
@@ -1522,6 +1507,7 @@ export async function invalidateGameCache(gameId: string): Promise<void> {
 ### 10.1 Differences from Tabletop
 
 **Advantages of Digital:**
+
 - Automated token management
 - Automatic result calculation
 - Complete game history/audit trail
@@ -1529,6 +1515,7 @@ export async function invalidateGameCache(gameId: string): Promise<void> {
 - No physical components needed
 
 **Considerations:**
+
 - Must maintain "feel" of physical randomness
 - Ensure transparency in token drawing
 - Preserve social deliberation aspects
@@ -1537,6 +1524,7 @@ export async function invalidateGameCache(gameId: string): Promise<void> {
 ### 10.2 Tutorial/Onboarding
 
 Create interactive tutorial that walks through:
+
 1. Action proposal
 2. Argumentation
 3. Voting mechanics
@@ -1548,21 +1536,25 @@ Create interactive tutorial that walks through:
 ## Appendix A: Technology Alternatives
 
 **Frontend Framework:**
+
 - React (recommended) - Large ecosystem, excellent TypeScript support
 - Vue 3 - Simpler learning curve, good TypeScript support
 - Svelte - Smaller bundle size, less tooling overhead
 
 **Backend Framework:**
+
 - Express (recommended) - Battle-tested, huge ecosystem
 - Fastify - Better performance, similar API
 - NestJS - More opinionated, better for large teams
 
 **Database:**
+
 - PostgreSQL (recommended) - Best for relational data, JSON support
 - MySQL - Slightly simpler, wide hosting support
 - MongoDB - NoSQL, flexible schema (not ideal for this use case)
 
 **ORM:**
+
 - Prisma (recommended) - Excellent TypeScript support, migrations
 - Drizzle - Lighter weight, type-safe
 - TypeORM - More features, steeper learning curve
@@ -1572,11 +1564,13 @@ Create interactive tutorial that walks through:
 ## Appendix B: Future Technical Considerations (v2+)
 
 **Real-time Features:**
+
 - WebSocket integration (Socket.io or native)
 - Live presence indicators
 - Real-time vote updates
 
 **Advanced Features:**
+
 - AI suggestion system for actions
 - Rich text editor for narration
 - Image upload for game history
@@ -1584,6 +1578,7 @@ Create interactive tutorial that walks through:
 - Mobile apps (React Native)
 
 **Scalability:**
+
 - Microservices architecture
 - Message queue (RabbitMQ, Redis Pub/Sub)
 - Horizontal scaling with load balancer

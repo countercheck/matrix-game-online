@@ -1,9 +1,22 @@
 import { randomBytes } from 'crypto';
 import { db } from '../config/database.js';
 import { ResultType, GamePhase } from '@prisma/client';
-import { BadRequestError, NotFoundError, ForbiddenError, ConflictError } from '../middleware/errorHandler.js';
+import {
+  BadRequestError,
+  NotFoundError,
+  ForbiddenError,
+  ConflictError,
+} from '../middleware/errorHandler.js';
 import { requireMember, logGameEvent, transitionPhase } from './game.service.js';
-import type { ActionProposalInput, ArgumentInput, VoteInput, NarrationInput, UpdateActionInput, UpdateArgumentInput, UpdateNarrationInput } from '../utils/validators.js';
+import type {
+  ActionProposalInput,
+  ArgumentInput,
+  VoteInput,
+  NarrationInput,
+  UpdateActionInput,
+  UpdateArgumentInput,
+  UpdateNarrationInput,
+} from '../utils/validators.js';
 import {
   notifyActionProposed,
   notifyVotingStarted,
@@ -59,10 +72,8 @@ export async function checkAndProposeNpcAction(gameId: string) {
 
   // Create NPC action using scripted proposal from persona
   const npcName = npcPlayer.persona?.name || npcPlayer.playerName;
-  const actionDescription =
-    npcPlayer.persona?.npcActionDescription || `${npcName} takes action`;
-  const desiredOutcome =
-    npcPlayer.persona?.npcDesiredOutcome || `${npcName} achieves their goal`;
+  const actionDescription = npcPlayer.persona?.npcActionDescription || `${npcName} takes action`;
+  const desiredOutcome = npcPlayer.persona?.npcDesiredOutcome || `${npcName} achieves their goal`;
 
   // Get next sequence number
   const lastAction = await db.action.findFirst({
@@ -99,6 +110,7 @@ export async function checkAndProposeNpcAction(gameId: string) {
     data: {
       currentPhase: 'ARGUMENTATION',
       currentActionId: action.id,
+      phaseStartedAt: new Date(),
     },
   });
 
@@ -188,6 +200,7 @@ export async function proposeAction(gameId: string, userId: string, data: Action
     data: {
       currentPhase: 'ARGUMENTATION',
       currentActionId: action.id,
+      phaseStartedAt: new Date(),
     },
   });
 
@@ -427,11 +440,7 @@ export async function completeArgumentation(actionId: string, userId: string) {
   await transitionPhase(action.gameId, GamePhase.VOTING);
 
   // Send notifications (async, don't wait)
-  notifyVotingStarted(
-    action.gameId,
-    action.game.name,
-    action.actionDescription
-  ).catch(() => {});
+  notifyVotingStarted(action.gameId, action.game.name, action.actionDescription).catch(() => {});
 
   return { message: 'Moved to voting phase' };
 }
@@ -685,7 +694,7 @@ function performTokenDraw(successCount: number, failureCount: number) {
   const drawnFailure = 3 - drawnSuccess;
 
   // Calculate result: -3, -1, +1, +3
-  const resultValue = (drawnSuccess * 2) - 3;
+  const resultValue = drawnSuccess * 2 - 3;
 
   const resultType = getResultType(drawnSuccess);
 
@@ -715,10 +724,14 @@ function getSecureRandomInt(min: number, max: number): number {
 
 function getResultType(successCount: number): ResultType {
   switch (successCount) {
-    case 3: return ResultType.TRIUMPH;
-    case 2: return ResultType.SUCCESS_BUT;
-    case 1: return ResultType.FAILURE_BUT;
-    default: return ResultType.DISASTER;
+    case 3:
+      return ResultType.TRIUMPH;
+    case 2:
+      return ResultType.SUCCESS_BUT;
+    case 1:
+      return ResultType.FAILURE_BUT;
+    default:
+      return ResultType.DISASTER;
   }
 }
 
@@ -835,6 +848,7 @@ export async function submitNarration(actionId: string, userId: string, data: Na
         data: {
           currentPhase: 'PROPOSAL',
           currentActionId: null,
+          phaseStartedAt: new Date(),
         },
       });
 
@@ -931,11 +945,7 @@ export async function skipArgumentation(actionId: string, userId: string) {
   });
 
   // Send notifications
-  notifyVotingStarted(
-    action.gameId,
-    action.game.name,
-    action.actionDescription
-  ).catch(() => {});
+  notifyVotingStarted(action.gameId, action.game.name, action.actionDescription).catch(() => {});
 
   return { message: 'Argumentation skipped, moved to voting phase' };
 }
@@ -1049,7 +1059,9 @@ export async function skipToNextAction(gameId: string, userId: string) {
     });
 
     if (roundActions === 0) {
-      throw new BadRequestError('Cannot skip - at least one action must be proposed before moving on');
+      throw new BadRequestError(
+        'Cannot skip - at least one action must be proposed before moving on'
+      );
     }
 
     // Update round to complete with current actions
@@ -1113,7 +1125,7 @@ export async function updateAction(actionId: string, userId: string, data: Updat
 
   await logGameEvent(action.gameId, userId, 'ACTION_EDITED', {
     actionId,
-    fieldsUpdated: Object.keys(data).filter(k => data[k as keyof typeof data] !== undefined),
+    fieldsUpdated: Object.keys(data).filter((k) => data[k as keyof typeof data] !== undefined),
   });
 
   return updatedAction;
@@ -1122,7 +1134,11 @@ export async function updateAction(actionId: string, userId: string, data: Updat
 /**
  * Host can edit an argument's content
  */
-export async function updateArgument(argumentId: string, userId: string, data: UpdateArgumentInput) {
+export async function updateArgument(
+  argumentId: string,
+  userId: string,
+  data: UpdateArgumentInput
+) {
   const argument = await db.argument.findUnique({
     where: { id: argumentId },
     include: {
@@ -1152,7 +1168,11 @@ export async function updateArgument(argumentId: string, userId: string, data: U
 /**
  * Host can edit a narration's content
  */
-export async function updateNarration(actionId: string, userId: string, data: UpdateNarrationInput) {
+export async function updateNarration(
+  actionId: string,
+  userId: string,
+  data: UpdateNarrationInput
+) {
   const narration = await db.narration.findUnique({
     where: { actionId },
     include: {

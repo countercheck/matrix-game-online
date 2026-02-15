@@ -50,9 +50,19 @@ export default function Layout() {
               aria-hidden="true"
             >
               {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               )}
             </svg>
           </button>
@@ -81,7 +91,10 @@ export default function Layout() {
             >
               Help
             </Link>
-            <span className="text-sm text-muted-foreground" aria-label={`Logged in as ${user?.displayName}`}>
+            <span
+              className="text-sm text-muted-foreground"
+              aria-label={`Logged in as ${user?.displayName}`}
+            >
               {user?.displayName}
             </span>
             <button
@@ -124,9 +137,7 @@ export default function Layout() {
             >
               Help
             </Link>
-            <div className="text-sm text-muted-foreground py-2">
-              {user?.displayName}
-            </div>
+            <div className="text-sm text-muted-foreground py-2">{user?.displayName}</div>
             <button
               onClick={() => {
                 setMobileMenuOpen(false);

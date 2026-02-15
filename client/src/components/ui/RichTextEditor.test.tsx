@@ -59,7 +59,7 @@ describe('RichTextEditor', () => {
     it('should convert markdown headings to editor content', async () => {
       render(<RichTextEditor value="## Heading 2\n\n### Heading 3" onChange={onChangeMock} />);
       const editor = screen.getByRole('textbox');
-      
+
       // Wait for the content to be rendered
       await waitFor(() => {
         // TipTap might not render exact H2/H3 tags, check for heading content
@@ -83,7 +83,7 @@ describe('RichTextEditor', () => {
     it('should convert markdown code blocks to editor content', async () => {
       render(<RichTextEditor value="```\ncode\n```" onChange={onChangeMock} />);
       const editor = screen.getByRole('textbox');
-      
+
       // Wait for the content to be rendered
       await waitFor(() => {
         // TipTap renders code blocks with specific classes
@@ -108,9 +108,9 @@ describe('RichTextEditor', () => {
 
     it('should update editor when value prop changes', async () => {
       const { rerender } = render(<RichTextEditor value="Initial text" onChange={onChangeMock} />);
-      
+
       rerender(<RichTextEditor value="**Updated text**" onChange={onChangeMock} />);
-      
+
       await waitFor(() => {
         const editor = screen.getByRole('textbox');
         expect(editor.querySelector('strong')).toBeInTheDocument();
@@ -165,7 +165,7 @@ describe('RichTextEditor', () => {
 
       const h2Button = screen.getByTitle('Heading 2');
       const editor = screen.getByRole('textbox');
-      
+
       await user.click(h2Button);
 
       // Verify the editor content changed to a heading
@@ -180,7 +180,7 @@ describe('RichTextEditor', () => {
 
       const h3Button = screen.getByTitle('Heading 3');
       const editor = screen.getByRole('textbox');
-      
+
       await user.click(h3Button);
 
       await waitFor(() => {
@@ -194,7 +194,7 @@ describe('RichTextEditor', () => {
 
       const bulletListButton = screen.getByTitle('Bullet List');
       const editor = screen.getByRole('textbox');
-      
+
       await user.click(bulletListButton);
 
       await waitFor(() => {
@@ -208,7 +208,7 @@ describe('RichTextEditor', () => {
 
       const orderedListButton = screen.getByTitle('Numbered List');
       const editor = screen.getByRole('textbox');
-      
+
       await user.click(orderedListButton);
 
       await waitFor(() => {

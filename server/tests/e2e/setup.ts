@@ -31,7 +31,7 @@ export async function cleanDatabase(retries = 3): Promise<void> {
         prisma.game.deleteMany(),
         prisma.user.deleteMany(),
       ]);
-      
+
       // Re-create NPC system user after cleaning
       const npcPasswordHash = await bcrypt.hash('npc-system-user-no-login', 4);
       await prisma.user.create({
@@ -41,7 +41,7 @@ export async function cleanDatabase(retries = 3): Promise<void> {
           passwordHash: npcPasswordHash,
         },
       });
-      
+
       return;
     } catch (error: any) {
       if (attempt === retries) {

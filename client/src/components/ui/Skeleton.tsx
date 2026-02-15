@@ -5,11 +5,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ className }: SkeletonProps) {
-  return (
-    <div
-      className={cn('animate-pulse rounded-md bg-muted', className)}
-    />
-  );
+  return <div className={cn('animate-pulse rounded-md bg-muted', className)} />;
 }
 
 interface SkeletonTextProps {
@@ -21,13 +17,7 @@ export function SkeletonText({ lines = 3, className }: SkeletonTextProps) {
   return (
     <div className={cn('space-y-2', className)}>
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className={cn(
-            'h-4',
-            i === lines - 1 ? 'w-3/4' : 'w-full'
-          )}
-        />
+        <Skeleton key={i} className={cn('h-4', i === lines - 1 ? 'w-3/4' : 'w-full')} />
       ))}
     </div>
   );

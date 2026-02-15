@@ -59,7 +59,7 @@ export default function Dashboard() {
       const response = await api.get(`/games/${gameId}/export`, {
         responseType: 'blob',
       });
-      
+
       // Use Content-Type from response or fallback to common YAML MIME type
       const contentType = response.headers['content-type'] || 'application/x-yaml';
       const responseBlob = response.data as Blob;
@@ -68,7 +68,7 @@ export default function Dashboard() {
           ? responseBlob
           : responseBlob.slice(0, responseBlob.size, contentType);
       const contentDisposition = response.headers['content-disposition'];
-      
+
       downloadBlob(blob, `${gameName}-export.yaml`, contentDisposition);
     } catch (err: unknown) {
       setExportError(getApiErrorMessage(err, 'Export failed'));
@@ -109,16 +109,30 @@ export default function Dashboard() {
       </div>
 
       {importError && (
-        <div role="alert" className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive">
+        <div
+          role="alert"
+          className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive"
+        >
           {importError}
-          <button onClick={() => setImportError(null)} className="ml-2 underline text-xs">Dismiss</button>
+          <button onClick={() => setImportError(null)} className="ml-2 underline text-xs">
+            Dismiss
+          </button>
         </div>
       )}
 
       {exportError && (
-        <div role="alert" className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive">
+        <div
+          role="alert"
+          className="p-3 text-sm border rounded-lg bg-destructive/5 text-destructive"
+        >
           {exportError}
-          <button onClick={() => setExportError(null)} className="ml-2 underline text-xs" aria-label="Dismiss export error message">Dismiss</button>
+          <button
+            onClick={() => setExportError(null)}
+            className="ml-2 underline text-xs"
+            aria-label="Dismiss export error message"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -134,10 +148,7 @@ export default function Dashboard() {
       </div>
 
       {error && (
-        <div
-          role="alert"
-          className="text-center py-8 sm:py-12 border rounded-lg bg-destructive/5"
-        >
+        <div role="alert" className="text-center py-8 sm:py-12 border rounded-lg bg-destructive/5">
           <p className="text-destructive">Failed to load games.</p>
           <button
             onClick={() => refetch()}
@@ -163,11 +174,12 @@ export default function Dashboard() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {games.map((game) => {
               // Validate image URL for security
-              const isValidImageUrl = game.imageUrl && 
-                (game.imageUrl.startsWith('http://localhost:') || 
-                 game.imageUrl.startsWith('https://') ||
-                 game.imageUrl.startsWith('/uploads/'));
-              
+              const isValidImageUrl =
+                game.imageUrl &&
+                (game.imageUrl.startsWith('http://localhost:') ||
+                  game.imageUrl.startsWith('https://') ||
+                  game.imageUrl.startsWith('/uploads/'));
+
               return (
                 <div
                   key={game.id}
@@ -175,9 +187,7 @@ export default function Dashboard() {
                 >
                   <Link
                     to={
-                      game.status === 'LOBBY'
-                        ? `/game/${game.id}/lobby`
-                        : `/game/${game.id}/play`
+                      game.status === 'LOBBY' ? `/game/${game.id}/lobby` : `/game/${game.id}/play`
                     }
                     className="block p-4 focus:outline-none focus:ring-2 focus:ring-primary rounded-t-lg"
                     aria-label={`${game.name} - ${game.status} - ${game.playerCount} players${game.isHost ? ' - You are the host' : ''}`}
@@ -194,64 +204,64 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                    <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold truncate">{game.name}</h3>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
-                        game.status === 'ACTIVE'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100'
-                          : game.status === 'LOBBY'
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100'
-                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-100'
-                      }`}
-                      aria-label={`Status: ${game.status}`}
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold truncate">{game.name}</h3>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
+                            game.status === 'ACTIVE'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100'
+                              : game.status === 'LOBBY'
+                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100'
+                                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-100'
+                          }`}
+                          aria-label={`Status: ${game.status}`}
+                        >
+                          {game.status}
+                        </span>
+                      </div>
+
+                      {game.description && (
+                        <RichTextDisplay
+                          content={game.description}
+                          className="text-sm mt-1 line-clamp-2 [&_p]:my-0 [&_p]:text-muted-foreground"
+                          disableLinks
+                        />
+                      )}
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
+                        <span>{game.playerCount} players</span>
+                        {game.currentRound && <span>Round {game.currentRound}</span>}
+                        {game.isHost && (
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                            Host
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Playing as <span className="font-medium">{game.playerName}</span>
+                      </div>
+
+                      {game.status === 'ACTIVE' && (
+                        <div className="mt-2 text-xs">
+                          <span className="text-muted-foreground">Phase: </span>
+                          <span className="font-medium">{game.currentPhase}</span>
+                        </div>
+                      )}
+                    </article>
+                  </Link>
+                  <div className="px-4 pb-3 pt-1 border-t">
+                    <button
+                      onClick={() => handleExport(game.id, game.name)}
+                      className="text-xs text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 rounded"
+                      aria-label={`Export ${game.name} as YAML`}
                     >
-                      {game.status}
-                    </span>
+                      Export YAML
+                    </button>
                   </div>
-
-                  {game.description && (
-                    <RichTextDisplay
-                      content={game.description}
-                      className="text-sm mt-1 line-clamp-2 [&_p]:my-0 [&_p]:text-muted-foreground"
-                      disableLinks
-                    />
-                  )}
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
-                    <span>{game.playerCount} players</span>
-                    {game.currentRound && <span>Round {game.currentRound}</span>}
-                    {game.isHost && (
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                        Host
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Playing as <span className="font-medium">{game.playerName}</span>
-                  </div>
-
-                  {game.status === 'ACTIVE' && (
-                    <div className="mt-2 text-xs">
-                      <span className="text-muted-foreground">Phase: </span>
-                      <span className="font-medium">{game.currentPhase}</span>
-                    </div>
-                  )}
-                </article>
-                </Link>
-                <div className="px-4 pb-3 pt-1 border-t">
-                  <button
-                    onClick={() => handleExport(game.id, game.name)}
-                    className="text-xs text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 rounded"
-                    aria-label={`Export ${game.name} as YAML`}
-                  >
-                    Export YAML
-                  </button>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </section>
       )}

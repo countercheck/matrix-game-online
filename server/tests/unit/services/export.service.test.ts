@@ -31,7 +31,11 @@ import { db } from '../../../src/config/database.js';
 import * as exportService from '../../../src/services/export.service.js';
 
 const mockDb = db as unknown as {
-  game: { findUnique: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+  game: {
+    findUnique: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
   gamePlayer: { findFirst: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
   gameEvent: { create: ReturnType<typeof vi.fn> };
   user: { findUnique: ReturnType<typeof vi.fn> };
@@ -290,9 +294,7 @@ describe('exportGameState', () => {
   it('should reject non-members', async () => {
     mockDb.gamePlayer.findFirst.mockResolvedValue(null);
 
-    await expect(
-      exportService.exportGameState('game-1', 'outsider')
-    ).rejects.toThrow();
+    await expect(exportService.exportGameState('game-1', 'outsider')).rejects.toThrow();
   });
 
   it('should reject deleted games', async () => {
@@ -301,9 +303,9 @@ describe('exportGameState', () => {
     mockDb.gamePlayer.findFirst.mockResolvedValue({ id: 'player-1', userId: 'user-1' });
     mockDb.game.findUnique.mockResolvedValue(gameFixture);
 
-    await expect(
-      exportService.exportGameState('game-1', 'user-1')
-    ).rejects.toThrow('Game not found');
+    await expect(exportService.exportGameState('game-1', 'user-1')).rejects.toThrow(
+      'Game not found'
+    );
   });
 });
 
@@ -444,15 +446,15 @@ personas:
   });
 
   it('should reject invalid YAML', async () => {
-    await expect(
-      exportService.importGameFromYaml('{{{{ not yaml', 'user-1')
-    ).rejects.toThrow('Invalid YAML');
+    await expect(exportService.importGameFromYaml('{{{{ not yaml', 'user-1')).rejects.toThrow(
+      'Invalid YAML'
+    );
   });
 
   it('should reject YAML missing game section', async () => {
-    await expect(
-      exportService.importGameFromYaml('personas: []', 'user-1')
-    ).rejects.toThrow('missing "game" section');
+    await expect(exportService.importGameFromYaml('personas: []', 'user-1')).rejects.toThrow(
+      'missing "game" section'
+    );
   });
 
   it('should use fallback name when game name is empty', async () => {

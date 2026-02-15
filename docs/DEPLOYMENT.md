@@ -38,12 +38,12 @@ The project uses GitHub Actions for continuous integration and deployment.
 
 Runs on every pull request and push to `main`:
 
-| Job | Description |
-|-----|-------------|
-| **Lint** | Runs ESLint on all code |
-| **Test Server** | Runs backend tests with PostgreSQL |
-| **Test Client** | Runs frontend tests |
-| **Build** | Builds both server and client for production |
+| Job             | Description                                  |
+| --------------- | -------------------------------------------- |
+| **Lint**        | Runs ESLint on all code                      |
+| **Test Server** | Runs backend tests with PostgreSQL           |
+| **Test Client** | Runs frontend tests                          |
+| **Build**       | Builds both server and client for production |
 
 ### Continuous Deployment (`.github/workflows/deploy.yml`)
 
@@ -56,6 +56,7 @@ git push origin v1.0.0
 ```
 
 This triggers:
+
 1. Deploy server to Railway
 2. Deploy client to Railway
 3. Run database migrations
@@ -65,17 +66,17 @@ This triggers:
 
 Set these in your repository settings (Settings → Secrets → Actions):
 
-| Secret | Description |
-|--------|-------------|
+| Secret          | Description                                                       |
+| --------------- | ----------------------------------------------------------------- |
 | `RAILWAY_TOKEN` | Railway API token (get from Railway dashboard → Account → Tokens) |
-| `DATABASE_URL` | Production database URL (for migrations) |
+| `DATABASE_URL`  | Production database URL (for migrations)                          |
 
 ### Required GitHub Variables
 
 Set these in Settings → Secrets → Variables:
 
-| Variable | Description |
-|----------|-------------|
+| Variable  | Description                                             |
+| --------- | ------------------------------------------------------- |
 | `API_URL` | Production API URL (e.g., `https://api.mosaicgame.com`) |
 
 ### Creating a Release
@@ -102,28 +103,28 @@ git push origin v1.0.0
 
 ### Required Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NODE_ENV` | Must be `production` | `production` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
-| `JWT_SECRET` | Secret for signing tokens (min 32 chars) | Generate with `openssl rand -base64 32` |
-| `APP_URL` | Frontend URL (no trailing slash) | `https://mosaicgame.com` |
-| `EMAIL_HOST` | SMTP server hostname | `smtp.sendgrid.net` |
-| `EMAIL_USER` | SMTP username | `apikey` |
-| `EMAIL_PASS` | SMTP password/API key | Your API key |
-| `EMAIL_FROM` | Sender email address | `noreply@mosaicgame.com` |
+| Variable       | Description                              | Example                                 |
+| -------------- | ---------------------------------------- | --------------------------------------- |
+| `NODE_ENV`     | Must be `production`                     | `production`                            |
+| `DATABASE_URL` | PostgreSQL connection string             | `postgresql://user:pass@host:5432/db`   |
+| `JWT_SECRET`   | Secret for signing tokens (min 32 chars) | Generate with `openssl rand -base64 32` |
+| `APP_URL`      | Frontend URL (no trailing slash)         | `https://mosaicgame.com`                |
+| `EMAIL_HOST`   | SMTP server hostname                     | `smtp.sendgrid.net`                     |
+| `EMAIL_USER`   | SMTP username                            | `apikey`                                |
+| `EMAIL_PASS`   | SMTP password/API key                    | Your API key                            |
+| `EMAIL_FROM`   | Sender email address                     | `noreply@mosaicgame.com`                |
 
 ### Optional Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3000` | Server port (usually set by platform) |
-| `JWT_EXPIRY` | `7d` | Token expiration time |
-| `BCRYPT_ROUNDS` | `12` | Password hashing rounds |
-| `EMAIL_ENABLED` | `true` | Enable/disable emails |
-| `ENABLE_TIMEOUT_WORKER` | `true` | Enable automatic phase timeouts |
-| `TIMEOUT_CHECK_INTERVAL_MS` | `60000` | Timeout check frequency |
-| `UPLOADS_DIR` | `./uploads` | Directory for uploaded files (use mounted volume path for persistent storage) |
+| Variable                    | Default     | Description                                                                   |
+| --------------------------- | ----------- | ----------------------------------------------------------------------------- |
+| `PORT`                      | `3000`      | Server port (usually set by platform)                                         |
+| `JWT_EXPIRY`                | `7d`        | Token expiration time                                                         |
+| `BCRYPT_ROUNDS`             | `12`        | Password hashing rounds                                                       |
+| `EMAIL_ENABLED`             | `true`      | Enable/disable emails                                                         |
+| `ENABLE_TIMEOUT_WORKER`     | `true`      | Enable automatic phase timeouts                                               |
+| `TIMEOUT_CHECK_INTERVAL_MS` | `60000`     | Timeout check frequency                                                       |
+| `UPLOADS_DIR`               | `./uploads` | Directory for uploaded files (use mounted volume path for persistent storage) |
 
 ### Generating a Secure JWT Secret
 
@@ -249,6 +250,7 @@ Railway provides easy deployment with built-in PostgreSQL. This project includes
 #### Project Structure
 
 The project is configured with Railway config files:
+
 - `server/railway.toml` - Backend configuration (Nixpacks build, auto-migrations)
 - `client/railway.toml` - Frontend configuration (static file serving)
 
@@ -277,6 +279,7 @@ The project is configured with Railway config files:
 4. **Configure backend environment variables**
    - Go to the server service → Variables tab
    - Add the following (Railway auto-injects `DATABASE_URL` and `PORT`):
+
    ```
    NODE_ENV=production
    JWT_SECRET=<generate with: openssl rand -base64 32>
@@ -286,14 +289,16 @@ The project is configured with Railway config files:
    EMAIL_PASS=your-sendgrid-api-key
    EMAIL_FROM=noreply@yourdomain.com
    ```
-   
+
    **For persistent file uploads (recommended for production):**
    - Create a Railway volume in your project (Volumes tab → New Volume)
    - Mount the volume to your server service (e.g., mount path: `/app/uploads`)
    - Add the following environment variable:
+
    ```
    UPLOADS_DIR=/app/uploads
    ```
+
    This ensures uploaded game images persist across deployments and restarts.
 
 5. **Deploy the frontend (Client service)**
@@ -304,6 +309,7 @@ The project is configured with Railway config files:
 
 6. **Configure frontend environment variables**
    - Add the following build-time variable:
+
    ```
    VITE_API_URL=https://your-api-domain.railway.app
    ```
@@ -346,6 +352,7 @@ The project includes automated deployment via GitHub Actions. Set up:
 #### Railway Configuration Files
 
 **Server (`server/railway.toml`):**
+
 ```toml
 [build]
 builder = "nixpacks"
@@ -360,6 +367,7 @@ restartPolicyMaxRetries = 10
 ```
 
 **Client (`client/railway.toml`):**
+
 ```toml
 [build]
 builder = "nixpacks"
@@ -376,16 +384,19 @@ restartPolicyMaxRetries = 10
 #### Troubleshooting Railway
 
 **Build failures:**
+
 - Check Railway build logs for specific errors
 - Ensure `railway.toml` is in the correct directory (server/ or client/)
 - Verify the root directory is set correctly in Railway service settings
 
 **Database connection issues:**
+
 - Verify PostgreSQL service is linked to your server
 - Check that `DATABASE_URL` is in the Variables tab
 - Ensure SSL is enabled: `?sslmode=require` in connection string
 
 **Migrations not running:**
+
 - Migrations run on every deploy via `startCommand`
 - Check deploy logs for Prisma migration output
 - Manually run: `railway run --service=mosaic-api npx prisma migrate deploy`
@@ -433,11 +444,13 @@ Fly.io offers edge deployment with excellent performance.
 #### Setup Steps
 
 1. **Install Fly CLI**
+
    ```bash
    curl -L https://fly.io/install.sh | sh
    ```
 
 2. **Create fly.toml** in `server/`:
+
    ```toml
    app = "mosaic-game-api"
    primary_region = "ord"
@@ -465,12 +478,14 @@ Fly.io offers edge deployment with excellent performance.
    ```
 
 3. **Create PostgreSQL database**
+
    ```bash
    fly postgres create --name mosaic-game-db
    fly postgres attach mosaic-game-db
    ```
 
 4. **Set secrets**
+
    ```bash
    fly secrets set JWT_SECRET="your-secret"
    fly secrets set EMAIL_HOST="smtp.sendgrid.net"
@@ -502,6 +517,7 @@ For deployment on a VPS (DigitalOcean, Linode, AWS EC2, etc.):
 #### Setup Steps
 
 1. **Install dependencies**
+
    ```bash
    # Node.js
    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -518,6 +534,7 @@ For deployment on a VPS (DigitalOcean, Linode, AWS EC2, etc.):
    ```
 
 2. **Create PostgreSQL database**
+
    ```bash
    sudo -u postgres psql
    CREATE USER mosaic WITH PASSWORD 'secure-password';
@@ -526,6 +543,7 @@ For deployment on a VPS (DigitalOcean, Linode, AWS EC2, etc.):
    ```
 
 3. **Clone and build**
+
    ```bash
    git clone https://github.com/your-repo/mosaic-game.git
    cd mosaic-game/server
@@ -536,12 +554,14 @@ For deployment on a VPS (DigitalOcean, Linode, AWS EC2, etc.):
    ```
 
 4. **Create .env file**
+
    ```bash
    cp .env.production.example .env
    # Edit .env with your values
    ```
 
 5. **Start with PM2**
+
    ```bash
    pm2 start dist/index.js --name mosaic-api
    pm2 save
@@ -549,6 +569,7 @@ For deployment on a VPS (DigitalOcean, Linode, AWS EC2, etc.):
    ```
 
 6. **Configure Nginx**
+
    ```nginx
    server {
        listen 80;
@@ -579,6 +600,7 @@ For deployment on a VPS (DigitalOcean, Linode, AWS EC2, etc.):
 After deploying, verify the following:
 
 ### Functionality
+
 - [ ] Health check endpoint responds: `GET /health`
 - [ ] User registration works
 - [ ] User login works
@@ -586,17 +608,20 @@ After deploying, verify the following:
 - [ ] Email notifications are received
 
 ### Security
+
 - [ ] HTTPS is enforced
 - [ ] CORS is configured correctly
 - [ ] Rate limiting is active
 - [ ] JWT secret is unique and secure
 
 ### Database
+
 - [ ] Migrations ran successfully
 - [ ] Database has SSL enabled
 - [ ] Backups are configured
 
 ### Monitoring
+
 - [ ] Error logging is working
 - [ ] Health checks are configured
 - [ ] Alerts are set up (if applicable)
@@ -617,6 +642,7 @@ curl https://your-api.com/health
 ### Log Monitoring
 
 Configure your platform's logging or use a service like:
+
 - [Logtail](https://logtail.com)
 - [Papertrail](https://papertrailapp.com)
 - [Datadog](https://datadoghq.com)
@@ -632,6 +658,7 @@ Consider adding Sentry for error tracking:
 ### Database Backups
 
 Most managed databases include automatic backups. Verify:
+
 - Daily backups are enabled
 - Point-in-time recovery is available
 - Backup retention meets your needs
@@ -651,20 +678,24 @@ When you need to scale:
 ### Common Issues
 
 **Database connection failed**
+
 - Check `DATABASE_URL` format
 - Verify SSL is enabled (`sslmode=require`)
 - Check firewall/network rules
 
 **Emails not sending**
+
 - Verify SMTP credentials
 - Check sender domain verification
 - Review email service logs
 
 **CORS errors**
+
 - Verify `APP_URL` matches your frontend URL exactly
 - Check for trailing slashes
 
 **JWT errors**
+
 - Ensure `JWT_SECRET` is set and consistent across restarts
 - Check token expiration settings
 

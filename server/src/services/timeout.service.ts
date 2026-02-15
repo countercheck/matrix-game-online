@@ -1,83 +1,182 @@
 import { db } from '../config/database.js';
 import { GamePhase } from '@prisma/client';
 import { logger } from '../utils/logger.js';
-import { transitionPhase } from './game.service.js';
+import { transitionPhase, getGameTimeoutSettings, type GameTimeoutSettings } from './game.service.js';
 import { notifyTimeoutOccurred } from './notification.service.js';
 
-// Timeout durations in milliseconds
-const ARGUMENTATION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
-const VOTING_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-export interface TimeoutConfig {
-  argumentationTimeoutMs?: number;
-  votingTimeoutMs?: number;
-}
-
 export interface TimeoutResult {
-  actionId: string;
+  actionId?: string;
   gameId: string;
-  phase: 'ARGUMENTATION' | 'VOTING';
+  phase: 'PROPOSAL' | 'ARGUMENTATION' | 'VOTING' | 'NARRATION';
   playersAffected: number;
   newPhase?: string;
+  hostNotified?: boolean;
 }
 
 /**
- * Gets all actions that have timed out in the argumentation phase.
- * An action times out if argumentationStartedAt + 24hrs < now and status is ARGUING.
+ * Process all timed-out actions across all active games.
+ * Each game's timeout settings are read from its own settings JSON.
  */
-export async function getTimedOutArgumentationActions(
-  config: TimeoutConfig = {}
-): Promise<{ id: string; gameId: string; argumentationStartedAt: Date }[]> {
-  const timeoutMs = config.argumentationTimeoutMs ?? ARGUMENTATION_TIMEOUT_MS;
-  const cutoffTime = new Date(Date.now() - timeoutMs);
+export async function processAllTimeouts(): Promise<{
+  results: TimeoutResult[];
+  errors: { gameId: string; error: string }[];
+}> {
+  const output = {
+    results: [] as TimeoutResult[],
+    errors: [] as { gameId: string; error: string }[],
+  };
 
-  const actions = await db.action.findMany({
+  // Find all active games in a phase that could timeout
+  const activeGames = await db.game.findMany({
     where: {
-      status: 'ARGUING',
-      argumentationStartedAt: {
-        lt: cutoffTime,
+      status: 'ACTIVE',
+      deletedAt: null,
+      currentPhase: {
+        in: ['PROPOSAL', 'ARGUMENTATION', 'VOTING', 'NARRATION'],
       },
+      phaseStartedAt: { not: null },
     },
     select: {
       id: true,
-      gameId: true,
-      argumentationStartedAt: true,
+      name: true,
+      currentPhase: true,
+      phaseStartedAt: true,
+      currentActionId: true,
+      settings: true,
     },
   });
 
-  return actions.filter(
-    (a): a is typeof a & { argumentationStartedAt: Date } =>
-      a.argumentationStartedAt !== null
-  );
+  for (const game of activeGames) {
+    try {
+      const settings = getGameTimeoutSettings(
+        (game.settings as Record<string, unknown>) || {}
+      );
+      const result = await processGameTimeout(game, settings);
+      if (result) {
+        output.results.push(result);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to process timeout for game ${game.id}: ${message}`);
+      output.errors.push({ gameId: game.id, error: message });
+    }
+  }
+
+  if (output.results.length > 0) {
+    logger.info(`Processed ${output.results.length} timeouts`);
+  }
+
+  return output;
 }
 
 /**
- * Gets all actions that have timed out in the voting phase.
- * An action times out if votingStartedAt + 24hrs < now and status is VOTING.
+ * Process timeout for a single game based on its current phase and settings.
  */
-export async function getTimedOutVotingActions(
-  config: TimeoutConfig = {}
-): Promise<{ id: string; gameId: string; votingStartedAt: Date }[]> {
-  const timeoutMs = config.votingTimeoutMs ?? VOTING_TIMEOUT_MS;
-  const cutoffTime = new Date(Date.now() - timeoutMs);
+async function processGameTimeout(
+  game: {
+    id: string;
+    name: string;
+    currentPhase: GamePhase;
+    phaseStartedAt: Date | null;
+    currentActionId: string | null;
+    settings: unknown;
+  },
+  timeoutConfig: GameTimeoutSettings
+): Promise<TimeoutResult | null> {
+  if (!game.phaseStartedAt) return null;
 
-  const actions = await db.action.findMany({
+  const now = Date.now();
+
+  switch (game.currentPhase) {
+    case 'PROPOSAL': {
+      if (timeoutConfig.proposalTimeoutMs === null) return null;
+      const elapsed = now - game.phaseStartedAt.getTime();
+      if (elapsed < timeoutConfig.proposalTimeoutMs) return null;
+      return processProposalTimeout(game.id, game.name);
+    }
+    case 'ARGUMENTATION': {
+      if (timeoutConfig.argumentationTimeoutMs === null) return null;
+      if (!game.currentActionId) return null;
+      const elapsed = now - game.phaseStartedAt.getTime();
+      if (elapsed < timeoutConfig.argumentationTimeoutMs) return null;
+      return processArgumentationTimeout(game.currentActionId);
+    }
+    case 'VOTING': {
+      if (timeoutConfig.votingTimeoutMs === null) return null;
+      if (!game.currentActionId) return null;
+      const elapsed = now - game.phaseStartedAt.getTime();
+      if (elapsed < timeoutConfig.votingTimeoutMs) return null;
+      return processVotingTimeout(game.currentActionId);
+    }
+    case 'NARRATION': {
+      if (timeoutConfig.narrationTimeoutMs === null) return null;
+      const elapsed = now - game.phaseStartedAt.getTime();
+      if (elapsed < timeoutConfig.narrationTimeoutMs) return null;
+      return processNarrationTimeout(game.id, game.name);
+    }
+    default:
+      return null;
+  }
+}
+
+/**
+ * Process a proposal phase timeout.
+ * Does NOT auto-resolve — creates an event and notifies the host to decide.
+ */
+async function processProposalTimeout(
+  gameId: string,
+  gameName: string
+): Promise<TimeoutResult | null> {
+  // Deduplicate: check if we already created a timeout event for this phase instance
+  const existing = await db.gameEvent.findFirst({
     where: {
-      status: 'VOTING',
-      votingStartedAt: {
-        lt: cutoffTime,
-      },
+      gameId,
+      eventType: 'PROPOSAL_TIMEOUT',
     },
-    select: {
-      id: true,
-      gameId: true,
-      votingStartedAt: true,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // If the most recent PROPOSAL_TIMEOUT event is after phaseStartedAt, skip
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    select: { phaseStartedAt: true },
+  });
+
+  if (existing && game?.phaseStartedAt && existing.createdAt >= game.phaseStartedAt) {
+    return null; // Already notified for this phase instance
+  }
+
+  await db.gameEvent.create({
+    data: {
+      gameId,
+      eventType: 'PROPOSAL_TIMEOUT',
+      eventData: { phase: 'PROPOSAL' },
     },
   });
 
-  return actions.filter(
-    (a): a is typeof a & { votingStartedAt: Date } => a.votingStartedAt !== null
-  );
+  // Notify the host
+  const host = await db.gamePlayer.findFirst({
+    where: { gameId, isHost: true, isActive: true },
+  });
+
+  const hostNotified = !!host;
+
+  if (host) {
+    notifyTimeoutOccurred(gameId, gameName, 'PROPOSAL', [host.userId]).catch(() => {});
+  }
+
+  if (hostNotified) {
+    logger.info(`Proposal timeout for game ${gameId} - host notified`);
+  } else {
+    logger.info(`Proposal timeout for game ${gameId} - no active host to notify`);
+  }
+
+  return {
+    gameId,
+    phase: 'PROPOSAL',
+    playersAffected: 0,
+    hostNotified,
+  };
 }
 
 /**
@@ -85,7 +184,7 @@ export async function getTimedOutVotingActions(
  * Creates placeholder arguments for players who haven't argued,
  * then advances the action to voting phase.
  */
-export async function processArgumentationTimeout(
+async function processArgumentationTimeout(
   actionId: string
 ): Promise<TimeoutResult> {
   const action = await db.action.findUnique({
@@ -188,7 +287,7 @@ export async function processArgumentationTimeout(
  * Auto-casts UNCERTAIN votes for players who haven't voted.
  * Then advances to RESOLUTION phase if all votes are now in.
  */
-export async function processVotingTimeout(
+async function processVotingTimeout(
   actionId: string
 ): Promise<TimeoutResult> {
   const action = await db.action.findUnique({
@@ -215,9 +314,7 @@ export async function processVotingTimeout(
 
   // Find players who haven't voted
   const votedPlayerIds = action.votes.map((v) => v.playerId);
-  const playersWhoHaventVoted = action.game.players.filter(
-    (p) => !votedPlayerIds.includes(p.id)
-  );
+  const playersWhoHaventVoted = action.game.players.filter((p) => !votedPlayerIds.includes(p.id));
 
   // Create auto-votes for missing players (UNCERTAIN = 1 success, 1 failure)
   if (playersWhoHaventVoted.length > 0) {
@@ -231,9 +328,7 @@ export async function processVotingTimeout(
       })),
     });
 
-    logger.info(
-      `Auto-cast ${playersWhoHaventVoted.length} UNCERTAIN votes for action ${actionId}`
-    );
+    logger.info(`Auto-cast ${playersWhoHaventVoted.length} UNCERTAIN votes for action ${actionId}`);
   }
 
   // Update action to resolved
@@ -275,123 +370,60 @@ export async function processVotingTimeout(
 }
 
 /**
- * Process all timed-out actions.
- * This is the main entry point for the timeout worker.
+ * Process a narration phase timeout.
+ * Does NOT auto-resolve — creates an event and notifies the host to decide.
  */
-export async function processAllTimeouts(
-  config: TimeoutConfig = {}
-): Promise<{
-  argumentationTimeouts: TimeoutResult[];
-  votingTimeouts: TimeoutResult[];
-  errors: { actionId: string; error: string }[];
-}> {
-  const results = {
-    argumentationTimeouts: [] as TimeoutResult[],
-    votingTimeouts: [] as TimeoutResult[],
-    errors: [] as { actionId: string; error: string }[],
-  };
+async function processNarrationTimeout(
+  gameId: string,
+  gameName: string
+): Promise<TimeoutResult | null> {
+  // Deduplicate: check if we already created a timeout event for this phase instance
+  const existing = await db.gameEvent.findFirst({
+    where: {
+      gameId,
+      eventType: 'NARRATION_TIMEOUT',
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
-  // Process argumentation timeouts
-  const argActions = await getTimedOutArgumentationActions(config);
-  for (const action of argActions) {
-    try {
-      const result = await processArgumentationTimeout(action.id);
-      results.argumentationTimeouts.push(result);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to process argumentation timeout for ${action.id}: ${message}`);
-      results.errors.push({ actionId: action.id, error: message });
-    }
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    select: { phaseStartedAt: true },
+  });
+
+  if (existing && game?.phaseStartedAt && existing.createdAt >= game.phaseStartedAt) {
+    return null; // Already notified for this phase instance
   }
 
-  // Process voting timeouts
-  const voteActions = await getTimedOutVotingActions(config);
-  for (const action of voteActions) {
-    try {
-      const result = await processVotingTimeout(action.id);
-      results.votingTimeouts.push(result);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to process voting timeout for ${action.id}: ${message}`);
-      results.errors.push({ actionId: action.id, error: message });
-    }
-  }
-
-  if (
-    results.argumentationTimeouts.length > 0 ||
-    results.votingTimeouts.length > 0
-  ) {
-    logger.info(
-      `Processed ${results.argumentationTimeouts.length} argumentation timeouts and ${results.votingTimeouts.length} voting timeouts`
-    );
-  }
-
-  return results;
-}
-
-/**
- * Get timeout status for a specific action.
- * Useful for displaying countdown timers in the UI.
- */
-export async function getActionTimeoutStatus(
-  actionId: string,
-  config: TimeoutConfig = {}
-): Promise<{
-  phase: string;
-  startedAt: Date | null;
-  timeoutAt: Date | null;
-  isTimedOut: boolean;
-  remainingMs: number | null;
-} | null> {
-  const action = await db.action.findUnique({
-    where: { id: actionId },
-    select: {
-      status: true,
-      argumentationStartedAt: true,
-      votingStartedAt: true,
+  await db.gameEvent.create({
+    data: {
+      gameId,
+      eventType: 'NARRATION_TIMEOUT',
+      eventData: { phase: 'NARRATION' },
     },
   });
 
-  if (!action) {
-    return null;
+  // Notify the host
+  const host = await db.gamePlayer.findFirst({
+    where: { gameId, isHost: true, isActive: true },
+  });
+
+  const hostNotified = !!host;
+
+  if (host) {
+    notifyTimeoutOccurred(gameId, gameName, 'NARRATION', [host.userId]).catch(() => {});
   }
 
-  const argTimeoutMs = config.argumentationTimeoutMs ?? ARGUMENTATION_TIMEOUT_MS;
-  const voteTimeoutMs = config.votingTimeoutMs ?? VOTING_TIMEOUT_MS;
-  const now = Date.now();
-
-  if (action.status === 'ARGUING' && action.argumentationStartedAt) {
-    const timeoutAt = new Date(
-      action.argumentationStartedAt.getTime() + argTimeoutMs
-    );
-    const remainingMs = timeoutAt.getTime() - now;
-    return {
-      phase: 'ARGUMENTATION',
-      startedAt: action.argumentationStartedAt,
-      timeoutAt,
-      isTimedOut: remainingMs <= 0,
-      remainingMs: Math.max(0, remainingMs),
-    };
+  if (hostNotified) {
+    logger.info(`Narration timeout for game ${gameId} - host notified`);
+  } else {
+    logger.info(`Narration timeout for game ${gameId} - no active host to notify`);
   }
 
-  if (action.status === 'VOTING' && action.votingStartedAt) {
-    const timeoutAt = new Date(action.votingStartedAt.getTime() + voteTimeoutMs);
-    const remainingMs = timeoutAt.getTime() - now;
-    return {
-      phase: 'VOTING',
-      startedAt: action.votingStartedAt,
-      timeoutAt,
-      isTimedOut: remainingMs <= 0,
-      remainingMs: Math.max(0, remainingMs),
-    };
-  }
-
-  // No active timeout for this action's phase
   return {
-    phase: action.status,
-    startedAt: null,
-    timeoutAt: null,
-    isTimedOut: false,
-    remainingMs: null,
+    gameId,
+    phase: 'NARRATION',
+    playersAffected: 0,
+    hostNotified,
   };
 }

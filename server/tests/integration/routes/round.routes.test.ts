@@ -409,9 +409,7 @@ describe('Round Routes', () => {
 
     it('should reject duplicate summary', async () => {
       // First submission
-      await request(app)
-        .post('/api/rounds/round-1/summary')
-        .send({ content: 'First summary' });
+      await request(app).post('/api/rounds/round-1/summary').send({ content: 'First summary' });
 
       // Reset game phase back to ROUND_SUMMARY to test duplicate check
       // (In real app, this wouldn't happen, but we need to test the duplicate check)
@@ -433,9 +431,7 @@ describe('Round Routes', () => {
     });
 
     it('should reject empty summary content', async () => {
-      const response = await request(app)
-        .post('/api/rounds/round-1/summary')
-        .send({ content: '' });
+      const response = await request(app).post('/api/rounds/round-1/summary').send({ content: '' });
 
       expect(response.status).toBe(400);
     });

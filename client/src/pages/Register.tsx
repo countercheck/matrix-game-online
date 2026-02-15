@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { getApiErrorMessage } from '../utils/apiError';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -20,8 +21,7 @@ export default function Register() {
       setError('');
       navigate('/');
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Registration failed');
+      setError(getApiErrorMessage(err, 'Registration failed'));
     } finally {
       setIsLoading(false);
     }

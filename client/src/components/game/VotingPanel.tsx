@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface Action {
   id: string;
@@ -108,8 +109,7 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
       setError('');
     },
     onError: (err: unknown) => {
-      const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Failed to submit vote');
+      setError(getApiErrorMessage(err, 'Failed to submit vote'));
     },
   });
 

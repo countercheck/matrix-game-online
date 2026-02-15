@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RichTextEditor } from '../ui/RichTextEditor';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface EditArgumentModalProps {
   isOpen: boolean;
@@ -31,8 +32,7 @@ export function EditArgumentModal({
       await onSave({ content });
       onClose();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(error.response?.data?.error?.message || 'Failed to update argument');
+      setError(getApiErrorMessage(err, 'Failed to update argument'));
     } finally {
       setIsLoading(false);
     }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { RichTextEditor } from '../components/ui';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface Persona {
   name: string;
@@ -56,8 +57,8 @@ export default function CreateGame() {
       
       navigate(`/game/${gameId}/lobby`);
     },
-    onError: (err: { response?: { data?: { error?: { message?: string } } } }) => {
-      setError(err.response?.data?.error?.message || 'Failed to create game');
+    onError: (err: unknown) => {
+      setError(getApiErrorMessage(err, 'Failed to create game'));
     },
   });
 

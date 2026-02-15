@@ -7,6 +7,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 import { EditGameModal } from '../components/game/EditGameModal';
 import { EditPersonaModal } from '../components/game/EditPersonaModal';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface Persona {
   id: string;
@@ -70,8 +71,8 @@ export default function GameLobby() {
     onSuccess: () => {
       navigate('/');
     },
-    onError: (err: { response?: { data?: { error?: { message?: string } } } }) => {
-      setDeleteError(err.response?.data?.error?.message || 'Failed to delete game');
+    onError: (err: unknown) => {
+      setDeleteError(getApiErrorMessage(err, 'Failed to delete game'));
     },
   });
 

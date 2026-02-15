@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface HostControlsProps {
   gameId: string;
@@ -166,8 +167,7 @@ function SkipConfirmButton({
         </div>
         {error && (
           <p className="text-sm text-red-600 dark:text-red-400">
-            {(error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-              'Failed to skip'}
+            {getApiErrorMessage(error, 'Failed to skip')}
           </p>
         )}
       </div>

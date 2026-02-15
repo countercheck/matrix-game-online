@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { getApiErrorMessage } from '../utils/apiError';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -19,8 +20,7 @@ export default function Login() {
       setError('');
       navigate('/');
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Login failed');
+      setError(getApiErrorMessage(err, 'Login failed'));
     } finally {
       setIsLoading(false);
     }

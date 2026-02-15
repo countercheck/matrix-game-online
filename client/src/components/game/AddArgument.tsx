@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextEditor } from '../ui';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface AddArgumentProps {
   actionId: string;
@@ -29,8 +30,7 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
       onAdded?.();
     },
     onError: (err: unknown) => {
-      const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosError.response?.data?.error?.message || 'Failed to add argument');
+      setError(getApiErrorMessage(err, 'Failed to add argument'));
     },
   });
 

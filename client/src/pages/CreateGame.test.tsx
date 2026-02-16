@@ -16,9 +16,11 @@ vi.mock('react-router-dom', async () => {
 
 // Mock API
 const mockPost = vi.fn();
+const mockGet = vi.fn();
 vi.mock('../services/api', () => ({
   api: {
     post: (url: string, data: unknown, config?: unknown) => mockPost(url, data, config),
+    get: (url: string) => mockGet(url),
   },
 }));
 
@@ -26,6 +28,20 @@ describe('CreateGame Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPost.mockReset();
+    mockGet.mockReset();
+
+    // Return token_draw as the default resolution method
+    mockGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id: 'token_draw',
+            displayName: 'Token Draw',
+            description: 'Draw 3 tokens from a pool.',
+          },
+        ],
+      },
+    });
 
     // Mock URL.createObjectURL for image preview
     globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock-url');

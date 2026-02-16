@@ -626,10 +626,11 @@ export async function drawTokens(actionId: string, userId: string) {
     data: {
       resolvedAt: new Date(),
       resolutionMethod: strategyId,
-      resolutionData: resolutionResult.strategyData as Record<
-        string,
-        unknown
-      > as Prisma.InputJsonValue,
+      resolutionData: {
+        resultType: resolutionResult.resultType,
+        resultValue: resolutionResult.resultValue,
+        ...resolutionResult.strategyData,
+      } as unknown as Prisma.InputJsonValue,
     },
   });
 
@@ -721,10 +722,13 @@ export async function getDrawResult(actionId: string, userId: string) {
 
   // Return resolutionData if available (new strategy-based resolution)
   if (action.resolutionData) {
+    const data = action.resolutionData as Record<string, unknown>;
     return {
       actionId,
       resolutionMethod: action.resolutionMethod,
-      ...(action.resolutionData as Record<string, unknown>),
+      resultType: data.resultType as string,
+      resultValue: data.resultValue as number,
+      ...data,
     };
   }
 

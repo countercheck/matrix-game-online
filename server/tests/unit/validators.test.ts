@@ -157,6 +157,31 @@ describe('Validators', () => {
       };
       expect(() => createGameSchema.parse(data)).not.toThrow();
     });
+
+    it('should accept valid resolution method', () => {
+      const data = {
+        name: 'Test Game',
+        settings: { resolutionMethod: 'token_draw' },
+      };
+      expect(() => createGameSchema.parse(data)).not.toThrow();
+    });
+
+    it('should reject invalid resolution method', () => {
+      const data = {
+        name: 'Test Game',
+        settings: { resolutionMethod: 'invalid_method' },
+      };
+      expect(() => createGameSchema.parse(data)).toThrow(/Unknown resolution strategy/);
+    });
+
+    it('should default to token_draw resolution method', () => {
+      const data = {
+        name: 'Test Game',
+        settings: {},
+      };
+      const result = createGameSchema.parse(data);
+      expect(result.settings?.resolutionMethod).toBe('token_draw');
+    });
   });
 
   describe('actionProposalSchema', () => {

@@ -145,7 +145,7 @@ export function ArgumentationPhase({
             <button
               onClick={() => completeMutation.mutate()}
               disabled={completeMutation.isPending}
-              className="py-2 px-4 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 disabled:opacity-50"
+              className="py-3 px-8 bg-green-600 text-white text-lg font-bold rounded-lg shadow-lg hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {completeMutation.isPending ? 'Submitting...' : "I'm Done"}
             </button>

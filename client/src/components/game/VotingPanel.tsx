@@ -309,7 +309,7 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
             onClick={handleVote}
             disabled={!selectedVote || voteMutation.isPending}
             aria-disabled={!selectedVote || voteMutation.isPending}
-            className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="w-full py-3 px-8 bg-green-600 text-white text-lg font-bold rounded-lg shadow-lg hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
           >
             {voteMutation.isPending ? 'Submitting...' : 'Submit Vote'}
           </button>

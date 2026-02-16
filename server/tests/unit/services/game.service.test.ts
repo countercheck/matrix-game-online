@@ -30,6 +30,15 @@ vi.mock('../../../src/config/database.js', () => ({
     user: {
       findUnique: vi.fn(),
     },
+    argument: {
+      count: vi.fn(),
+    },
+    argumentationComplete: {
+      findUnique: vi.fn(),
+    },
+    persona: {
+      update: vi.fn(),
+    },
   },
 }));
 
@@ -555,6 +564,328 @@ describe('Game Service', () => {
         new NotFoundError('Game not found')
       );
       expect(db.game.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getGame', () => {
+    it('should return game with myPlayer data for active member', async () => {
+      const mockGame = {
+        id: 'game-1',
+        name: 'Test',
+        status: 'ACTIVE',
+        deletedAt: null,
+        settings: { argumentLimit: 3 },
+        players: [
+          { id: 'player-1', userId: 'user-1', isHost: true, playerName: 'Host', isActive: true },
+        ],
+        personas: [],
+        currentRound: { id: 'round-1' },
+        currentAction: { id: 'action-1' },
+      };
+
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as any);
+      vi.mocked(db.action.findFirst).mockResolvedValue(null);
+      vi.mocked(db.argument.count).mockResolvedValue(1);
+      vi.mocked(db.argumentationComplete?.findUnique ?? vi.fn()).mockResolvedValue(null);
+
+      const result = await gameService.getGame('game-1', 'user-1');
+
+      expect(result.myPlayer).toBeTruthy();
+      expect(result.myPlayer?.isHost).toBe(true);
+    });
+
+    it('should throw NotFoundError when game not found', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue(null);
+
+      await expect(gameService.getGame('game-1', 'user-1')).rejects.toThrow(NotFoundError);
+    });
+
+    it('should throw NotFoundError for deleted game', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        id: 'game-1',
+        deletedAt: new Date(),
+        players: [],
+      } as any);
+
+      await expect(gameService.getGame('game-1', 'user-1')).rejects.toThrow(NotFoundError);
+    });
+
+    it('should throw ForbiddenError for non-member on active game', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        id: 'game-1',
+        status: 'ACTIVE',
+        deletedAt: null,
+        players: [],
+        personas: [],
+        currentRound: null,
+        currentAction: null,
+      } as any);
+
+      await expect(gameService.getGame('game-1', 'user-1')).rejects.toThrow(ForbiddenError);
+    });
+
+    it('should allow non-member to view LOBBY game', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        id: 'game-1',
+        status: 'LOBBY',
+        deletedAt: null,
+        players: [],
+        personas: [],
+        currentRound: null,
+        currentAction: null,
+      } as any);
+
+      const result = await gameService.getGame('game-1', 'user-1');
+      expect(result.myPlayer).toBeNull();
+    });
+  });
+
+  describe('updateGame', () => {
+    it('should update game when user is host', async () => {
+      vi.mocked(db.gamePlayer.findFirst).mockResolvedValue({
+        id: 'player-1',
+        userId: 'user-1',
+        isHost: true,
+        isActive: true,
+      } as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        id: 'game-1',
+        status: 'LOBBY',
+        deletedAt: null,
+      } as any);
+      vi.mocked(db.game.update).mockResolvedValue({ id: 'game-1', name: 'Updated' } as any);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as any);
+
+      const result = await gameService.updateGame('game-1', 'user-1', { name: 'Updated' });
+
+      expect(result.name).toBe('Updated');
+    });
+
+    it('should throw ForbiddenError when non-host tries to update', async () => {
+      vi.mocked(db.gamePlayer.findFirst).mockResolvedValue({
+        id: 'player-2',
+        userId: 'user-2',
+        isHost: false,
+        isActive: true,
+      } as any);
+
+      await expect(gameService.updateGame('game-1', 'user-2', { name: 'Updated' })).rejects.toThrow(
+        ForbiddenError
+      );
+    });
+  });
+
+  describe('leaveGame', () => {
+    it('should mark player inactive and decrement count', async () => {
+      vi.mocked(db.gamePlayer.findFirst).mockResolvedValue({
+        id: 'player-1',
+        userId: 'user-1',
+        playerName: 'Test',
+        isActive: true,
+      } as any);
+      vi.mocked(db.gamePlayer.update).mockResolvedValue({} as any);
+      vi.mocked(db.game.update).mockResolvedValue({} as any);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as any);
+
+      await gameService.leaveGame('game-1', 'user-1');
+
+      expect(db.gamePlayer.update).toHaveBeenCalledWith({
+        where: { id: 'player-1' },
+        data: { isActive: false },
+      });
+      expect(db.game.update).toHaveBeenCalledWith({
+        where: { id: 'game-1' },
+        data: { playerCount: { decrement: 1 } },
+      });
+    });
+
+    it('should throw NotFoundError when player not in game', async () => {
+      vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(null);
+
+      await expect(gameService.leaveGame('game-1', 'user-1')).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe('getGameTimeoutSettings', () => {
+    it('should convert valid timeout hours to milliseconds', () => {
+      const settings = gameService.getGameTimeoutSettings({
+        proposalTimeoutHours: 24,
+        argumentationTimeoutHours: 12,
+        votingTimeoutHours: 6,
+        narrationTimeoutHours: 48,
+      });
+
+      expect(settings.proposalTimeoutMs).toBe(24 * 60 * 60 * 1000);
+      expect(settings.argumentationTimeoutMs).toBe(12 * 60 * 60 * 1000);
+      expect(settings.votingTimeoutMs).toBe(6 * 60 * 60 * 1000);
+      expect(settings.narrationTimeoutMs).toBe(48 * 60 * 60 * 1000);
+    });
+
+    it('should return null for -1 (infinite) timeouts', () => {
+      const settings = gameService.getGameTimeoutSettings({
+        proposalTimeoutHours: -1,
+        argumentationTimeoutHours: -1,
+      });
+
+      expect(settings.proposalTimeoutMs).toBeNull();
+      expect(settings.argumentationTimeoutMs).toBeNull();
+    });
+
+    it('should return null for missing timeout settings', () => {
+      const settings = gameService.getGameTimeoutSettings({});
+
+      expect(settings.proposalTimeoutMs).toBeNull();
+      expect(settings.argumentationTimeoutMs).toBeNull();
+      expect(settings.votingTimeoutMs).toBeNull();
+      expect(settings.narrationTimeoutMs).toBeNull();
+    });
+
+    it('should return null for non-integer values', () => {
+      const settings = gameService.getGameTimeoutSettings({
+        proposalTimeoutHours: 1.5,
+        argumentationTimeoutHours: 'abc',
+      });
+
+      expect(settings.proposalTimeoutMs).toBeNull();
+      expect(settings.argumentationTimeoutMs).toBeNull();
+    });
+  });
+
+  describe('transitionPhase', () => {
+    it('should transition from PROPOSAL to ARGUMENTATION', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        id: 'game-1',
+        currentPhase: 'PROPOSAL',
+        deletedAt: null,
+      } as any);
+      vi.mocked(db.game.update).mockResolvedValue({} as any);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as any);
+
+      await gameService.transitionPhase('game-1', 'ARGUMENTATION' as any);
+
+      expect(db.game.update).toHaveBeenCalledWith({
+        where: { id: 'game-1' },
+        data: {
+          currentPhase: 'ARGUMENTATION',
+          phaseStartedAt: expect.any(Date),
+        },
+      });
+    });
+
+    it('should throw BadRequestError for invalid transition', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        id: 'game-1',
+        currentPhase: 'PROPOSAL',
+        deletedAt: null,
+      } as any);
+
+      await expect(gameService.transitionPhase('game-1', 'RESOLUTION' as any)).rejects.toThrow(
+        BadRequestError
+      );
+    });
+
+    it('should throw NotFoundError for missing game', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue(null);
+
+      await expect(gameService.transitionPhase('game-1', 'ARGUMENTATION' as any)).rejects.toThrow(
+        NotFoundError
+      );
+    });
+  });
+
+  describe('extendTimeout', () => {
+    it('should extend timeout when host requests', async () => {
+      vi.mocked(db.gamePlayer.findFirst).mockResolvedValue({
+        id: 'player-1',
+        userId: 'user-1',
+        isHost: true,
+        isActive: true,
+      } as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        id: 'game-1',
+        currentPhase: 'VOTING',
+        deletedAt: null,
+      } as any);
+      vi.mocked(db.game.update).mockResolvedValue({} as any);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as any);
+
+      const result = await gameService.extendTimeout('game-1', 'user-1');
+
+      expect(result.message).toBe('Timeout extended');
+      expect(db.game.update).toHaveBeenCalledWith({
+        where: { id: 'game-1' },
+        data: { phaseStartedAt: expect.any(Date) },
+      });
+    });
+
+    it('should throw NotFoundError for deleted game', async () => {
+      vi.mocked(db.gamePlayer.findFirst).mockResolvedValue({
+        isHost: true,
+        isActive: true,
+      } as any);
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        id: 'game-1',
+        deletedAt: new Date(),
+      } as any);
+
+      await expect(gameService.extendTimeout('game-1', 'user-1')).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe('getGameTimeoutStatus', () => {
+    it('should return null when game has no phaseStartedAt', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        currentPhase: 'PROPOSAL',
+        phaseStartedAt: null,
+        settings: {},
+      } as any);
+
+      const result = await gameService.getGameTimeoutStatus('game-1');
+      expect(result).toBeNull();
+    });
+
+    it('should return timeout status with remaining time', async () => {
+      const phaseStart = new Date(Date.now() - 1000 * 60 * 60); // 1 hour ago
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        currentPhase: 'PROPOSAL',
+        phaseStartedAt: phaseStart,
+        settings: { proposalTimeoutHours: 24 },
+      } as any);
+
+      const result = await gameService.getGameTimeoutStatus('game-1');
+
+      expect(result).toBeTruthy();
+      expect(result!.phase).toBe('PROPOSAL');
+      expect(result!.isTimedOut).toBe(false);
+      expect(result!.isInfinite).toBe(false);
+      expect(result!.remainingMs).toBeGreaterThan(0);
+    });
+
+    it('should detect timed-out status', async () => {
+      const phaseStart = new Date(Date.now() - 1000 * 60 * 60 * 25); // 25 hours ago
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        currentPhase: 'PROPOSAL',
+        phaseStartedAt: phaseStart,
+        settings: { proposalTimeoutHours: 24 },
+      } as any);
+
+      const result = await gameService.getGameTimeoutStatus('game-1');
+
+      expect(result!.isTimedOut).toBe(true);
+      expect(result!.remainingMs).toBe(0);
+    });
+
+    it('should return infinite for phases without timeout', async () => {
+      vi.mocked(db.game.findUnique).mockResolvedValue({
+        currentPhase: 'PROPOSAL',
+        phaseStartedAt: new Date(),
+        settings: { proposalTimeoutHours: -1 },
+      } as any);
+
+      const result = await gameService.getGameTimeoutStatus('game-1');
+
+      expect(result!.isInfinite).toBe(true);
+      expect(result!.timeoutAt).toBeNull();
     });
   });
 });

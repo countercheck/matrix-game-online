@@ -261,6 +261,7 @@ export async function getGame(gameId: string, userId: string) {
       id: myPlayer.id,
       playerName: myPlayer.playerName,
       isHost: myPlayer.isHost,
+      personaId: myPlayer.personaId,
       isPersonaLead: myPlayer.isPersonaLead,
       hasProposedThisRound,
       remainingArguments,

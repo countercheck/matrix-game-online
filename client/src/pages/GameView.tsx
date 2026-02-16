@@ -77,6 +77,7 @@ interface Game {
     id: string;
     playerName: string;
     isHost: boolean;
+    personaId: string | null;
     isPersonaLead: boolean;
     hasProposedThisRound: boolean;
     remainingArguments: number;
@@ -376,6 +377,7 @@ export default function GameView() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {myPlayer &&
+            myPlayer.personaId &&
             myPlayer.isPersonaLead === false &&
             (game.currentPhase === 'PROPOSAL' || game.currentPhase === 'NARRATION') && (
               <div className="mb-4 p-3 text-sm bg-muted/50 border rounded-md text-muted-foreground">

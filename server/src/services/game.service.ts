@@ -8,6 +8,7 @@ import {
 } from '../middleware/errorHandler.js';
 import type { CreateGameInput, UpdatePersonaInput } from '../utils/validators.js';
 import { notifyGameStarted } from './notification.service.js';
+import { countActingUnits } from './shared/persona-helpers.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { getUploadsDir } from '../config/uploads.js';
@@ -153,7 +154,7 @@ export async function getGame(gameId: string, userId: string) {
         orderBy: { sortOrder: 'asc' },
         include: {
           claimedBy: {
-            select: { id: true, playerName: true },
+            select: { id: true, playerName: true, isPersonaLead: true },
           },
         },
       },
@@ -185,30 +186,64 @@ export async function getGame(gameId: string, userId: string) {
   // Calculate myPlayer's game state
   let myPlayerData = null;
   if (myPlayer && game.currentRound) {
-    // Check if player has proposed this round
-    const hasProposedThisRound = await db.action.findFirst({
-      where: {
-        gameId,
-        roundId: game.currentRound.id,
-        initiatorId: myPlayer.id,
-      },
-    });
+    const settings = (game.settings as GameSettings) || {};
 
-    // Get game settings for argument limit
-    const settings = (game.settings as { argumentLimit?: number }) || {};
+    // Check if player (or their persona unit) has proposed this round
+    let hasProposedThisRound = false;
+    if (settings.allowSharedPersonas && myPlayer.personaId) {
+      // Persona-level check: any member of the persona proposed
+      const personaMembers = game.players.filter((p) => p.personaId === myPlayer.personaId);
+      const memberIds = personaMembers.map((p) => p.id);
+      const personaProposal = await db.action.findFirst({
+        where: {
+          gameId,
+          roundId: game.currentRound.id,
+          initiatorId: { in: memberIds },
+        },
+      });
+      hasProposedThisRound = !!personaProposal;
+    } else {
+      const proposal = await db.action.findFirst({
+        where: {
+          gameId,
+          roundId: game.currentRound.id,
+          initiatorId: myPlayer.id,
+        },
+      });
+      hasProposedThisRound = !!proposal;
+    }
+
+    // Get argument limit
     const argumentLimit = settings.argumentLimit || 3;
 
     // Count arguments made on current action
     let remainingArguments = argumentLimit;
     let hasCompletedArgumentation = false;
     if (game.currentAction) {
-      const argumentCount = await db.argument.count({
-        where: {
-          actionId: game.currentAction.id,
-          playerId: myPlayer.id,
-        },
-      });
-      remainingArguments = Math.max(0, argumentLimit - argumentCount);
+      if (
+        settings.allowSharedPersonas &&
+        settings.sharedPersonaArguments === 'shared_pool' &&
+        myPlayer.personaId
+      ) {
+        // Shared pool: count arguments across all persona members
+        const personaMembers = game.players.filter((p) => p.personaId === myPlayer.personaId);
+        const memberIds = personaMembers.map((p) => p.id);
+        const argumentCount = await db.argument.count({
+          where: {
+            actionId: game.currentAction.id,
+            playerId: { in: memberIds },
+          },
+        });
+        remainingArguments = Math.max(0, argumentLimit - argumentCount);
+      } else {
+        const argumentCount = await db.argument.count({
+          where: {
+            actionId: game.currentAction.id,
+            playerId: myPlayer.id,
+          },
+        });
+        remainingArguments = Math.max(0, argumentLimit - argumentCount);
+      }
 
       // Check if player has marked argumentation complete
       const completionRecord = await db.argumentationComplete.findUnique({
@@ -226,7 +261,8 @@ export async function getGame(gameId: string, userId: string) {
       id: myPlayer.id,
       playerName: myPlayer.playerName,
       isHost: myPlayer.isHost,
-      hasProposedThisRound: !!hasProposedThisRound,
+      isPersonaLead: myPlayer.isPersonaLead,
+      hasProposedThisRound,
       remainingArguments,
       hasCompletedArgumentation,
     };
@@ -299,6 +335,7 @@ export async function joinGame(
   }
 
   // Validate persona if provided
+  let isFirstClaim = false;
   if (personaId) {
     const persona = game.personas.find((p) => p.id === personaId);
     if (!persona) {
@@ -308,9 +345,10 @@ export async function joinGame(
     if (persona.isNpc) {
       throw new BadRequestError('Cannot select an NPC persona');
     }
-    if (persona.claimedBy.length > 0) {
+    if (persona.claimedBy.length > 0 && !settings.allowSharedPersonas) {
       throw new ConflictError('This persona has already been claimed');
     }
+    isFirstClaim = persona.claimedBy.length === 0;
   }
 
   const existingPlayer = game.players.find((p) => p.userId === userId);
@@ -325,6 +363,7 @@ export async function joinGame(
         isActive: true,
         playerName,
         personaId: personaId || null,
+        isPersonaLead: personaId ? isFirstClaim : false,
       },
       include: { persona: true },
     });
@@ -343,6 +382,7 @@ export async function joinGame(
       personaId: personaId || null,
       joinOrder: game.players.length + 1,
       isHost: false,
+      isPersonaLead: personaId ? isFirstClaim : false,
     },
     include: { persona: true },
   });
@@ -440,28 +480,52 @@ export async function selectPersona(gameId: string, userId: string, personaId: s
     throw new ForbiddenError('Not a member of this game');
   }
 
+  const settings = (game.settings as GameSettings) || {};
+  const oldPersonaId = player.personaId;
+
   // If selecting a persona (not clearing)
   if (personaId) {
     const persona = game.personas.find((p) => p.id === personaId);
     if (!persona) {
       throw new BadRequestError('Invalid persona');
     }
-    // NPC personas cannot be selected by players
     if (persona.isNpc) {
       throw new BadRequestError('Cannot select an NPC persona');
     }
-    // Allow if unclaimed or claimed by this player
+    // Allow if unclaimed, claimed by this player, or shared personas enabled
     const claimedByOther = persona.claimedBy.some((cb) => cb.id !== player.id);
-    if (claimedByOther && persona.claimedBy.length > 0) {
+    if (claimedByOther && !settings.allowSharedPersonas) {
       throw new ConflictError('This persona has already been claimed');
     }
   }
 
+  // Determine if this player should become lead
+  const isFirstClaim = personaId
+    ? game.personas.find((p) => p.id === personaId)!.claimedBy.filter((cb) => cb.id !== player.id)
+        .length === 0
+    : false;
+
   const updatedPlayer = await db.gamePlayer.update({
     where: { id: player.id },
-    data: { personaId },
+    data: {
+      personaId,
+      isPersonaLead: personaId ? isFirstClaim : false,
+    },
     include: { persona: true },
   });
+
+  // If player was lead and cleared/changed persona, auto-promote next member
+  if (oldPersonaId && oldPersonaId !== personaId && player.isPersonaLead) {
+    const remainingMembers = game.players.filter(
+      (p) => p.id !== player.id && p.personaId === oldPersonaId && p.isActive && !p.isNpc
+    );
+    if (remainingMembers.length > 0) {
+      await db.gamePlayer.update({
+        where: { id: remainingMembers[0]!.id },
+        data: { isPersonaLead: true },
+      });
+    }
+  }
 
   await logGameEvent(gameId, userId, 'PERSONA_SELECTED', {
     playerName: player.playerName,
@@ -469,6 +533,59 @@ export async function selectPersona(gameId: string, userId: string, personaId: s
   });
 
   return updatedPlayer;
+}
+
+export async function setPersonaLead(
+  gameId: string,
+  personaId: string,
+  newLeadPlayerId: string,
+  userId: string
+) {
+  await requireHost(gameId, userId);
+
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: {
+      players: { where: { isActive: true } },
+    },
+  });
+
+  if (!game || game.deletedAt) {
+    throw new NotFoundError('Game not found');
+  }
+
+  if (game.status !== 'LOBBY') {
+    throw new BadRequestError('Can only change persona lead in the lobby');
+  }
+
+  const newLead = game.players.find((p) => p.id === newLeadPlayerId);
+  if (!newLead) {
+    throw new NotFoundError('Player not found in this game');
+  }
+
+  if (newLead.personaId !== personaId) {
+    throw new BadRequestError('Player is not a member of this persona');
+  }
+
+  // Remove lead from current lead(s)
+  await db.gamePlayer.updateMany({
+    where: { gameId, personaId, isPersonaLead: true },
+    data: { isPersonaLead: false },
+  });
+
+  // Set new lead
+  await db.gamePlayer.update({
+    where: { id: newLeadPlayerId },
+    data: { isPersonaLead: true },
+  });
+
+  await logGameEvent(gameId, userId, 'PERSONA_LEAD_CHANGED', {
+    personaId,
+    newLeadPlayerId,
+    newLeadName: newLead.playerName,
+  });
+
+  return { message: 'Persona lead updated' };
 }
 
 export async function updatePersona(
@@ -590,13 +707,19 @@ export async function startGame(gameId: string, userId: string) {
     totalPlayers += 1;
   }
 
+  // Recalculate acting units including the NPC player if created
+  const allPlayers = await db.gamePlayer.findMany({
+    where: { gameId, isActive: true },
+  });
+  const totalActionsRequired = countActingUnits(allPlayers);
+
   // Create first round
   const round = await db.round.create({
     data: {
       gameId,
       roundNumber: 1,
       status: 'IN_PROGRESS',
-      totalActionsRequired: totalPlayers,
+      totalActionsRequired,
     },
   });
 

@@ -19,6 +19,26 @@ vi.mock('../../../src/config/database.js', () => ({
 import { db } from '../../../src/config/database.js';
 import { selectPersona } from '../../../src/services/game.service.js';
 
+function mockPlayer(overrides: {
+  id: string;
+  userId: string;
+  playerName: string;
+  personaId?: string | null;
+  isPersonaLead?: boolean;
+  isActive?: boolean;
+  isNpc?: boolean;
+}) {
+  return {
+    id: overrides.id,
+    userId: overrides.userId,
+    playerName: overrides.playerName,
+    personaId: overrides.personaId ?? null,
+    isPersonaLead: overrides.isPersonaLead ?? false,
+    isActive: overrides.isActive ?? true,
+    isNpc: overrides.isNpc ?? false,
+  };
+}
+
 describe('Persona Swapping', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,18 +52,13 @@ describe('Persona Swapping', () => {
       const persona1Id = 'persona-1';
       const persona2Id = 'persona-2';
 
-      // Mock game with two personas and a player who has selected persona1
       const mockGame = {
         id: gameId,
         status: 'LOBBY',
         deletedAt: null,
+        settings: {},
         players: [
-          {
-            id: playerId,
-            userId: userId,
-            playerName: 'Test Player',
-            personaId: persona1Id,
-          },
+          mockPlayer({ id: playerId, userId, playerName: 'Test Player', personaId: persona1Id, isPersonaLead: true }),
         ],
         personas: [
           {
@@ -56,7 +71,7 @@ describe('Persona Swapping', () => {
             id: persona2Id,
             name: 'Mage',
             isNpc: false,
-            claimedBy: [], // Available
+            claimedBy: [],
           },
         ],
       };
@@ -71,13 +86,12 @@ describe('Persona Swapping', () => {
       } as never);
       vi.mocked(db.gameEvent.create).mockResolvedValue({} as never);
 
-      // Player swaps from Warrior to Mage
       const result = await selectPersona(gameId, userId, persona2Id);
 
       expect(result.personaId).toBe(persona2Id);
       expect(db.gamePlayer.update).toHaveBeenCalledWith({
         where: { id: playerId },
-        data: { personaId: persona2Id },
+        data: { personaId: persona2Id, isPersonaLead: true },
         include: { persona: true },
       });
     });
@@ -92,13 +106,9 @@ describe('Persona Swapping', () => {
         id: gameId,
         status: 'LOBBY',
         deletedAt: null,
+        settings: {},
         players: [
-          {
-            id: playerId,
-            userId: userId,
-            playerName: 'Test Player',
-            personaId: personaId,
-          },
+          mockPlayer({ id: playerId, userId, playerName: 'Test Player', personaId, isPersonaLead: true }),
         ],
         personas: [
           {
@@ -118,12 +128,11 @@ describe('Persona Swapping', () => {
       } as never);
       vi.mocked(db.gameEvent.create).mockResolvedValue({} as never);
 
-      // Player selects the same persona they already have
       await selectPersona(gameId, userId, personaId);
 
       expect(db.gamePlayer.update).toHaveBeenCalledWith({
         where: { id: playerId },
-        data: { personaId: personaId },
+        data: { personaId: personaId, isPersonaLead: true },
         include: { persona: true },
       });
     });
@@ -138,13 +147,9 @@ describe('Persona Swapping', () => {
         id: gameId,
         status: 'LOBBY',
         deletedAt: null,
+        settings: {},
         players: [
-          {
-            id: playerId,
-            userId: userId,
-            playerName: 'Test Player',
-            personaId: personaId,
-          },
+          mockPlayer({ id: playerId, userId, playerName: 'Test Player', personaId, isPersonaLead: true }),
         ],
         personas: [
           {
@@ -164,13 +169,12 @@ describe('Persona Swapping', () => {
       } as never);
       vi.mocked(db.gameEvent.create).mockResolvedValue({} as never);
 
-      // Player clears their persona
       const result = await selectPersona(gameId, userId, null);
 
       expect(result.personaId).toBeNull();
       expect(db.gamePlayer.update).toHaveBeenCalledWith({
         where: { id: playerId },
-        data: { personaId: null },
+        data: { personaId: null, isPersonaLead: false },
         include: { persona: true },
       });
     });
@@ -187,13 +191,9 @@ describe('Persona Swapping', () => {
         id: gameId,
         status: 'LOBBY',
         deletedAt: null,
+        settings: {},
         players: [
-          {
-            id: playerId,
-            userId: userId,
-            playerName: 'Test Player',
-            personaId: persona1Id,
-          },
+          mockPlayer({ id: playerId, userId, playerName: 'Test Player', personaId: persona1Id }),
         ],
         personas: [
           {
@@ -213,7 +213,6 @@ describe('Persona Swapping', () => {
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
-      // Player tries to swap to persona claimed by another player
       const swapPromise = selectPersona(gameId, userId, persona2Id);
       await expect(swapPromise).rejects.toThrow(ConflictError);
       await expect(swapPromise).rejects.toThrow('This persona has already been claimed');
@@ -228,15 +227,11 @@ describe('Persona Swapping', () => {
 
       const mockGame = {
         id: gameId,
-        status: 'ACTIVE', // Game has started
+        status: 'ACTIVE',
         deletedAt: null,
+        settings: {},
         players: [
-          {
-            id: playerId,
-            userId: userId,
-            playerName: 'Test Player',
-            personaId: persona1Id,
-          },
+          mockPlayer({ id: playerId, userId, playerName: 'Test Player', personaId: persona1Id }),
         ],
         personas: [
           {
@@ -256,7 +251,6 @@ describe('Persona Swapping', () => {
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
-      // Player tries to swap persona after game started
       const swapPromise = selectPersona(gameId, userId, persona2Id);
       await expect(swapPromise).rejects.toThrow(BadRequestError);
       await expect(swapPromise).rejects.toThrow('Cannot change persona after game has started');
@@ -272,19 +266,15 @@ describe('Persona Swapping', () => {
         id: gameId,
         status: 'LOBBY',
         deletedAt: null,
+        settings: {},
         players: [
-          {
-            id: playerId,
-            userId: userId,
-            playerName: 'Test Player',
-            personaId: null,
-          },
+          mockPlayer({ id: playerId, userId, playerName: 'Test Player' }),
         ],
         personas: [
           {
             id: npcPersonaId,
             name: 'Dragon',
-            isNpc: true, // NPC persona
+            isNpc: true,
             claimedBy: [],
           },
         ],
@@ -292,7 +282,6 @@ describe('Persona Swapping', () => {
 
       vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
 
-      // Player tries to select NPC persona
       const selectPromise = selectPersona(gameId, userId, npcPersonaId);
       await expect(selectPromise).rejects.toThrow(BadRequestError);
       await expect(selectPromise).rejects.toThrow('Cannot select an NPC persona');

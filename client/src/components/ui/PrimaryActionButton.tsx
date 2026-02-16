@@ -16,7 +16,6 @@ export const PrimaryActionButton = forwardRef<HTMLButtonElement, PrimaryActionBu
         ref={ref}
         type="button"
         disabled={disabled || loading}
-        aria-disabled={disabled || loading}
         className={`w-full py-3 px-8 bg-green-600 text-white text-lg font-bold rounded-lg shadow-lg hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${className}`}
         {...props}
       >

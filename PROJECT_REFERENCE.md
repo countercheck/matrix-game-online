@@ -85,9 +85,9 @@ Game flow: Game has Rounds; each Round has multiple Actions; each Action goes th
 **Server** — Vitest; unit and integration use default config, e2e uses `vitest.config.e2e.ts`.
 - **Unit** (`server/tests/unit/`): services, validators, middleware. Prisma and deps usually mocked with `vi.mock`.
 - **Integration** (`server/tests/integration/`): route tests with supertest against a test app; may use test DB or mocks depending on file.
-- **E2E** (`server/tests/e2e/`): full app + real PostgreSQL. `setup.js`: sets `DATABASE_URL` to test DB, exports `testDb` (Prisma), `cleanDatabase`. `test-app.js`: `createTestApp()` for express app. Tests: game flow, actions, uploads, NPC. Run after `db:migrate:test`.
+- **E2E** (`server/tests/e2e/`): full app + real PostgreSQL. `setup.ts`: sets `DATABASE_URL` to test DB, exports `testDb` (Prisma), `cleanDatabase`. `test-app.ts`: `createTestApp()` for express app. Tests: game flow, actions, uploads, NPC. Run after `db:migrate:test`.
 
-**Where to look:** Client test helpers → `client/src/test/setup.ts`, `client/src/test/test-utils.tsx`. Server test DB setup and app factory → `server/tests/e2e/setup.js`, `server/tests/e2e/test-app.js`.
+**Where to look:** Client test helpers → `client/src/test/setup.ts`, `client/src/test/test-utils.tsx`. Server test DB setup and app factory → `server/tests/e2e/setup.ts`, `server/tests/e2e/test-app.ts`.
 
 ---
 

@@ -753,8 +753,8 @@ export async function submitNarration(actionId: string, userId: string, data: Na
     throw new NotFoundError('Action not found');
   }
 
-  if (!action.tokenDraw) {
-    throw new BadRequestError('Tokens must be drawn before narrating');
+  if (!action.tokenDraw && !action.resolutionData) {
+    throw new BadRequestError('Action must be resolved before narrating');
   }
 
   const player = await db.gamePlayer.findFirst({

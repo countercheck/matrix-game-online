@@ -689,7 +689,6 @@ export async function startGame(gameId: string, userId: string) {
 
   // Check if there's an NPC persona and create an NPC player
   const npcPersona = game.personas.find((p) => p.isNpc);
-  let totalPlayers = game.players.length;
 
   if (npcPersona) {
     // Get the NPC system user
@@ -712,8 +711,6 @@ export async function startGame(gameId: string, userId: string) {
       where: { id: gameId },
       data: { playerCount: { increment: 1 } },
     });
-
-    totalPlayers += 1;
   }
 
   // Recalculate acting units including the NPC player if created

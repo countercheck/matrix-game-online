@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { ArgumentList } from './ArgumentList';
 import { AddArgument } from './AddArgument';
 import { EditActionModal } from './EditActionModal';
+import { PrimaryActionButton } from '../ui';
 
 interface Action {
   id: string;
@@ -142,13 +143,13 @@ export function ArgumentationPhase({
                 Click when you're ready to move to voting.
               </p>
             </div>
-            <button
+            <PrimaryActionButton
               onClick={() => completeMutation.mutate()}
-              disabled={completeMutation.isPending}
-              className="py-3 px-8 bg-green-600 text-white text-lg font-bold rounded-lg shadow-lg hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              loading={completeMutation.isPending}
+              loadingText="Submitting..."
             >
-              {completeMutation.isPending ? 'Submitting...' : "I'm Done"}
-            </button>
+              I'm Done
+            </PrimaryActionButton>
           </div>
         )}
       </div>

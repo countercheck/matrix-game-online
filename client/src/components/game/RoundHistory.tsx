@@ -201,8 +201,9 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                     </div>
                     {/* Expand Icon */}
                     <button
+                      type="button"
                       onClick={() => setExpandedRound(isExpanded ? null : round.id)}
-                      aria-label={isExpanded ? 'Collapse round' : 'Expand round'}
+                      aria-label={isExpanded ? `Collapse round ${round.roundNumber}` : `Expand round ${round.roundNumber}`}
                       className="p-1 rounded hover:bg-muted/50 transition-colors"
                     >
                       <svg

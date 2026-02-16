@@ -305,7 +305,7 @@ export async function joinGame(
     if (persona.isNpc) {
       throw new BadRequestError('Cannot select an NPC persona');
     }
-    if (persona.claimedBy) {
+    if (persona.claimedBy.length > 0) {
       throw new ConflictError('This persona has already been claimed');
     }
   }
@@ -448,7 +448,8 @@ export async function selectPersona(gameId: string, userId: string, personaId: s
       throw new BadRequestError('Cannot select an NPC persona');
     }
     // Allow if unclaimed or claimed by this player
-    if (persona.claimedBy && persona.claimedBy.id !== player.id) {
+    const claimedByOther = persona.claimedBy.some((cb) => cb.id !== player.id);
+    if (claimedByOther && persona.claimedBy.length > 0) {
       throw new ConflictError('This persona has already been claimed');
     }
   }

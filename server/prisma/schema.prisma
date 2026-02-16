@@ -113,11 +113,12 @@ model GamePlayer {
   id         String    @id @default(uuid())
   gameId     String    @map("game_id")
   userId     String    @map("user_id")
-  personaId  String?   @unique @map("persona_id")
-  playerName String    @map("player_name") @db.VarChar(50)
-  joinOrder  Int       @map("join_order")
-  isHost     Boolean   @default(false) @map("is_host")
-  isNpc      Boolean   @default(false) @map("is_npc")
+  personaId     String?  @map("persona_id")
+  playerName    String   @map("player_name") @db.VarChar(50)
+  joinOrder     Int      @map("join_order")
+  isHost        Boolean  @default(false) @map("is_host")
+  isNpc         Boolean  @default(false) @map("is_npc")
+  isPersonaLead Boolean  @default(false) @map("is_persona_lead")
   isActive   Boolean   @default(true) @map("is_active")
   joinedAt   DateTime  @default(now()) @map("joined_at")
   lastSeenAt DateTime? @map("last_seen_at")
@@ -153,7 +154,7 @@ model Persona {
 
   // Relations
   game        Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  claimedBy   GamePlayer?
+  claimedBy   GamePlayer[]
 
   @@unique([gameId, name])
   @@index([gameId])

@@ -76,7 +76,7 @@ function buildGameFixture() {
         npcActionDescription: null,
         npcDesiredOutcome: null,
         sortOrder: 0,
-        claimedBy: { playerName: 'Alice' },
+        claimedBy: [{ playerName: 'Alice' }],
       },
       {
         id: 'persona-2',
@@ -86,7 +86,7 @@ function buildGameFixture() {
         npcActionDescription: 'Undermines the ruling class',
         npcDesiredOutcome: 'Chaos reigns',
         sortOrder: 1,
-        claimedBy: null,
+        claimedBy: [],
       },
     ],
     players: [

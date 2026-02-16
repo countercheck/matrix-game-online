@@ -50,13 +50,13 @@ describe('Persona Swapping', () => {
             id: persona1Id,
             name: 'Warrior',
             isNpc: false,
-            claimedBy: { id: playerId, playerName: 'Test Player' },
+            claimedBy: [{ id: playerId, playerName: 'Test Player' }],
           },
           {
             id: persona2Id,
             name: 'Mage',
             isNpc: false,
-            claimedBy: null, // Available
+            claimedBy: [], // Available
           },
         ],
       };
@@ -105,7 +105,7 @@ describe('Persona Swapping', () => {
             id: personaId,
             name: 'Warrior',
             isNpc: false,
-            claimedBy: { id: playerId, playerName: 'Test Player' },
+            claimedBy: [{ id: playerId, playerName: 'Test Player' }],
           },
         ],
       };
@@ -151,7 +151,7 @@ describe('Persona Swapping', () => {
             id: personaId,
             name: 'Warrior',
             isNpc: false,
-            claimedBy: { id: playerId, playerName: 'Test Player' },
+            claimedBy: [{ id: playerId, playerName: 'Test Player' }],
           },
         ],
       };
@@ -200,13 +200,13 @@ describe('Persona Swapping', () => {
             id: persona1Id,
             name: 'Warrior',
             isNpc: false,
-            claimedBy: { id: playerId, playerName: 'Test Player' },
+            claimedBy: [{ id: playerId, playerName: 'Test Player' }],
           },
           {
             id: persona2Id,
             name: 'Mage',
             isNpc: false,
-            claimedBy: { id: otherPlayerId, playerName: 'Other Player' },
+            claimedBy: [{ id: otherPlayerId, playerName: 'Other Player' }],
           },
         ],
       };
@@ -243,13 +243,13 @@ describe('Persona Swapping', () => {
             id: persona1Id,
             name: 'Warrior',
             isNpc: false,
-            claimedBy: { id: playerId, playerName: 'Test Player' },
+            claimedBy: [{ id: playerId, playerName: 'Test Player' }],
           },
           {
             id: persona2Id,
             name: 'Mage',
             isNpc: false,
-            claimedBy: null,
+            claimedBy: [],
           },
         ],
       };
@@ -285,7 +285,7 @@ describe('Persona Swapping', () => {
             id: npcPersonaId,
             name: 'Dragon',
             isNpc: true, // NPC persona
-            claimedBy: null,
+            claimedBy: [],
           },
         ],
       };

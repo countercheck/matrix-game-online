@@ -29,6 +29,11 @@ router.post(
 router.post('/:gameId/join', authenticateToken, gameController.joinGame);
 router.post('/:gameId/select-persona', authenticateToken, gameController.selectPersona);
 router.put('/:gameId/personas/:personaId', authenticateToken, gameController.updatePersona);
+router.post(
+  '/:gameId/personas/:personaId/set-lead',
+  authenticateToken,
+  gameController.setPersonaLead
+);
 router.post('/:gameId/leave', authenticateToken, gameController.leaveGame);
 router.post('/:gameId/start', authenticateToken, gameController.startGame);
 router.get('/:gameId/players', authenticateToken, gameController.getPlayers);

@@ -236,7 +236,10 @@ Create a new game.
     "maxPlayers": 6,
     "argumentationTimeoutHours": 24,
     "votingTimeoutHours": 24,
-    "personasRequired": false
+    "personasRequired": false,
+    "allowSharedPersonas": false,
+    "sharedPersonaVoting": "each_member",
+    "sharedPersonaArguments": "independent"
   },
   "personas": [
     { "name": "The Detective", "description": "Investigates mysteries" },
@@ -383,6 +386,36 @@ Select or change persona (lobby only).
 
 **Note:** NPC personas (`isNpc: true`) cannot be selected by players. They are automatically assigned to an NPC player when the game starts.
 
+**Shared Personas:** When `allowSharedPersonas` is enabled, multiple players can select the same persona. The first player to claim a persona becomes the **persona lead**. Subsequent claimers join as non-lead members. When a lead deselects their persona, the next member is automatically promoted to lead.
+
+### POST /games/:gameId/personas/:personaId/set-lead
+
+Reassign the persona lead to a different member of a shared persona (host only, lobby only).
+
+**Request Body:**
+
+```json
+{
+  "playerId": "uuid"
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Persona lead updated"
+  }
+}
+```
+
+**Error Responses:**
+
+- `400 Bad Request` - Game is not in LOBBY status, or player is not a member of the specified persona
+- `403 Forbidden` - Not the game host
+
 #### NPC Personas
 
 When a persona is marked as `isNpc: true`, the system:
@@ -395,6 +428,39 @@ When a persona is marked as `isNpc: true`, the system:
 6. Any player can draw tokens and narrate NPC actions
 
 **Note:** The NPC system user must be seeded in the database before games with NPC personas can be started. Run `pnpm db:seed` to create the NPC user.
+
+#### Shared Personas
+
+When a game has `allowSharedPersonas: true` in its settings, multiple players can claim the same persona and act as a single **acting unit**.
+
+**Game Settings:**
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `allowSharedPersonas` | `boolean` | `false` | Allow multiple players to select the same persona |
+| `sharedPersonaVoting` | `string` | `"each_member"` | `"each_member"` — every player votes independently. `"one_per_persona"` — only one vote per shared persona |
+| `sharedPersonaArguments` | `string` | `"independent"` | `"independent"` — each member has their own argument limit. `"shared_pool"` — all persona members share a single argument limit |
+
+**Schema Changes:**
+
+- `GamePlayer.personaId` is no longer unique — multiple players can reference the same persona
+- `GamePlayer.isPersonaLead` (`boolean`, default `false`) — indicates which member of a shared persona is the lead
+- `Persona.claimedBy` is a one-to-many relation (`GamePlayer[]`) — a persona can have multiple claimants
+
+**Persona Lead:**
+
+The first player to claim a persona becomes the lead. The lead is the only member who can:
+- Propose actions on behalf of the shared persona
+- Write narrations for the shared persona's resolved actions
+
+When the lead deselects their persona, the next member is automatically promoted. The host can also reassign the lead via the `POST /games/:gameId/personas/:personaId/set-lead` endpoint.
+
+**Behavioral Effects:**
+
+- **Proposals:** Only the persona lead can propose. The system enforces one action per persona per round (not per player).
+- **Argumentation:** All persona members can add arguments. The initiator check extends to all members of the initiating persona — any member can add clarifications. The `sharedPersonaArguments` setting controls whether argument limits are per-player or shared across the persona.
+- **Voting:** Controlled by `sharedPersonaVoting`. In `one_per_persona` mode, once one member votes, other members of the same persona are blocked.
+- **Acting Units:** The game counts unique personas (plus solo players without a persona) as "acting units" instead of raw player count. This affects the number of actions required per round and thresholds for phase transitions (e.g., all acting units must complete argumentation before voting begins).
 
 ### PUT /games/:gameId/personas/:personaId
 
@@ -512,8 +578,9 @@ Propose a new action (one per player per round).
 **Errors:**
 
 - `400 Bad Request` - Invalid input or player already proposed an action this round
-- `403 Forbidden` - Not a member of the game or game not in PROPOSAL phase
+- `403 Forbidden` - Not a member of the game, game not in PROPOSAL phase, or player is a non-lead member of a shared persona
 - `404 Not Found` - Game or round not found
+- `409 Conflict` - Another member of the player's shared persona already proposed this round
 
 ---
 

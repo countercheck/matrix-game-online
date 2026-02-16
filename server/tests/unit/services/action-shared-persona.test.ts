@@ -32,6 +32,14 @@ const { mockDb, mockRequireMember, mockLogGameEvent, mockTransitionPhase } = vi.
       create: vi.fn(),
       count: vi.fn(),
     },
+    narration: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
+    round: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
     gameEvent: {
       create: vi.fn(),
     },
@@ -84,6 +92,7 @@ import {
   addArgument,
   completeArgumentation,
   submitVote,
+  submitNarration,
 } from '../../../src/services/action.service.js';
 import {
   ForbiddenError,
@@ -664,6 +673,94 @@ describe('Action Service - Shared Personas', () => {
         })
       );
       expect(mockTransitionPhase).toHaveBeenCalled();
+    });
+  });
+
+  describe('submitNarration - lead enforcement', () => {
+    it('should reject non-lead persona member from narrating', async () => {
+      const nonLead = {
+        id: 'p2',
+        userId: 'u2',
+        personaId: 'persona-1',
+        isPersonaLead: false,
+        isActive: true,
+        isNpc: false,
+      };
+
+      mockDb.action.findUnique.mockResolvedValue({
+        id: 'action-1',
+        status: 'RESOLVED',
+        gameId: 'game-1',
+        initiatorId: 'p1',
+        resolutionData: { result: 'success' },
+        initiator: {
+          id: 'p1',
+          userId: 'u1',
+          personaId: 'persona-1',
+          isNpc: false,
+        },
+        game: {
+          id: 'game-1',
+          settings: { allowSharedPersonas: true, narrationMode: 'initiator_only' },
+          currentRound: { id: 'round-1' },
+        },
+        tokenDraw: { id: 'td-1' },
+      });
+      mockDb.gamePlayer.findFirst.mockResolvedValue(nonLead);
+
+      await expect(
+        submitNarration('action-1', 'u2', { content: 'The warrior strikes!' })
+      ).rejects.toThrow(ForbiddenError);
+    });
+
+    it('should allow persona lead to narrate', async () => {
+      const lead = {
+        id: 'p1',
+        userId: 'u1',
+        personaId: 'persona-1',
+        isPersonaLead: true,
+        isActive: true,
+        isNpc: false,
+      };
+
+      mockDb.action.findUnique.mockResolvedValue({
+        id: 'action-1',
+        status: 'RESOLVED',
+        gameId: 'game-1',
+        initiatorId: 'p1',
+        resolutionData: { result: 'success' },
+        initiator: {
+          id: 'p1',
+          userId: 'u1',
+          personaId: 'persona-1',
+          isNpc: false,
+        },
+        game: {
+          id: 'game-1',
+          name: 'Test Game',
+          settings: { allowSharedPersonas: true, narrationMode: 'initiator_only' },
+          currentRound: { id: 'round-1' },
+        },
+        tokenDraw: { id: 'td-1' },
+      });
+      mockDb.gamePlayer.findFirst.mockResolvedValue(lead);
+      mockDb.narration.findUnique.mockResolvedValue(null);
+      mockDb.narration.create.mockResolvedValue({
+        id: 'narr-1',
+        content: 'The warrior strikes!',
+        author: { user: { displayName: 'Alice' } },
+      });
+      mockDb.action.update.mockResolvedValue({});
+      mockDb.round.update.mockResolvedValue({});
+      mockDb.round.findUnique.mockResolvedValue({
+        id: 'round-1',
+        actionsCompleted: 1,
+        totalActionsRequired: 2, // Not complete yet
+      });
+
+      const result = await submitNarration('action-1', 'u1', { content: 'The warrior strikes!' });
+
+      expect(result.id).toBe('narr-1');
     });
   });
 

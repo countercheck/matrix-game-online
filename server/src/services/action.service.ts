@@ -884,8 +884,19 @@ export async function submitNarration(actionId: string, userId: string, data: Na
   // NPC actions can be narrated by any player
   const isNpcAction = action.initiator.isNpc;
 
-  if (!isNpcAction && narrationMode === 'initiator_only' && action.initiator.userId !== userId) {
-    throw new ForbiddenError('Only the initiator can narrate this action');
+  if (!isNpcAction && narrationMode === 'initiator_only') {
+    if (
+      settings.allowSharedPersonas &&
+      player.personaId &&
+      action.initiator.personaId === player.personaId
+    ) {
+      // Shared persona member — only lead can narrate
+      if (!player.isPersonaLead) {
+        throw new ForbiddenError('Only the persona lead can narrate for your shared persona');
+      }
+    } else if (action.initiator.userId !== userId) {
+      throw new ForbiddenError('Only the initiator can narrate this action');
+    }
   }
 
   // Check for existing narration

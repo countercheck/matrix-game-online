@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay, PrimaryActionButton } from '../ui';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
 interface Action {
   id: string;
@@ -151,7 +152,7 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
             <RichTextDisplay content={action.desiredOutcome} className="mt-1" />
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Proposed by {action.initiator.playerName}
+            Proposed by {decodeHtmlEntities(action.initiator.playerName)}
           </p>
         </div>
       </div>

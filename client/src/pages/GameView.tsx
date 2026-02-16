@@ -18,6 +18,7 @@ import {
 } from '../components/game';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
+import { decodeHtmlEntities } from '../utils/decodeEntities';
 
 interface Persona {
   id: string;
@@ -274,7 +275,7 @@ export default function GameView() {
                 </svg>
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-white">{game.name}</h1>
+                <h1 className="text-2xl font-bold text-white">{decodeHtmlEntities(game.name)}</h1>
                 {game.currentRound && (
                   <p className="text-sm text-white/90">
                     Round {game.currentRound.roundNumber} • {game.currentRound.actionsCompleted}/
@@ -327,7 +328,7 @@ export default function GameView() {
                   />
                 </svg>
               </Link>
-              <h1 className="text-2xl font-bold">{game.name}</h1>
+              <h1 className="text-2xl font-bold">{decodeHtmlEntities(game.name)}</h1>
             </div>
           </div>
           <div className="text-right">
@@ -356,7 +357,9 @@ export default function GameView() {
               </span>
             </div>
             {myPlayer && (
-              <p className="text-xs text-muted-foreground mt-1">Playing as {myPlayer.playerName}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Playing as {decodeHtmlEntities(myPlayer.playerName)}
+              </p>
             )}
           </div>
         </div>
@@ -415,12 +418,16 @@ export default function GameView() {
                           </span>
                         )}
                         <span>
-                          {player.persona ? player.persona.name : player.playerName}
+                          {decodeHtmlEntities(
+                            player.persona ? player.persona.name : player.playerName
+                          )}
                           {player.userId === currentUserId && ' (you)'}
                         </span>
                       </div>
                       {player.persona && (
-                        <p className="text-xs text-muted-foreground pl-4">{player.playerName}</p>
+                        <p className="text-xs text-muted-foreground pl-4">
+                          {decodeHtmlEntities(player.playerName)}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -480,7 +487,7 @@ export default function GameView() {
           {game.players.some((p) => p.isNpc) && (
             <NpcMomentumDisplay
               momentum={game.npcMomentum || 0}
-              npcName={game.players.find((p) => p.isNpc)?.playerName || 'NPC'}
+              npcName={decodeHtmlEntities(game.players.find((p) => p.isNpc)?.playerName || 'NPC')}
             />
           )}
 
@@ -488,9 +495,9 @@ export default function GameView() {
           {game.currentAction && game.currentPhase !== 'PROPOSAL' && (
             <div className="p-4 border rounded-lg">
               <h3 className="font-semibold mb-2">Current Action</h3>
-              <p className="text-sm">{game.currentAction.actionDescription}</p>
+              <RichTextDisplay content={game.currentAction.actionDescription} className="text-sm" />
               <p className="text-xs text-muted-foreground mt-2">
-                By {game.currentAction.initiator.playerName}
+                By {decodeHtmlEntities(game.currentAction.initiator.playerName)}
               </p>
             </div>
           )}

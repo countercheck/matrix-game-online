@@ -262,6 +262,64 @@ describe('RichTextDisplay', () => {
     });
   });
 
+  describe('HTML entity decoding', () => {
+    it('should decode &quot; entities as quotation marks', () => {
+      const encoded = 'The growing &quot;popularity&quot; of ISB Director';
+      const { container } = render(<RichTextDisplay content={encoded} />);
+
+      expect(container.textContent).toContain('The growing "popularity" of ISB Director');
+      expect(container.textContent).not.toContain('&quot;');
+    });
+
+    it('should decode &amp; entities as ampersands', () => {
+      const encoded = 'Tom &amp; Jerry';
+      const { container } = render(<RichTextDisplay content={encoded} />);
+
+      expect(container.textContent).toContain('Tom & Jerry');
+      expect(container.textContent).not.toContain('&amp;');
+    });
+
+    it('should decode &lt; and &gt; entities', () => {
+      const encoded = 'value &lt; 10 &amp; value &gt; 5';
+      const { container } = render(<RichTextDisplay content={encoded} />);
+
+      expect(container.textContent).toContain('value < 10 & value > 5');
+    });
+
+    it('should decode &#x27; entities as apostrophes', () => {
+      const encoded = 'It&#x27;s a beautiful day';
+      const { container } = render(<RichTextDisplay content={encoded} />);
+
+      expect(container.textContent).toContain("It's a beautiful day");
+    });
+
+    it('should decode multiple mixed entities in the same string', () => {
+      const encoded = 'She said &quot;it&#x27;s fine&quot; &amp; left';
+      const { container } = render(<RichTextDisplay content={encoded} />);
+
+      expect(container.textContent).toContain(`She said "it's fine" & left`);
+    });
+
+    it('should handle content with no entities unchanged', () => {
+      const { container } = render(<RichTextDisplay content="Plain text without entities" />);
+
+      expect(container.textContent).toContain('Plain text without entities');
+    });
+
+    it('should decode HTML entities within markdown content without breaking markdown parsing', () => {
+      const encoded = '**Bold &quot;text&quot;** with &amp; symbols';
+      const { container } = render(<RichTextDisplay content={encoded} />);
+
+      const boldElement = container.querySelector('strong');
+
+      expect(container.textContent).toContain('Bold "text" with & symbols');
+      expect(container.textContent).not.toContain('&quot;');
+      expect(container.textContent).not.toContain('&amp;');
+      expect(boldElement).toBeInTheDocument();
+      expect(boldElement?.textContent).toBe('Bold "text"');
+    });
+  });
+
   describe('Link handling', () => {
     it('should render links by default', () => {
       const { container } = render(<RichTextDisplay content="[link text](https://example.com)" />);

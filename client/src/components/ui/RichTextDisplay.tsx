@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
 interface RichTextDisplayProps {
   content: string;
@@ -49,7 +50,7 @@ export function RichTextDisplay({
             : undefined
         }
       >
-        {content}
+        {decodeHtmlEntities(content)}
       </ReactMarkdown>
     </Component>
   );

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay, RichTextEditor } from '../ui';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
 interface RoundSummaryProps {
   gameId: string;
@@ -198,7 +199,9 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
               {npcMomentum > 0 ? '+' : ''}
               {npcMomentum}
             </div>
-            <div className="text-sm text-amber-700 dark:text-amber-300">{npcPlayer.playerName}</div>
+            <div className="text-sm text-amber-700 dark:text-amber-300">
+              {decodeHtmlEntities(npcPlayer.playerName)}
+            </div>
             {npcRoundResult !== 0 && (
               <div
                 className={`text-xs mt-1 ${npcRoundResult > 0 ? 'text-red-500' : 'text-green-500'}`}
@@ -223,7 +226,9 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-muted-foreground">#{index + 1}</span>
-                    <span className="text-sm font-medium">{action.initiator.playerName}</span>
+                    <span className="text-sm font-medium">
+                      {decodeHtmlEntities(action.initiator.playerName)}
+                    </span>
                     {action.initiator.isNpc && (
                       <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
                         NPC

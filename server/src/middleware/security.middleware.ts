@@ -3,58 +3,20 @@ import rateLimit from 'express-rate-limit';
 import { logger } from '../utils/logger.js';
 
 /**
- * Sanitize a string value by escaping HTML entities.
- * Prevents XSS attacks in text content.
+ * Middleware placeholder for input sanitization.
+ *
+ * HTML entity encoding was removed because:
+ * 1. The frontend uses react-markdown which safely renders content without
+ *    interpreting raw HTML (XSS-safe by default).
+ * 2. Encoding on input corrupted stored content (e.g., " became &quot;)
+ *    which then displayed as literal &quot; in the UI.
+ * 3. XSS prevention is better handled at the rendering layer (output encoding)
+ *    rather than input encoding, which corrupts legitimate content.
+ *
+ * The sanitizeInput middleware is kept as a pass-through to avoid breaking
+ * the import in index.ts. It can be removed entirely if desired.
  */
-export function sanitizeString(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-}
-
-/**
- * Recursively sanitize all string values in an object.
- */
-function sanitizeObject(obj: unknown): unknown {
-  if (typeof obj === 'string') {
-    return sanitizeString(obj);
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(sanitizeObject);
-  }
-
-  if (obj !== null && typeof obj === 'object') {
-    const sanitized: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      sanitized[key] = sanitizeObject(value);
-    }
-    return sanitized;
-  }
-
-  return obj;
-}
-
-/**
- * Middleware to sanitize request body, query, and params.
- * Escapes HTML entities to prevent XSS attacks.
- */
-export function sanitizeInput(req: Request, _res: Response, next: NextFunction): void {
-  if (req.body && typeof req.body === 'object') {
-    req.body = sanitizeObject(req.body);
-  }
-
-  if (req.query && typeof req.query === 'object') {
-    req.query = sanitizeObject(req.query) as typeof req.query;
-  }
-
-  if (req.params && typeof req.params === 'object') {
-    req.params = sanitizeObject(req.params) as typeof req.params;
-  }
-
+export function sanitizeInput(_req: Request, _res: Response, next: NextFunction): void {
   next();
 }
 

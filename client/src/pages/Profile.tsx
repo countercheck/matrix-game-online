@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { decodeHtmlEntities } from '../utils/decodeEntities';
 
 interface Profile {
   id: string;
@@ -52,7 +53,7 @@ export default function Profile() {
       <div className="p-6 border rounded-lg space-y-4">
         <div>
           <label className="text-sm font-medium text-muted-foreground">Email</label>
-          <p className="mt-1">{profile.email}</p>
+          <p className="mt-1">{decodeHtmlEntities(profile.email)}</p>
         </div>
 
         <div>
@@ -85,7 +86,7 @@ export default function Profile() {
             </div>
           ) : (
             <div className="mt-1 flex items-center gap-2">
-              <p>{profile.displayName}</p>
+              <p>{decodeHtmlEntities(profile.displayName)}</p>
               <button
                 onClick={() => setIsEditing(true)}
                 className="text-sm text-primary hover:underline"

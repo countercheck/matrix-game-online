@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextEditor, RichTextDisplay } from '../ui';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 import { EditNarrationModal } from './EditNarrationModal';
 import { getApiErrorMessage } from '../../utils/apiError';
 
@@ -239,7 +240,8 @@ export function NarrationForm({
             </div>
           </div>
           <p className="text-sm mb-4">
-            <span className="font-medium">Action:</span> {action.actionDescription}
+            <span className="font-medium">Action:</span>{' '}
+            {decodeHtmlEntities(action.actionDescription)}
           </p>
         </div>
 
@@ -258,7 +260,7 @@ export function NarrationForm({
             )}
           </div>
           <p className="text-sm text-muted-foreground mb-3">
-            Narrated by {existingNarration.author.playerName} ·{' '}
+            Narrated by {decodeHtmlEntities(existingNarration.author.playerName)} ·{' '}
             {formatRelativeTime(existingNarration.createdAt)}
           </p>
           <div className="p-4 bg-muted rounded-md">
@@ -309,10 +311,12 @@ export function NarrationForm({
           </div>
         </div>
         <p className="text-sm">
-          <span className="font-medium">Action:</span> {action.actionDescription}
+          <span className="font-medium">Action:</span>{' '}
+          {decodeHtmlEntities(action.actionDescription)}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          <span className="font-medium">Desired outcome:</span> {action.desiredOutcome}
+          <span className="font-medium">Desired outcome:</span>{' '}
+          {decodeHtmlEntities(action.desiredOutcome)}
         </p>
       </div>
 
@@ -347,7 +351,8 @@ export function NarrationForm({
         <div className="p-6 border rounded-lg text-center">
           <h3 className="font-semibold mb-2">Waiting for Narration</h3>
           <p className="text-sm text-muted-foreground">
-            {action.initiator.playerName} is writing the narration for this action.
+            {decodeHtmlEntities(action.initiator.playerName)} is writing the narration for this
+            action.
           </p>
         </div>
       )}

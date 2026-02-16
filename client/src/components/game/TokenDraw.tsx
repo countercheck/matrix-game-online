@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
 interface Action {
   id: string;
@@ -130,7 +131,7 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
           <div className="p-4 bg-muted rounded-md">
             <RichTextDisplay content={action.actionDescription} className="font-medium" />
             <p className="text-xs text-muted-foreground mt-2">
-              Proposed by {action.initiator.playerName}
+              Proposed by {decodeHtmlEntities(action.initiator.playerName)}
             </p>
           </div>
         </div>
@@ -254,7 +255,8 @@ export function TokenDraw({ gameId, action, currentUserId }: TokenDrawProps) {
           <>
             <h3 className="font-semibold mb-2">Waiting for Token Draw</h3>
             <p className="text-sm text-muted-foreground">
-              {action.initiator.playerName} will draw the tokens to determine the outcome.
+              {decodeHtmlEntities(action.initiator.playerName)} will draw the tokens to determine
+              the outcome.
             </p>
           </>
         )}

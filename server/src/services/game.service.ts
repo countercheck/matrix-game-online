@@ -22,6 +22,9 @@ interface GameSettings {
   argumentationTimeoutHours?: number;
   votingTimeoutHours?: number;
   narrationTimeoutHours?: number;
+  allowSharedPersonas?: boolean;
+  sharedPersonaVoting?: 'one_per_persona' | 'each_member';
+  sharedPersonaArguments?: 'shared_pool' | 'independent';
 }
 
 export interface GameTimeoutSettings {

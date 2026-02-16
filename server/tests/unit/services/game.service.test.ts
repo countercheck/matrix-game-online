@@ -332,12 +332,12 @@ describe('Game Service', () => {
 
     it('should exclude NPC personas from player selection', () => {
       const personas = [
-        { id: '1', name: 'Hero', isNpc: false, claimedBy: null },
-        { id: '2', name: 'Villain', isNpc: true, claimedBy: null },
-        { id: '3', name: 'Merchant', isNpc: false, claimedBy: 'player-1' },
+        { id: '1', name: 'Hero', isNpc: false, claimedBy: [] as string[] },
+        { id: '2', name: 'Villain', isNpc: true, claimedBy: [] as string[] },
+        { id: '3', name: 'Merchant', isNpc: false, claimedBy: ['player-1'] },
       ];
 
-      const availableForPlayers = personas.filter((p) => !p.isNpc && !p.claimedBy);
+      const availableForPlayers = personas.filter((p) => !p.isNpc && p.claimedBy.length === 0);
       expect(availableForPlayers.length).toBe(1);
       expect(availableForPlayers[0]?.name).toBe('Hero');
     });

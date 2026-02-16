@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
-import { RichTextDisplay } from '../ui';
+import { RichTextDisplay, PrimaryActionButton } from '../ui';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
@@ -306,14 +306,14 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
             })}
           </div>
 
-          <button
+          <PrimaryActionButton
             onClick={handleVote}
-            disabled={!selectedVote || voteMutation.isPending}
-            aria-disabled={!selectedVote || voteMutation.isPending}
-            className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            disabled={!selectedVote}
+            loading={voteMutation.isPending}
+            loadingText="Submitting..."
           >
-            {voteMutation.isPending ? 'Submitting...' : 'Submit Vote'}
-          </button>
+            Submit Vote
+          </PrimaryActionButton>
         </div>
       )}
     </div>

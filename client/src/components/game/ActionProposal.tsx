@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
-import { RichTextEditor } from '../ui';
+import { RichTextEditor, PrimaryActionButton } from '../ui';
 import { getApiErrorMessage } from '../../utils/apiError';
 
 interface ActionProposalProps {
@@ -128,13 +128,13 @@ export function ActionProposal({ gameId, hasProposedThisRound, onProposed }: Act
         ))}
       </div>
 
-      <button
+      <PrimaryActionButton
         type="submit"
-        disabled={proposeMutation.isPending}
-        className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+        loading={proposeMutation.isPending}
+        loadingText="Proposing..."
       >
-        {proposeMutation.isPending ? 'Proposing...' : 'Propose Action'}
-      </button>
+        Propose Action
+      </PrimaryActionButton>
     </form>
   );
 }

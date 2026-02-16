@@ -277,11 +277,7 @@ export async function extendTimeout(
   }
 }
 
-export async function importGame(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function importGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
 

@@ -111,8 +111,7 @@ export function HostControls({
 
   // Show timeout alert for proposal/narration phases
   const showTimeoutAlert =
-    timeoutExpired &&
-    (currentPhase === 'PROPOSAL' || currentPhase === 'NARRATION');
+    timeoutExpired && (currentPhase === 'PROPOSAL' || currentPhase === 'NARRATION');
 
   if (!skipButton && !showTimeoutAlert) {
     return null;
@@ -138,7 +137,7 @@ export function HostControls({
             {currentPhase === 'PROPOSAL' ? 'Proposal' : 'Narration'} phase has timed out
           </p>
           <p className="text-xs text-red-600 dark:text-red-400">
-            {currentPhase === 'PROPOSAL' 
+            {currentPhase === 'PROPOSAL'
               ? 'You can extend the time or skip this phase.'
               : 'You can extend the time to allow more narration.'}
           </p>
@@ -160,9 +159,7 @@ export function HostControls({
             )}
           </div>
           {extendTimeoutMutation.error && (
-            <p className="text-sm text-red-600 dark:text-red-400">
-              Failed to extend timeout
-            </p>
+            <p className="text-sm text-red-600 dark:text-red-400">Failed to extend timeout</p>
           )}
         </div>
       )}

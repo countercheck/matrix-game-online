@@ -94,7 +94,9 @@ export function EditGameModal({
       setName(initialName);
       setDescription(initialDescription);
       setProposalTimeout((initialSettings?.proposalTimeoutHours as number | undefined) ?? -1);
-      setArgumentationTimeout((initialSettings?.argumentationTimeoutHours as number | undefined) ?? -1);
+      setArgumentationTimeout(
+        (initialSettings?.argumentationTimeoutHours as number | undefined) ?? -1
+      );
       setVotingTimeout((initialSettings?.votingTimeoutHours as number | undefined) ?? -1);
       setNarrationTimeout((initialSettings?.narrationTimeoutHours as number | undefined) ?? -1);
       setError('');

@@ -138,7 +138,7 @@ export async function exportGameState(gameId: string, userId: string): Promise<E
             npc_desired_outcome: p.npcDesiredOutcome || null,
           }
         : {}),
-      claimed_by: p.claimedBy[0]?.playerName || null,
+      claimed_by: p.claimedBy.length > 0 ? p.claimedBy.map((cb) => cb.playerName) : null,
     })),
     players: game.players.map((p) => ({
       player_name: p.playerName,

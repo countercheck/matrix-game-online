@@ -8,7 +8,6 @@ import {
   ActionProposal,
   ArgumentationPhase,
   VotingPanel,
-  TokenDraw,
   NarrationForm,
   RoundSummary,
   GameHistory,
@@ -16,6 +15,7 @@ import {
   HostControls,
   PhaseCountdown,
 } from '../components/game';
+import { ResolutionPhase } from '../components/game/resolution';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 import { decodeHtmlEntities } from '../utils/decodeEntities';
@@ -39,6 +39,7 @@ interface Game {
   phaseStartedAt?: string | null;
   settings: {
     argumentLimit: number;
+    resolutionMethod?: string;
     proposalTimeoutHours?: number;
     argumentationTimeoutHours?: number;
     votingTimeoutHours?: number;
@@ -217,7 +218,12 @@ export default function GameView() {
           );
         }
         return (
-          <TokenDraw gameId={game.id} action={game.currentAction} currentUserId={currentUserId} />
+          <ResolutionPhase
+            gameId={game.id}
+            action={game.currentAction}
+            currentUserId={currentUserId}
+            resolutionMethod={game.settings.resolutionMethod}
+          />
         );
 
       case 'NARRATION':

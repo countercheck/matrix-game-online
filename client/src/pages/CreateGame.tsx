@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { RichTextEditor } from '../components/ui';
 import { getApiErrorMessage } from '../utils/apiError';
@@ -13,11 +13,18 @@ interface Persona {
   npcDesiredOutcome?: string;
 }
 
+interface ResolutionMethod {
+  id: string;
+  displayName: string;
+  description: string;
+}
+
 interface CreateGameData {
   name: string;
   description?: string;
   settings?: {
     personasRequired?: boolean;
+    resolutionMethod?: string;
     proposalTimeoutHours?: number;
     argumentationTimeoutHours?: number;
     votingTimeoutHours?: number;
@@ -48,11 +55,19 @@ export default function CreateGame() {
   const [showPersonas, setShowPersonas] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [resolutionMethod, setResolutionMethod] = useState('token_draw');
   const [showTimeouts, setShowTimeouts] = useState(false);
   const [proposalTimeout, setProposalTimeout] = useState(-1);
   const [argumentationTimeout, setArgumentationTimeout] = useState(-1);
   const [votingTimeout, setVotingTimeout] = useState(-1);
   const [narrationTimeout, setNarrationTimeout] = useState(-1);
+
+  const { data: methodsData } = useQuery<{ data: ResolutionMethod[] }>({
+    queryKey: ['resolutionMethods'],
+    queryFn: () => api.get('/games/resolution-methods').then((res) => res.data),
+  });
+
+  const resolutionMethods = methodsData?.data ?? [];
 
   const createMutation = useMutation({
     mutationFn: (data: CreateGameData) => api.post('/games', data),
@@ -180,6 +195,7 @@ export default function CreateGame() {
     // Always include settings with timeout values
     data.settings = {
       ...(validPersonas.length > 0 ? { personasRequired } : {}),
+      resolutionMethod,
       proposalTimeoutHours: proposalTimeout,
       argumentationTimeoutHours: argumentationTimeout,
       votingTimeoutHours: votingTimeout,
@@ -286,6 +302,31 @@ export default function CreateGame() {
             </div>
           )}
         </div>
+
+        {/* Resolution Method */}
+        {resolutionMethods.length > 1 && (
+          <div className="space-y-2">
+            <label htmlFor="resolutionMethod" className="text-sm font-medium">
+              Resolution Method
+            </label>
+            <select
+              id="resolutionMethod"
+              value={resolutionMethod}
+              onChange={(e) => setResolutionMethod(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md bg-background"
+            >
+              {resolutionMethods.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.displayName}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              {resolutionMethods.find((m) => m.id === resolutionMethod)?.description ??
+                'How action outcomes are determined'}
+            </p>
+          </div>
+        )}
 
         {/* Personas Section */}
         <div className="border rounded-md">

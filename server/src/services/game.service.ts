@@ -17,6 +17,7 @@ const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
 interface GameSettings {
   argumentLimit?: number;
   personasRequired?: boolean;
+  resolutionMethod?: string;
   proposalTimeoutHours?: number;
   argumentationTimeoutHours?: number;
   votingTimeoutHours?: number;

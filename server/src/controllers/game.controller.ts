@@ -10,9 +10,28 @@ import {
   updatePersonaSchema,
 } from '../utils/validators.js';
 import { BadRequestError } from '../middleware/errorHandler.js';
+import { getAllStrategies } from '../services/resolution/index.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { getUploadsDir } from '../config/uploads.js';
+
+export async function getResolutionMethods(
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const strategies = getAllStrategies();
+    const methods = strategies.map((s) => ({
+      id: s.id,
+      displayName: s.displayName,
+      description: s.description,
+    }));
+    res.json({ success: true, data: methods });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function createGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

@@ -16,9 +16,11 @@ vi.mock('react-router-dom', async () => {
 
 // Mock API
 const mockPost = vi.fn();
+const mockGet = vi.fn();
 vi.mock('../services/api', () => ({
   api: {
     post: (url: string, data: unknown, config?: unknown) => mockPost(url, data, config),
+    get: (url: string) => mockGet(url),
   },
 }));
 
@@ -26,6 +28,20 @@ describe('CreateGame Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPost.mockReset();
+    mockGet.mockReset();
+
+    // Return token_draw as the default resolution method
+    mockGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id: 'token_draw',
+            displayName: 'Token Draw',
+            description: 'Draw 3 tokens from a pool.',
+          },
+        ],
+      },
+    });
 
     // Mock URL.createObjectURL for image preview
     globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
@@ -73,6 +89,7 @@ describe('CreateGame Page', () => {
           name: 'Test Game',
           description: undefined,
           settings: {
+            resolutionMethod: 'token_draw',
             proposalTimeoutHours: -1,
             argumentationTimeoutHours: -1,
             votingTimeoutHours: -1,
@@ -190,6 +207,7 @@ describe('CreateGame Page', () => {
         name: 'Test Game',
         description: undefined,
         settings: {
+          resolutionMethod: 'token_draw',
           proposalTimeoutHours: -1,
           argumentationTimeoutHours: -1,
           votingTimeoutHours: -1,
@@ -288,6 +306,7 @@ describe('CreateGame Page', () => {
           name: 'Test Game',
           description: undefined,
           settings: {
+            resolutionMethod: 'token_draw',
             proposalTimeoutHours: 24,
             argumentationTimeoutHours: 48,
             votingTimeoutHours: -1,

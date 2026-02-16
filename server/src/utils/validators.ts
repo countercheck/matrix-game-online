@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { getAllStrategies } from '../services/resolution/index.js';
 
 // Auth schemas
 export const registerSchema = z.object({
@@ -100,6 +101,16 @@ export const createGameSchema = z.object({
       votingTimeoutHours: z.union([z.literal(-1), z.number().int().min(1).max(168)]).default(-1),
       narrationTimeoutHours: z.union([z.literal(-1), z.number().int().min(1).max(168)]).default(-1),
       narrationMode: z.enum(['initiator_only', 'collaborative']).default('initiator_only'),
+      resolutionMethod: z
+        .string()
+        .max(50)
+        .default('token_draw')
+        .refine(
+          (val) => getAllStrategies().some((s) => s.id === val),
+          (val) => ({
+            message: `Unknown resolution strategy: "${val}". Valid strategies: ${getAllStrategies().map((s) => s.id).join(', ')}`,
+          })
+        ),
       personasRequired: z.boolean().default(false),
     })
     .optional(),

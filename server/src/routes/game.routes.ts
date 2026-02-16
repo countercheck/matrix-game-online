@@ -6,7 +6,8 @@ import { upload } from '../config/multer.js';
 
 const router = Router();
 
-// Import must be before /:gameId to avoid matching "import" as a gameId
+// Static routes must be before /:gameId to avoid matching as a gameId
+router.get('/resolution-methods', authenticateToken, gameController.getResolutionMethods);
 router.post(
   '/import',
   authenticateToken,

@@ -1,0 +1,64 @@
+# Resolution Strategy Pattern — Implementation Plan
+
+## Context
+
+The action resolution logic (token pool, shuffle, draw 3, map to ResultType) is hardcoded in `action.service.ts`. We'll extract it into a strategy pattern so alternative methods can be added later. This PR builds only the infrastructure — the current Token Draw becomes the default strategy. Resolution method is changeable in lobby, locked once game starts.
+
+---
+
+## New Files
+
+### Backend — `server/src/services/resolution/`
+
+1. **`resolution-strategy.ts`** — Strategy interface (`id`, `displayName`, `description`, `mapVoteToTokens()`, `resolve()`) + `ResolutionVotes` and `ResolutionResult` types. Result includes `strategyData: Record<string, unknown>` for strategy-specific JSON.
+
+2. **`registry.ts`** — `Map<string, ResolutionStrategy>` with `registerStrategy()`, `getStrategy()`, `getAllStrategies()`
+
+3. **`index.ts`** — Barrel exports + imports strategies to trigger self-registration
+
+4. **`strategies/token-draw.strategy.ts`** — Current logic extracted from `action.service.ts` lines 676-735 (`performTokenDraw`, `getSecureRandomInt`, `getResultType`, vote-to-token map). Self-registers.
+
+### Frontend — `client/src/components/game/resolution/`
+
+5. **`TokenDrawResolution.tsx`** — Current `TokenDraw.tsx` moved here, adapted to shared `ResolutionProps`
+
+6. **`ResolutionPhase.tsx`** — Dispatcher: reads `game.settings.resolutionMethod`, picks renderer, falls back to `token_draw`
+
+7. **`index.ts`** — Renderer registry mapping strategy IDs to components
+
+---
+
+## Modified Files
+
+8. **`server/prisma/schema.prisma`** — Add `resolutionMethod String?` and `resolutionData Json?` to `Action` model
+
+9. **`server/src/services/game.service.ts`** — Add `resolutionMethod?: string` to `GameSettings` interface
+
+10. **`server/src/utils/validators.ts`** — Add `resolutionMethod` to settings Zod schema (default `'token_draw'`)
+
+11. **`server/src/services/action.service.ts`** — `submitVote` uses `strategy.mapVoteToTokens()` instead of hardcoded map; `drawTokens` delegates to `strategy.resolve()`, stores result in `resolutionData`/`resolutionMethod`, keeps writing to `TokenDraw` table for backward compat; remove extracted private functions
+
+12. **`server/src/routes/game.routes.ts` + `server/src/controllers/game.controller.ts`** — Add `GET /api/games/resolution-methods` endpoint
+
+13. **`client/src/pages/GameView.tsx`** — Replace `<TokenDraw>` with `<ResolutionPhase>`
+
+14. **`client/src/pages/CreateGame.tsx`** — Add resolution method dropdown (fetches from API)
+
+15. **`client/src/pages/GameLobby.tsx`** — Display selected resolution method; host can change in lobby
+
+---
+
+## Tests
+
+- **`token-draw.strategy.test.ts`** — vote mapping, resolve produces valid results, base pool with no votes
+- **`registry.test.ts`** — get/register/duplicate/unknown ID
+- Update existing action service tests for strategy delegation
+
+---
+
+## Verification
+
+1. `pnpm db:migrate` runs cleanly
+2. `pnpm test` passes (existing + new)
+3. New game shows "Token Draw" as default; existing games fall back correctly
+4. Full action cycle works identically to before

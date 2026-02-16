@@ -176,6 +176,8 @@ model Action {
   votingStartedAt         DateTime?    @map("voting_started_at")
   resolvedAt              DateTime?    @map("resolved_at")
   completedAt             DateTime?    @map("completed_at")
+  resolutionMethod        String?      @map("resolution_method") @db.VarChar(50)
+  resolutionData          Json?        @map("resolution_data")
 
   // Relations
   game                   Game                   @relation("GameActions", fields: [gameId], references: [id], onDelete: Cascade)

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConflictError, BadRequestError, ForbiddenError } from '../../../src/middleware/errorHandler.js';
+import {
+  ConflictError,
+  BadRequestError,
+  ForbiddenError,
+} from '../../../src/middleware/errorHandler.js';
 
 // Mock the database
 vi.mock('../../../src/config/database.js', () => ({
@@ -221,6 +225,59 @@ describe('Shared Persona - Game Service', () => {
       expect(db.gamePlayer.update).toHaveBeenCalledWith({
         where: { id: 'p1' },
         data: { personaId: 'persona-1', isPersonaLead: true },
+        include: { persona: true },
+      });
+    });
+
+    it('should preserve non-lead status when re-selecting same persona', async () => {
+      const player1 = mockPlayer({
+        id: 'p1',
+        userId: 'u1',
+        playerName: 'Alice',
+        personaId: 'persona-1',
+        isPersonaLead: true,
+      });
+      const player2 = mockPlayer({
+        id: 'p2',
+        userId: 'u2',
+        playerName: 'Bob',
+        personaId: 'persona-1',
+        isPersonaLead: false,
+      });
+
+      const mockGame = {
+        id: 'game-1',
+        status: 'LOBBY',
+        deletedAt: null,
+        settings: { allowSharedPersonas: true },
+        players: [player1, player2],
+        personas: [
+          {
+            id: 'persona-1',
+            name: 'Warrior',
+            isNpc: false,
+            claimedBy: [
+              { id: 'p1', playerName: 'Alice' },
+              { id: 'p2', playerName: 'Bob' },
+            ],
+          },
+        ],
+      };
+
+      vi.mocked(db.game.findUnique).mockResolvedValue(mockGame as never);
+      vi.mocked(db.gamePlayer.update).mockResolvedValue({
+        id: 'p2',
+        personaId: 'persona-1',
+        persona: { id: 'persona-1', name: 'Warrior' },
+      } as never);
+      vi.mocked(db.gameEvent.create).mockResolvedValue({} as never);
+
+      await selectPersona('game-1', 'u2', 'persona-1');
+
+      // Non-lead re-selecting same persona should stay non-lead
+      expect(db.gamePlayer.update).toHaveBeenCalledWith({
+        where: { id: 'p2' },
+        data: { personaId: 'persona-1', isPersonaLead: false },
         include: { persona: true },
       });
     });

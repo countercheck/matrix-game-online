@@ -499,17 +499,26 @@ export async function selectPersona(gameId: string, userId: string, personaId: s
     }
   }
 
-  // Determine if this player should become lead
-  const isFirstClaim = personaId
-    ? game.personas.find((p) => p.id === personaId)!.claimedBy.filter((cb) => cb.id !== player.id)
-        .length === 0
-    : false;
+  // Determine lead status for the update
+  let newIsPersonaLead: boolean;
+  if (!personaId) {
+    // Clearing persona
+    newIsPersonaLead = false;
+  } else if (personaId === player.personaId) {
+    // Re-selecting same persona — preserve current lead status
+    newIsPersonaLead = player.isPersonaLead;
+  } else {
+    // New persona — become lead only if no one else has claimed it
+    const persona = game.personas.find((p) => p.id === personaId)!;
+    const otherClaimants = persona.claimedBy.filter((cb) => cb.id !== player.id);
+    newIsPersonaLead = otherClaimants.length === 0;
+  }
 
   const updatedPlayer = await db.gamePlayer.update({
     where: { id: player.id },
     data: {
       personaId,
-      isPersonaLead: personaId ? isFirstClaim : false,
+      isPersonaLead: newIsPersonaLead,
     },
     include: { persona: true },
   });

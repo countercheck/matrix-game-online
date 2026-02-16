@@ -47,11 +47,11 @@ Web app for the **Mosaic Strict Matrix Game**: asynchronous play-by-post. Player
 ## Data model (Prisma)
 
 - **User** — email, passwordHash, displayName, role, etc. Relations: createdGames, gamePlayers.
-- **Game** — name, description, status (e.g. LOBBY, IN_PROGRESS), currentPhase (WAITING, PROPOSAL, ARGUMENTATION, VOTING, RESOLUTION, NARRATION, COMPLETE), currentRoundId, currentActionId, creatorId, playerCount. Relations: creator, players (GamePlayer), rounds, actions, currentRound, currentAction.
+- **Game** — name, description, status (LOBBY, ACTIVE, PAUSED, COMPLETED), currentPhase (WAITING, PROPOSAL, ARGUMENTATION, VOTING, RESOLUTION, NARRATION, ROUND_SUMMARY), currentRoundId, currentActionId, creatorId, playerCount. Relations: creator, players (GamePlayer), rounds, actions, currentRound, currentAction.
 - **GamePlayer** — gameId, userId, personaId, playerName, isHost, isNpc, joinOrder. Links User to Game; optional Persona.
 - **Persona** — name, gameId; character identity in a game.
 - **Round** — gameId, roundNumber, status, actionsCompleted, totalActionsRequired. Has many Actions; optional RoundSummary.
-- **Action** — roundId, initiatorId (GamePlayer), title, description, status, phase (proposal → argumentation → voting → resolution → narration). Has Arguments, Vote(s), token draw result.
+- **Action** — roundId, initiatorId (GamePlayer), actionDescription, desiredOutcome, status (PROPOSED, ARGUING, VOTING, RESOLVED, NARRATED). Has Arguments, Vote(s), token draw result.
 - **Argument** — actionId, authorId, stance (FOR/AGAINST/CLARIFICATION), content.
 - **Vote** — actionId, voterId, voteType (LIKELY_SUCCESS, LIKELY_FAILURE, UNCERTAIN).
 - **RoundSummary** — roundId, authorId, content (narrative summary).
@@ -93,4 +93,4 @@ Game flow: Game has Rounds; each Round has multiple Actions; each Action goes th
 
 ## Game phases (reminder)
 
-`WAITING` → `PROPOSAL` → `ARGUMENTATION` → `VOTING` → `RESOLUTION` → `NARRATION` → `COMPLETE`. One action at a time; phase stored on Game and/or Action. Token pool built from votes; 3 tokens drawn for result (+3, +1, -1, -3).
+`WAITING` → `PROPOSAL` → `ARGUMENTATION` → `VOTING` → `RESOLUTION` → `NARRATION` → `ROUND_SUMMARY`. One action at a time; phase stored on Game and/or Action. Token pool built from votes; 3 tokens drawn for result (+3, +1, -1, -3).

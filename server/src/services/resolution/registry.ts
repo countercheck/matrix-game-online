@@ -1,4 +1,5 @@
 import type { ResolutionStrategy } from './resolution-strategy.js';
+import { BadRequestError } from '../../middleware/errorHandler.js';
 
 const strategies = new Map<string, ResolutionStrategy>();
 
@@ -12,7 +13,7 @@ export function registerStrategy(strategy: ResolutionStrategy): void {
 export function getStrategy(id: string): ResolutionStrategy {
   const strategy = strategies.get(id);
   if (!strategy) {
-    throw new Error(`Unknown resolution strategy: "${id}"`);
+    throw new BadRequestError(`Unknown resolution strategy: "${id}"`);
   }
   return strategy;
 }

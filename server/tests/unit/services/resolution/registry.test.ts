@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getStrategy, getAllStrategies } from '../../../../src/services/resolution/registry.js';
+import { BadRequestError } from '../../../../src/middleware/errorHandler.js';
 
 // Import to trigger self-registration
 import '../../../../src/services/resolution/strategies/token-draw.strategy.js';
@@ -12,7 +13,8 @@ describe('Resolution Strategy Registry', () => {
       expect(strategy.id).toBe('token_draw');
     });
 
-    it('throws for unknown strategy id', () => {
+    it('throws BadRequestError for unknown strategy id', () => {
+      expect(() => getStrategy('nonexistent')).toThrow(BadRequestError);
       expect(() => getStrategy('nonexistent')).toThrow('Unknown resolution strategy: "nonexistent"');
     });
   });

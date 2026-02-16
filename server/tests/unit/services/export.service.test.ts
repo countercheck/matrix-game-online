@@ -223,7 +223,7 @@ describe('exportGameState', () => {
     expect(parsed.personas).toHaveLength(2);
     expect(parsed.personas[0].name).toBe('The Chancellor');
     expect(parsed.personas[0].is_npc).toBe(false);
-    expect(parsed.personas[0].claimed_by).toBe('Alice');
+    expect(parsed.personas[0].claimed_by).toEqual(['Alice']);
     expect(parsed.personas[1].name).toBe('The Shadow');
     expect(parsed.personas[1].is_npc).toBe(true);
     expect(parsed.personas[1].npc_action_description).toBe('Undermines the ruling class');

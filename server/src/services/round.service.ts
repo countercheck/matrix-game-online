@@ -1,6 +1,7 @@
 import { db } from '../config/database.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../middleware/errorHandler.js';
 import { requireMember, logGameEvent } from './game.service.js';
+import { countActingUnits } from './shared/persona-helpers.js';
 import type { RoundSummaryInput, UpdateRoundSummaryInput } from '../utils/validators.js';
 import { notifyNewRound } from './notification.service.js';
 
@@ -263,7 +264,7 @@ async function createNextRound(gameId: string, roundNumber: number) {
       gameId,
       roundNumber,
       status: 'IN_PROGRESS',
-      totalActionsRequired: game.players.length,
+      totalActionsRequired: countActingUnits(game.players),
     },
   });
 

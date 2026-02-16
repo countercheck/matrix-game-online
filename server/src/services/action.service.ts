@@ -627,9 +627,9 @@ export async function drawTokens(actionId: string, userId: string) {
       resolvedAt: new Date(),
       resolutionMethod: strategyId,
       resolutionData: {
+        ...resolutionResult.strategyData,
         resultType: resolutionResult.resultType,
         resultValue: resolutionResult.resultValue,
-        ...resolutionResult.strategyData,
       } as unknown as Prisma.InputJsonValue,
     },
   });

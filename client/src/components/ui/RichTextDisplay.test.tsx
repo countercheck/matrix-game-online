@@ -305,6 +305,19 @@ describe('RichTextDisplay', () => {
 
       expect(container.textContent).toContain('Plain text without entities');
     });
+
+    it('should decode HTML entities within markdown content without breaking markdown parsing', () => {
+      const encoded = '**Bold &quot;text&quot;** with &amp; symbols';
+      const { container } = render(<RichTextDisplay content={encoded} />);
+
+      const boldElement = container.querySelector('strong');
+
+      expect(container.textContent).toContain('Bold "text" with & symbols');
+      expect(container.textContent).not.toContain('&quot;');
+      expect(container.textContent).not.toContain('&amp;');
+      expect(boldElement).toBeInTheDocument();
+      expect(boldElement?.textContent).toBe('Bold "text"');
+    });
   });
 
   describe('Link handling', () => {

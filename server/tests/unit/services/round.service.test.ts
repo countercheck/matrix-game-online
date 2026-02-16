@@ -294,6 +294,25 @@ describe('Round Service', () => {
       expect(call.data.totalActionsRequired).toBe(2); // 2 active players
     });
 
+    it('should use acting units count for totalActionsRequired with shared personas', async () => {
+      // 2 players share persona-1, 1 solo = 2 acting units
+      const sharedPlayers = [
+        { id: 'p1', userId: 'user-1', isActive: true, isNpc: false, personaId: 'persona-1' },
+        { id: 'p2', userId: 'user-2', isActive: true, isNpc: false, personaId: 'persona-1' },
+        { id: 'p3', userId: 'user-3', isActive: true, isNpc: false, personaId: null },
+      ];
+      mockDb.game.findUnique.mockResolvedValue({
+        id: 'game-1',
+        deletedAt: null,
+        players: sharedPlayers,
+      });
+
+      await submitRoundSummary('round-1', 'user-1', { content: 'Summary' });
+
+      const createCall = mockDb.round.create.mock.calls[0][0];
+      expect(createCall.data.totalActionsRequired).toBe(2); // 2 acting units, not 3 players
+    });
+
     it('should update game to point to next round with PROPOSAL phase', async () => {
       mockDb.round.create.mockResolvedValue({ id: 'new-round-id', roundNumber: 2 });
 

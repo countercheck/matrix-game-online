@@ -7,6 +7,7 @@ import {
   voteSchema,
   narrationSchema,
   personaSchema,
+  setPersonaLeadSchema,
 } from '../../src/utils/validators.js';
 
 describe('Validators', () => {
@@ -367,6 +368,94 @@ describe('Validators', () => {
     it('should default isNpc to false', () => {
       const result = personaSchema.parse({ name: 'Hero' });
       expect(result.isNpc).toBe(false);
+    });
+  });
+
+  describe('createGameSchema - shared persona settings', () => {
+    it('should accept allowSharedPersonas boolean', () => {
+      const data = {
+        name: 'Test Game',
+        settings: { allowSharedPersonas: true },
+      };
+      const result = createGameSchema.parse(data);
+      expect(result.settings?.allowSharedPersonas).toBe(true);
+    });
+
+    it('should default allowSharedPersonas to false', () => {
+      const data = { name: 'Test Game', settings: {} };
+      const result = createGameSchema.parse(data);
+      expect(result.settings?.allowSharedPersonas).toBe(false);
+    });
+
+    it('should accept valid sharedPersonaVoting values', () => {
+      const one = createGameSchema.parse({
+        name: 'Test',
+        settings: { sharedPersonaVoting: 'one_per_persona' },
+      });
+      expect(one.settings?.sharedPersonaVoting).toBe('one_per_persona');
+
+      const each = createGameSchema.parse({
+        name: 'Test',
+        settings: { sharedPersonaVoting: 'each_member' },
+      });
+      expect(each.settings?.sharedPersonaVoting).toBe('each_member');
+    });
+
+    it('should reject invalid sharedPersonaVoting value', () => {
+      expect(() =>
+        createGameSchema.parse({
+          name: 'Test',
+          settings: { sharedPersonaVoting: 'invalid' },
+        })
+      ).toThrow();
+    });
+
+    it('should default sharedPersonaVoting to each_member', () => {
+      const result = createGameSchema.parse({ name: 'Test', settings: {} });
+      expect(result.settings?.sharedPersonaVoting).toBe('each_member');
+    });
+
+    it('should accept valid sharedPersonaArguments values', () => {
+      const shared = createGameSchema.parse({
+        name: 'Test',
+        settings: { sharedPersonaArguments: 'shared_pool' },
+      });
+      expect(shared.settings?.sharedPersonaArguments).toBe('shared_pool');
+
+      const indep = createGameSchema.parse({
+        name: 'Test',
+        settings: { sharedPersonaArguments: 'independent' },
+      });
+      expect(indep.settings?.sharedPersonaArguments).toBe('independent');
+    });
+
+    it('should reject invalid sharedPersonaArguments value', () => {
+      expect(() =>
+        createGameSchema.parse({
+          name: 'Test',
+          settings: { sharedPersonaArguments: 'invalid' },
+        })
+      ).toThrow();
+    });
+
+    it('should default sharedPersonaArguments to independent', () => {
+      const result = createGameSchema.parse({ name: 'Test', settings: {} });
+      expect(result.settings?.sharedPersonaArguments).toBe('independent');
+    });
+  });
+
+  describe('setPersonaLeadSchema', () => {
+    it('should accept valid player ID', () => {
+      const data = { playerId: '550e8400-e29b-41d4-a716-446655440000' };
+      expect(() => setPersonaLeadSchema.parse(data)).not.toThrow();
+    });
+
+    it('should reject non-UUID player ID', () => {
+      expect(() => setPersonaLeadSchema.parse({ playerId: 'not-a-uuid' })).toThrow();
+    });
+
+    it('should reject missing player ID', () => {
+      expect(() => setPersonaLeadSchema.parse({})).toThrow();
     });
   });
 

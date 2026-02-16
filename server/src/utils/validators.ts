@@ -108,10 +108,15 @@ export const createGameSchema = z.object({
         .refine(
           (val) => getAllStrategies().some((s) => s.id === val),
           (val) => ({
-            message: `Unknown resolution strategy: "${val}". Valid strategies: ${getAllStrategies().map((s) => s.id).join(', ')}`,
+            message: `Unknown resolution strategy: "${val}". Valid strategies: ${getAllStrategies()
+              .map((s) => s.id)
+              .join(', ')}`,
           })
         ),
       personasRequired: z.boolean().default(false),
+      allowSharedPersonas: z.boolean().default(false),
+      sharedPersonaVoting: z.enum(['one_per_persona', 'each_member']).default('each_member'),
+      sharedPersonaArguments: z.enum(['shared_pool', 'independent']).default('independent'),
     })
     .optional(),
   personas: z.array(personaSchema).max(20, 'Maximum 20 personas allowed').optional(),
@@ -124,6 +129,10 @@ export const joinGameSchema = z.object({
 
 export const selectPersonaSchema = z.object({
   personaId: z.string().uuid('Invalid persona ID').nullable(),
+});
+
+export const setPersonaLeadSchema = z.object({
+  playerId: z.string().uuid('Invalid player ID'),
 });
 
 export const updatePersonaSchema = z
@@ -262,6 +271,7 @@ export type PersonaInput = z.infer<typeof personaSchema>;
 export type CreateGameInput = z.infer<typeof createGameSchema>;
 export type JoinGameInput = z.infer<typeof joinGameSchema>;
 export type SelectPersonaInput = z.infer<typeof selectPersonaSchema>;
+export type SetPersonaLeadInput = z.infer<typeof setPersonaLeadSchema>;
 export type UpdatePersonaInput = z.infer<typeof updatePersonaSchema>;
 export type ActionProposalInput = z.infer<typeof actionProposalSchema>;
 export type ArgumentInput = z.infer<typeof argumentSchema>;

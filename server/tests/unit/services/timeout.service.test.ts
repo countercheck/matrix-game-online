@@ -231,6 +231,219 @@ describe('Timeout Service (Refactored)', () => {
       expect(mockNotifyTimeoutOccurred).not.toHaveBeenCalled();
     });
 
+    it('should skip PROPOSAL timeout if already notified for this phase instance', async () => {
+      const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
+
+      mockDb.game.findMany.mockResolvedValue([
+        {
+          id: 'game-1',
+          name: 'Test Game',
+          currentPhase: 'PROPOSAL',
+          phaseStartedAt: oldTime,
+          currentActionId: null,
+          settings: { proposalTimeoutHours: 24 },
+        },
+      ]);
+
+      mockGetGameTimeoutSettings.mockReturnValue({
+        proposalTimeoutMs: 24 * 60 * 60 * 1000,
+        argumentationTimeoutMs: null,
+        votingTimeoutMs: null,
+        narrationTimeoutMs: null,
+      });
+
+      // Already notified - event created after phaseStartedAt
+      mockDb.gameEvent.findFirst.mockResolvedValue({
+        createdAt: new Date(oldTime.getTime() + 1000),
+      });
+      mockDb.game.findUnique.mockResolvedValue({ phaseStartedAt: oldTime });
+
+      const result = await processAllTimeouts();
+
+      expect(result.results).toEqual([]);
+    });
+
+    it('should process ARGUMENTATION timeout', async () => {
+      const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
+
+      mockDb.game.findMany.mockResolvedValue([
+        {
+          id: 'game-1',
+          name: 'Test Game',
+          currentPhase: 'ARGUMENTATION',
+          phaseStartedAt: oldTime,
+          currentActionId: 'action-1',
+          settings: { argumentationTimeoutHours: 24 },
+        },
+      ]);
+
+      mockGetGameTimeoutSettings.mockReturnValue({
+        proposalTimeoutMs: null,
+        argumentationTimeoutMs: 24 * 60 * 60 * 1000,
+        votingTimeoutMs: null,
+        narrationTimeoutMs: null,
+      });
+
+      mockDb.action.findUnique.mockResolvedValue({
+        id: 'action-1',
+        status: 'ARGUING',
+        gameId: 'game-1',
+        game: {
+          name: 'Test Game',
+          players: [
+            { id: 'player-1', userId: 'user-1', isActive: true },
+            { id: 'player-2', userId: 'user-2', isActive: true },
+          ],
+        },
+        arguments: [{ playerId: 'player-1' }], // Only player-1 has argued
+      });
+      mockDb.argument.findFirst.mockResolvedValue({ sequence: 2 });
+      mockDb.argument.createMany.mockResolvedValue({ count: 1 });
+      mockDb.action.update.mockResolvedValue({});
+      mockDb.gameEvent.create.mockResolvedValue({});
+
+      const result = await processAllTimeouts();
+
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0]).toMatchObject({
+        actionId: 'action-1',
+        gameId: 'game-1',
+        phase: 'ARGUMENTATION',
+        playersAffected: 1,
+        newPhase: 'VOTING',
+      });
+      expect(mockDb.argument.createMany).toHaveBeenCalled();
+    });
+
+    it('should process VOTING timeout with auto-votes', async () => {
+      const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
+
+      mockDb.game.findMany.mockResolvedValue([
+        {
+          id: 'game-1',
+          name: 'Test Game',
+          currentPhase: 'VOTING',
+          phaseStartedAt: oldTime,
+          currentActionId: 'action-1',
+          settings: { votingTimeoutHours: 24 },
+        },
+      ]);
+
+      mockGetGameTimeoutSettings.mockReturnValue({
+        proposalTimeoutMs: null,
+        argumentationTimeoutMs: null,
+        votingTimeoutMs: 24 * 60 * 60 * 1000,
+        narrationTimeoutMs: null,
+      });
+
+      mockDb.action.findUnique.mockResolvedValue({
+        id: 'action-1',
+        status: 'VOTING',
+        gameId: 'game-1',
+        game: {
+          name: 'Test Game',
+          players: [
+            { id: 'player-1', userId: 'user-1', isActive: true },
+            { id: 'player-2', userId: 'user-2', isActive: true },
+          ],
+        },
+        votes: [{ playerId: 'player-1' }], // Only player-1 voted
+      });
+      mockDb.vote.createMany.mockResolvedValue({ count: 1 });
+      mockDb.action.update.mockResolvedValue({});
+      mockDb.gameEvent.create.mockResolvedValue({});
+
+      const result = await processAllTimeouts();
+
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0]).toMatchObject({
+        actionId: 'action-1',
+        gameId: 'game-1',
+        phase: 'VOTING',
+        playersAffected: 1,
+        newPhase: 'RESOLUTION',
+      });
+      expect(mockDb.vote.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            actionId: 'action-1',
+            playerId: 'player-2',
+            voteType: 'UNCERTAIN',
+            successTokens: 1,
+            failureTokens: 1,
+          },
+        ],
+      });
+    });
+
+    it('should process NARRATION timeout and notify host', async () => {
+      const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
+
+      mockDb.game.findMany.mockResolvedValue([
+        {
+          id: 'game-1',
+          name: 'Test Game',
+          currentPhase: 'NARRATION',
+          phaseStartedAt: oldTime,
+          currentActionId: null,
+          settings: { narrationTimeoutHours: 24 },
+        },
+      ]);
+
+      mockGetGameTimeoutSettings.mockReturnValue({
+        proposalTimeoutMs: null,
+        argumentationTimeoutMs: null,
+        votingTimeoutMs: null,
+        narrationTimeoutMs: 24 * 60 * 60 * 1000,
+      });
+
+      mockDb.gameEvent.findFirst.mockResolvedValue(null);
+      mockDb.game.findUnique.mockResolvedValue({ phaseStartedAt: oldTime });
+      mockDb.gamePlayer.findFirst.mockResolvedValue({
+        id: 'player-1',
+        userId: 'user-1',
+        isHost: true,
+        isActive: true,
+      });
+      mockDb.gameEvent.create.mockResolvedValue({});
+
+      const result = await processAllTimeouts();
+
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0]).toMatchObject({
+        gameId: 'game-1',
+        phase: 'NARRATION',
+        playersAffected: 0,
+        hostNotified: true,
+      });
+    });
+
+    it('should skip ARGUMENTATION timeout when no currentActionId', async () => {
+      const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
+
+      mockDb.game.findMany.mockResolvedValue([
+        {
+          id: 'game-1',
+          name: 'Test Game',
+          currentPhase: 'ARGUMENTATION',
+          phaseStartedAt: oldTime,
+          currentActionId: null, // No action
+          settings: { argumentationTimeoutHours: 24 },
+        },
+      ]);
+
+      mockGetGameTimeoutSettings.mockReturnValue({
+        proposalTimeoutMs: null,
+        argumentationTimeoutMs: 24 * 60 * 60 * 1000,
+        votingTimeoutMs: null,
+        narrationTimeoutMs: null,
+      });
+
+      const result = await processAllTimeouts();
+
+      expect(result.results).toEqual([]);
+    });
+
     it('should collect errors without stopping the batch', async () => {
       const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
 

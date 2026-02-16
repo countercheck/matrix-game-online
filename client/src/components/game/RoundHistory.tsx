@@ -169,10 +169,7 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
           return (
             <div key={round.id} className="border rounded-lg overflow-hidden">
               {/* Round Header */}
-              <button
-                onClick={() => setExpandedRound(isExpanded ? null : round.id)}
-                className="w-full p-4 text-left hover:bg-muted/50 transition-colors"
-              >
+              <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-semibold">Round {round.roundNumber}</span>
@@ -203,21 +200,27 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                       </span>
                     </div>
                     {/* Expand Icon */}
-                    <svg
-                      className={`w-5 h-5 text-muted-foreground transition-transform ${
-                        isExpanded ? 'rotate-180' : ''
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <button
+                      onClick={() => setExpandedRound(isExpanded ? null : round.id)}
+                      aria-label={isExpanded ? 'Collapse round' : 'Expand round'}
+                      className="p-1 rounded hover:bg-muted/50 transition-colors"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                      <svg
+                        className={`w-5 h-5 text-muted-foreground transition-transform ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 {round.summary && !isExpanded && (
@@ -225,7 +228,7 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                     <RichTextDisplay content={round.summary.content} className="[&_p]:my-0" />
                   </div>
                 )}
-              </button>
+              </div>
 
               {/* Expanded Content */}
               {isExpanded && (

@@ -106,10 +106,7 @@ export const createGameSchema = z.object({
         .max(50)
         .default('token_draw')
         .refine(
-          (val) => {
-            const validIds = getAllStrategies().map((s) => s.id);
-            return validIds.includes(val);
-          },
+          (val) => getAllStrategies().some((s) => s.id === val),
           (val) => ({
             message: `Unknown resolution strategy: "${val}". Valid strategies: ${getAllStrategies().map((s) => s.id).join(', ')}`,
           })

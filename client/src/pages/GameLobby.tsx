@@ -10,6 +10,12 @@ import { EditPersonaModal } from '../components/game/EditPersonaModal';
 import { getApiErrorMessage } from '../utils/apiError';
 import { decodeHtmlEntities } from '../utils/decodeEntities';
 
+interface PersonaMember {
+  id: string;
+  playerName: string;
+  isPersonaLead: boolean;
+}
+
 interface Persona {
   id: string;
   name: string;
@@ -17,7 +23,7 @@ interface Persona {
   isNpc?: boolean;
   npcActionDescription?: string | null;
   npcDesiredOutcome?: string | null;
-  claimedBy: { id: string; playerName: string } | null;
+  claimedBy: PersonaMember[];
 }
 
 interface Player {
@@ -44,6 +50,9 @@ interface Game {
     argumentationTimeoutHours?: number;
     votingTimeoutHours?: number;
     narrationTimeoutHours?: number;
+    allowSharedPersonas?: boolean;
+    sharedPersonaVoting?: 'one_per_persona' | 'each_member';
+    sharedPersonaArguments?: 'shared_pool' | 'independent';
   };
 }
 
@@ -108,6 +117,14 @@ export default function GameLobby() {
     },
   });
 
+  const setPersonaLeadMutation = useMutation({
+    mutationFn: ({ personaId, playerId }: { personaId: string; playerId: string }) =>
+      api.post(`/games/${gameId}/personas/${personaId}/set-lead`, { playerId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+    },
+  });
+
   const updatePersonaMutation = useMutation({
     mutationFn: ({
       personaId,
@@ -133,8 +150,17 @@ export default function GameLobby() {
 
   const hasPersonas = (game?.personas?.length || 0) > 0;
   const personasRequired = game?.settings?.personasRequired || false;
+  const allowSharedPersonas = game?.settings?.allowSharedPersonas || false;
   // NPC personas cannot be claimed by players
-  const availablePersonas = game?.personas?.filter((p) => !p.claimedBy && !p.isNpc) || [];
+  const availablePersonas =
+    game?.personas?.filter((p) => {
+      if (p.isNpc) return false;
+      if (allowSharedPersonas) {
+        // Available unless this player already claimed it
+        return !p.claimedBy.some((cb) => cb.id === currentPlayer?.id);
+      }
+      return p.claimedBy.length === 0;
+    }) || [];
   const hasNpcPersona = game?.personas?.some((p) => p.isNpc) || false;
 
   // Check if all players have personas (for start validation warning)
@@ -406,12 +432,12 @@ export default function GameLobby() {
                 className={`p-2 rounded-md text-sm ${
                   persona.isNpc
                     ? 'bg-amber-100/50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
-                    : persona.claimedBy
+                    : persona.claimedBy.length > 0
                       ? 'bg-muted/50 text-muted-foreground'
                       : 'bg-muted'
                 }`}
               >
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-start">
                   <span className="font-medium flex items-center gap-2">
                     {decodeHtmlEntities(persona.name)}
                     {persona.isNpc && (
@@ -425,10 +451,34 @@ export default function GameLobby() {
                       <span className="text-xs text-amber-600 dark:text-amber-400">
                         Auto-controlled
                       </span>
-                    ) : persona.claimedBy ? (
-                      <span className="text-xs">
-                        {decodeHtmlEntities(persona.claimedBy.playerName)}
-                      </span>
+                    ) : persona.claimedBy.length > 0 ? (
+                      <div className="flex flex-col items-end gap-0.5">
+                        {persona.claimedBy.map((member) => (
+                          <div key={member.id} className="flex items-center gap-1">
+                            <span className="text-xs">{decodeHtmlEntities(member.playerName)}</span>
+                            {member.isPersonaLead && (
+                              <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1 py-0.5 rounded">
+                                Lead
+                              </span>
+                            )}
+                            {isHost && allowSharedPersonas && !member.isPersonaLead && (
+                              <button
+                                onClick={() =>
+                                  setPersonaLeadMutation.mutate({
+                                    personaId: persona.id,
+                                    playerId: member.id,
+                                  })
+                                }
+                                disabled={setPersonaLeadMutation.isPending}
+                                className="text-xs text-muted-foreground hover:text-foreground"
+                                title={`Make ${member.playerName} the lead`}
+                              >
+                                Make Lead
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     ) : (
                       <span className="text-xs text-green-600 dark:text-green-400">Available</span>
                     )}

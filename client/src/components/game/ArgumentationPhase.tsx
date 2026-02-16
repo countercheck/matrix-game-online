@@ -4,6 +4,8 @@ import { api } from '../../services/api';
 import { ArgumentList } from './ArgumentList';
 import { AddArgument } from './AddArgument';
 import { EditActionModal } from './EditActionModal';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
+import { PrimaryActionButton } from '../ui';
 
 interface Action {
   id: string;
@@ -82,12 +84,13 @@ export function ArgumentationPhase({
           )}
         </div>
         <div className="p-4 bg-muted rounded-md">
-          <p className="font-medium">{action.actionDescription}</p>
+          <p className="font-medium">{decodeHtmlEntities(action.actionDescription)}</p>
           <p className="text-sm text-muted-foreground mt-2">
-            <span className="font-medium">Desired outcome:</span> {action.desiredOutcome}
+            <span className="font-medium">Desired outcome:</span>{' '}
+            {decodeHtmlEntities(action.desiredOutcome)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Proposed by {action.initiator.playerName}
+            Proposed by {decodeHtmlEntities(action.initiator.playerName)}
           </p>
         </div>
       </div>
@@ -142,13 +145,14 @@ export function ArgumentationPhase({
                 Click when you're ready to move to voting.
               </p>
             </div>
-            <button
+            <PrimaryActionButton
               onClick={() => completeMutation.mutate()}
-              disabled={completeMutation.isPending}
-              className="py-2 px-4 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 disabled:opacity-50"
+              loading={completeMutation.isPending}
+              loadingText="Submitting..."
+              fullWidth={false}
             >
-              {completeMutation.isPending ? 'Submitting...' : "I'm Done"}
-            </button>
+              I'm Done
+            </PrimaryActionButton>
           </div>
         )}
       </div>

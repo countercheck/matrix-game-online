@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui/RichTextDisplay';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 import { EditActionModal } from './EditActionModal';
 import { EditArgumentModal } from './EditArgumentModal';
 import { EditNarrationModal } from './EditNarrationModal';
@@ -248,8 +249,10 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                   {getResultIcon(action.tokenDraw?.resultType)}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{action.actionDescription}</p>
-                  <p className="text-xs text-muted-foreground">{action.initiator.playerName}</p>
+                  <p className="text-sm truncate">{decodeHtmlEntities(action.actionDescription)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {decodeHtmlEntities(action.initiator.playerName)}
+                  </p>
                 </div>
                 <span
                   className={`text-xs font-medium ${getResultColor(action.tokenDraw?.resultType)}`}
@@ -269,7 +272,9 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                       <span className="text-xs text-muted-foreground">
                         #{action.sequenceNumber}
                       </span>
-                      <span className="text-sm font-medium">{action.initiator.playerName}</span>
+                      <span className="text-sm font-medium">
+                        {decodeHtmlEntities(action.initiator.playerName)}
+                      </span>
                       {isHost && (
                         <button
                           onClick={(e) => {
@@ -293,7 +298,10 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                         </span>
                       )}
                     </div>
-                    <p className="text-sm">{action.actionDescription}</p>
+                    <RichTextDisplay
+                      content={action.actionDescription}
+                      className="text-sm [&_p]:my-0"
+                    />
                   </div>
                   <div className="text-right shrink-0">
                     <div
@@ -316,7 +324,7 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                 {action.desiredOutcome && (
                   <div className="text-xs">
                     <span className="text-muted-foreground">Desired: </span>
-                    {action.desiredOutcome}
+                    {decodeHtmlEntities(action.desiredOutcome)}
                   </div>
                 )}
 
@@ -372,7 +380,9 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                               >
                                 {getArgumentTypeLabel(arg.argumentType)}
                               </span>
-                              <span className="font-medium">{arg.player.playerName}</span>
+                              <span className="font-medium">
+                                {decodeHtmlEntities(arg.player.playerName)}
+                              </span>
                               <span className="text-muted-foreground">
                                 {formatRelativeTime(arg.createdAt)}
                               </span>

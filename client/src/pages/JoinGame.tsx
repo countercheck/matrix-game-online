@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 import { getApiErrorMessage } from '../utils/apiError';
+import { decodeHtmlEntities } from '../utils/decodeEntities';
 
 interface Persona {
   id: string;
@@ -80,7 +81,7 @@ export default function JoinGame() {
   return (
     <div className="max-w-md mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Join Game</h1>
-      {game && <p className="text-muted-foreground">Joining: {game.name}</p>}
+      {game && <p className="text-muted-foreground">Joining: {decodeHtmlEntities(game.name)}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -134,7 +135,7 @@ export default function JoinGame() {
                         className="mt-1"
                       />
                       <div>
-                        <div className="font-medium">{persona.name}</div>
+                        <div className="font-medium">{decodeHtmlEntities(persona.name)}</div>
                         {persona.description && (
                           <RichTextDisplay
                             content={persona.description}

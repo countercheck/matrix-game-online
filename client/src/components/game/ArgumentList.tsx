@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 import { EditArgumentModal } from './EditArgumentModal';
 
 interface Argument {
@@ -138,7 +139,9 @@ export function ArgumentList({ actionId, gameId, isHost = false }: ArgumentListP
             <div key={arg.id} className={`p-3 rounded-md border-l-4 ${styles.container}`}>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{arg.player.playerName}</span>
+                  <span className="text-sm font-medium">
+                    {decodeHtmlEntities(arg.player.playerName)}
+                  </span>
                   <span className="text-xs text-muted-foreground">
                     {formatRelativeTime(arg.createdAt)}
                   </span>

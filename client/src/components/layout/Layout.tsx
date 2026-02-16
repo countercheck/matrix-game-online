@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -95,7 +96,7 @@ export default function Layout() {
               className="text-sm text-muted-foreground"
               aria-label={`Logged in as ${user?.displayName}`}
             >
-              {user?.displayName}
+              {user?.displayName ? decodeHtmlEntities(user.displayName) : ''}
             </span>
             <button
               onClick={handleLogout}
@@ -137,7 +138,9 @@ export default function Layout() {
             >
               Help
             </Link>
-            <div className="text-sm text-muted-foreground py-2">{user?.displayName}</div>
+            <div className="text-sm text-muted-foreground py-2">
+              {user?.displayName ? decodeHtmlEntities(user.displayName) : ''}
+            </div>
             <button
               onClick={() => {
                 setMobileMenuOpen(false);

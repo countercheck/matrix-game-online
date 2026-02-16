@@ -4,10 +4,10 @@ import { processAllTimeouts } from '../../../src/services/timeout.service.js';
 
 /**
  * Integration tests for the refactored timeout service.
- * 
+ *
  * Note: The timeout service was refactored from action-level to game-level timeouts.
  * These tests focus on the new per-game timeout behavior with phaseStartedAt tracking.
- * 
+ *
  * Key changes:
  * - Timeouts now operate on games (not individual actions)
  * - Per-game timeout settings from game.settings
@@ -66,7 +66,7 @@ describe('Timeout Service Integration', () => {
       const result = await processAllTimeouts();
 
       // Should not process this game
-      expect(result.results.find(r => r.gameId === game.id)).toBeUndefined();
+      expect(result.results.find((r) => r.gameId === game.id)).toBeUndefined();
     });
 
     it('should skip games with infinite timeout (-1)', async () => {
@@ -86,7 +86,7 @@ describe('Timeout Service Integration', () => {
       const result = await processAllTimeouts();
 
       // Should not timeout
-      expect(result.results.find(r => r.gameId === game.id)).toBeUndefined();
+      expect(result.results.find((r) => r.gameId === game.id)).toBeUndefined();
     });
 
     it('should skip games that have not timed out yet', async () => {
@@ -106,7 +106,7 @@ describe('Timeout Service Integration', () => {
       const result = await processAllTimeouts();
 
       // Should not timeout yet
-      expect(result.results.find(r => r.gameId === game.id)).toBeUndefined();
+      expect(result.results.find((r) => r.gameId === game.id)).toBeUndefined();
     });
 
     it('should process PROPOSAL timeout and create event', async () => {
@@ -138,7 +138,7 @@ describe('Timeout Service Integration', () => {
       const result = await processAllTimeouts();
 
       // Should process timeout
-      const timeoutResult = result.results.find(r => r.gameId === game.id);
+      const timeoutResult = result.results.find((r) => r.gameId === game.id);
       expect(timeoutResult).toBeDefined();
       expect(timeoutResult?.phase).toBe('PROPOSAL');
       expect(timeoutResult?.hostNotified).toBe(true);
@@ -182,7 +182,7 @@ describe('Timeout Service Integration', () => {
       const result = await processAllTimeouts();
 
       // Should process timeout
-      const timeoutResult = result.results.find(r => r.gameId === game.id);
+      const timeoutResult = result.results.find((r) => r.gameId === game.id);
       expect(timeoutResult).toBeDefined();
       expect(timeoutResult?.phase).toBe('NARRATION');
       expect(timeoutResult?.hostNotified).toBe(true);

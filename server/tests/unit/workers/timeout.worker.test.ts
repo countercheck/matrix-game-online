@@ -57,9 +57,7 @@ describe('Timeout Worker', () => {
 
       await runTimeoutCheck();
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('processed 2 timeouts')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('processed 2 timeouts'));
     });
 
     it('should log warning when there are errors', async () => {

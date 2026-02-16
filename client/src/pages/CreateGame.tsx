@@ -29,6 +29,9 @@ interface CreateGameData {
     argumentationTimeoutHours?: number;
     votingTimeoutHours?: number;
     narrationTimeoutHours?: number;
+    allowSharedPersonas?: boolean;
+    sharedPersonaVoting?: string;
+    sharedPersonaArguments?: string;
   };
   personas?: Persona[];
 }
@@ -61,6 +64,9 @@ export default function CreateGame() {
   const [argumentationTimeout, setArgumentationTimeout] = useState(-1);
   const [votingTimeout, setVotingTimeout] = useState(-1);
   const [narrationTimeout, setNarrationTimeout] = useState(-1);
+  const [allowSharedPersonas, setAllowSharedPersonas] = useState(false);
+  const [sharedPersonaVoting, setSharedPersonaVoting] = useState('each_member');
+  const [sharedPersonaArguments, setSharedPersonaArguments] = useState('independent');
 
   const { data: methodsData } = useQuery<{ data: ResolutionMethod[] }>({
     queryKey: ['resolutionMethods'],
@@ -200,6 +206,9 @@ export default function CreateGame() {
       argumentationTimeoutHours: argumentationTimeout,
       votingTimeoutHours: votingTimeout,
       narrationTimeoutHours: narrationTimeout,
+      allowSharedPersonas,
+      sharedPersonaVoting,
+      sharedPersonaArguments,
     };
 
     createMutation.mutate(data);
@@ -438,15 +447,52 @@ export default function CreateGame() {
               )}
 
               {personas.length > 0 && (
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={personasRequired}
-                    onChange={(e) => setPersonasRequired(e.target.checked)}
-                    className="rounded"
-                  />
-                  Require players to select a persona when joining
-                </label>
+                <>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={personasRequired}
+                      onChange={(e) => setPersonasRequired(e.target.checked)}
+                      className="rounded"
+                    />
+                    Require players to select a persona when joining
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={allowSharedPersonas}
+                      onChange={(e) => setAllowSharedPersonas(e.target.checked)}
+                      className="rounded"
+                    />
+                    Allow multiple players to share a persona
+                  </label>
+                  {allowSharedPersonas && (
+                    <div className="pl-6 space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium">Voting Mode</label>
+                        <select
+                          value={sharedPersonaVoting}
+                          onChange={(e) => setSharedPersonaVoting(e.target.value)}
+                          className="w-full px-2 py-1.5 border rounded-md bg-background text-sm"
+                        >
+                          <option value="each_member">Each member votes independently</option>
+                          <option value="one_per_persona">One vote per persona</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium">Argument Mode</label>
+                        <select
+                          value={sharedPersonaArguments}
+                          onChange={(e) => setSharedPersonaArguments(e.target.value)}
+                          className="w-full px-2 py-1.5 border rounded-md bg-background text-sm"
+                        >
+                          <option value="independent">Each member has own argument limit</option>
+                          <option value="shared_pool">Persona shares one argument pool</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

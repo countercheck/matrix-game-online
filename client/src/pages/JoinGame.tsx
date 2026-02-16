@@ -11,7 +11,7 @@ interface Persona {
   id: string;
   name: string;
   description: string | null;
-  claimedBy: { id: string; playerName: string } | null;
+  claimedBy: Array<{ id: string; playerName: string }>;
 }
 
 interface GameData {
@@ -41,7 +41,11 @@ export default function JoinGame() {
   const game = gameData?.data;
   const personas = game?.personas || [];
   const personasRequired = game?.settings?.personasRequired || false;
-  const availablePersonas = personas.filter((p) => !p.claimedBy);
+  const allowSharedPersonas =
+    (game?.settings as Record<string, unknown>)?.allowSharedPersonas || false;
+  const availablePersonas = personas.filter((p) =>
+    allowSharedPersonas ? true : p.claimedBy.length === 0
+  );
   const hasPersonas = personas.length > 0;
 
   const joinMutation = useMutation({

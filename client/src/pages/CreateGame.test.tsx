@@ -94,6 +94,9 @@ describe('CreateGame Page', () => {
             argumentationTimeoutHours: -1,
             votingTimeoutHours: -1,
             narrationTimeoutHours: -1,
+            allowSharedPersonas: false,
+            sharedPersonaVoting: 'each_member',
+            sharedPersonaArguments: 'independent',
           },
         },
         undefined
@@ -212,6 +215,9 @@ describe('CreateGame Page', () => {
           argumentationTimeoutHours: -1,
           votingTimeoutHours: -1,
           narrationTimeoutHours: -1,
+          allowSharedPersonas: false,
+          sharedPersonaVoting: 'each_member',
+          sharedPersonaArguments: 'independent',
         },
       },
       undefined
@@ -311,6 +317,9 @@ describe('CreateGame Page', () => {
             argumentationTimeoutHours: 48,
             votingTimeoutHours: -1,
             narrationTimeoutHours: -1,
+            allowSharedPersonas: false,
+            sharedPersonaVoting: 'each_member',
+            sharedPersonaArguments: 'independent',
           },
         },
         undefined

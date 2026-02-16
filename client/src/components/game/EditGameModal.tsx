@@ -49,6 +49,15 @@ export function EditGameModal({
   const [narrationTimeout, setNarrationTimeout] = useState(
     (initialSettings?.narrationTimeoutHours as number | undefined) ?? -1
   );
+  const [allowSharedPersonas, setAllowSharedPersonas] = useState(
+    (initialSettings?.allowSharedPersonas as boolean | undefined) ?? false
+  );
+  const [sharedPersonaVoting, setSharedPersonaVoting] = useState(
+    (initialSettings?.sharedPersonaVoting as string | undefined) ?? 'each_member'
+  );
+  const [sharedPersonaArguments, setSharedPersonaArguments] = useState(
+    (initialSettings?.sharedPersonaArguments as string | undefined) ?? 'independent'
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -68,12 +77,18 @@ export function EditGameModal({
             argumentationTimeoutHours: argumentationTimeout,
             votingTimeoutHours: votingTimeout,
             narrationTimeoutHours: narrationTimeout,
+            allowSharedPersonas,
+            sharedPersonaVoting,
+            sharedPersonaArguments,
           }
         : {
             proposalTimeoutHours: proposalTimeout,
             argumentationTimeoutHours: argumentationTimeout,
             votingTimeoutHours: votingTimeout,
             narrationTimeoutHours: narrationTimeout,
+            allowSharedPersonas,
+            sharedPersonaVoting,
+            sharedPersonaArguments,
           };
 
       await onSave({
@@ -99,6 +114,15 @@ export function EditGameModal({
       );
       setVotingTimeout((initialSettings?.votingTimeoutHours as number | undefined) ?? -1);
       setNarrationTimeout((initialSettings?.narrationTimeoutHours as number | undefined) ?? -1);
+      setAllowSharedPersonas(
+        (initialSettings?.allowSharedPersonas as boolean | undefined) ?? false
+      );
+      setSharedPersonaVoting(
+        (initialSettings?.sharedPersonaVoting as string | undefined) ?? 'each_member'
+      );
+      setSharedPersonaArguments(
+        (initialSettings?.sharedPersonaArguments as string | undefined) ?? 'independent'
+      );
       setError('');
       onClose();
     }
@@ -182,6 +206,49 @@ export function EditGameModal({
                   disabled={isLoading}
                 />
               </div>
+            </div>
+
+            {/* Shared Personas */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">Shared Personas</h3>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={allowSharedPersonas}
+                  onChange={(e) => setAllowSharedPersonas(e.target.checked)}
+                  disabled={isLoading}
+                  className="rounded"
+                />
+                Allow multiple players to share a persona
+              </label>
+              {allowSharedPersonas && (
+                <div className="pl-6 space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium">Voting Mode</label>
+                    <select
+                      value={sharedPersonaVoting}
+                      onChange={(e) => setSharedPersonaVoting(e.target.value)}
+                      disabled={isLoading}
+                      className="w-full px-2 py-1.5 border rounded-md bg-background text-sm disabled:opacity-50"
+                    >
+                      <option value="each_member">Each member votes independently</option>
+                      <option value="one_per_persona">One vote per persona</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium">Argument Mode</label>
+                    <select
+                      value={sharedPersonaArguments}
+                      onChange={(e) => setSharedPersonaArguments(e.target.value)}
+                      disabled={isLoading}
+                      className="w-full px-2 py-1.5 border rounded-md bg-background text-sm disabled:opacity-50"
+                    >
+                      <option value="independent">Each member has own argument limit</option>
+                      <option value="shared_pool">Persona shares one argument pool</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

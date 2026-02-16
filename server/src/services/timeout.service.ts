@@ -1,7 +1,11 @@
 import { db } from '../config/database.js';
 import { GamePhase } from '@prisma/client';
 import { logger } from '../utils/logger.js';
-import { transitionPhase, getGameTimeoutSettings, type GameTimeoutSettings } from './game.service.js';
+import {
+  transitionPhase,
+  getGameTimeoutSettings,
+  type GameTimeoutSettings,
+} from './game.service.js';
 import { notifyTimeoutOccurred } from './notification.service.js';
 
 export interface TimeoutResult {
@@ -48,9 +52,7 @@ export async function processAllTimeouts(): Promise<{
 
   for (const game of activeGames) {
     try {
-      const settings = getGameTimeoutSettings(
-        (game.settings as Record<string, unknown>) || {}
-      );
+      const settings = getGameTimeoutSettings((game.settings as Record<string, unknown>) || {});
       const result = await processGameTimeout(game, settings);
       if (result) {
         output.results.push(result);
@@ -184,9 +186,7 @@ async function processProposalTimeout(
  * Creates placeholder arguments for players who haven't argued,
  * then advances the action to voting phase.
  */
-async function processArgumentationTimeout(
-  actionId: string
-): Promise<TimeoutResult> {
+async function processArgumentationTimeout(actionId: string): Promise<TimeoutResult> {
   const action = await db.action.findUnique({
     where: { id: actionId },
     include: {
@@ -287,9 +287,7 @@ async function processArgumentationTimeout(
  * Auto-casts UNCERTAIN votes for players who haven't voted.
  * Then advances to RESOLUTION phase if all votes are now in.
  */
-async function processVotingTimeout(
-  actionId: string
-): Promise<TimeoutResult> {
+async function processVotingTimeout(actionId: string): Promise<TimeoutResult> {
   const action = await db.action.findUnique({
     where: { id: actionId },
     include: {

@@ -651,9 +651,11 @@ Create a new game from an exported YAML file. Imports game name, description, se
 ---
 
 ### GET /games/:gameId/timeout-status
+
 Get the current timeout status for a game's phase, including the time remaining.
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -669,6 +671,7 @@ Get the current timeout status for a game's phase, including the time remaining.
 ```
 
 **Response when no timeout configured or phase not started:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -677,6 +680,7 @@ Get the current timeout status for a game's phase, including the time remaining.
 ```
 
 **Fields:**
+
 - `phase`: The current game phase
 - `startedAt`: When the current phase started (ISO timestamp)
 - `timeoutAt`: When the phase will timeout (ISO timestamp, null if infinite)
@@ -685,15 +689,18 @@ Get the current timeout status for a game's phase, including the time remaining.
 - `isInfinite`: Whether the timeout is infinite (no timeout configured)
 
 **Errors:**
+
 - `403 Forbidden` - Not a member of the game
 - `404 Not Found` - Game not found
 
 ---
 
 ### POST /games/:gameId/extend-timeout
+
 Reset the timeout for the current phase, restarting the current phase timer. Only available to the game host.
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -704,15 +711,18 @@ Reset the timeout for the current phase, restarting the current phase timer. Onl
 ```
 
 **Errors:**
+
 - `403 Forbidden` - Not the game host
 - `404 Not Found` - Game not found
 
 ---
 
 ### POST /games/:gameId/skip-proposals
+
 Skip remaining proposals in the current round and move to round summary. Only available to the game host when in PROPOSAL phase. At least one action must be proposed.
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -724,9 +734,9 @@ Skip remaining proposals in the current round and move to round summary. Only av
 ```
 
 **Errors:**
+
 - `403 Forbidden` - Not the game host
 - `404 Not Found` - Game not found
 - `400 Bad Request` - Not in PROPOSAL phase or no actions proposed yet
 
 ---
-

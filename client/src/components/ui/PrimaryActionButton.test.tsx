@@ -18,6 +18,11 @@ describe('PrimaryActionButton', () => {
     expect(screen.getByRole('button', { name: 'Loading...' })).toBeInTheDocument();
   });
 
+  it('shows children when loading without loadingText', () => {
+    render(<PrimaryActionButton loading>Submit</PrimaryActionButton>);
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument();
+  });
+
   it('is disabled when loading', () => {
     render(<PrimaryActionButton loading>Submit</PrimaryActionButton>);
     expect(screen.getByRole('button')).toBeDisabled();
@@ -32,7 +37,7 @@ describe('PrimaryActionButton', () => {
     const user = userEvent.setup();
     const handleClick = vi.fn();
     render(<PrimaryActionButton onClick={handleClick}>Click Me</PrimaryActionButton>);
-    
+
     await user.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
@@ -45,7 +50,7 @@ describe('PrimaryActionButton', () => {
         Click Me
       </PrimaryActionButton>
     );
-    
+
     await user.click(screen.getByRole('button'));
     expect(handleClick).not.toHaveBeenCalled();
   });
@@ -63,5 +68,15 @@ describe('PrimaryActionButton', () => {
   it('applies custom className', () => {
     render(<PrimaryActionButton className="custom-class">Submit</PrimaryActionButton>);
     expect(screen.getByRole('button')).toHaveClass('custom-class');
+  });
+
+  it('is full width by default', () => {
+    render(<PrimaryActionButton>Submit</PrimaryActionButton>);
+    expect(screen.getByRole('button')).toHaveClass('w-full');
+  });
+
+  it('can disable full width', () => {
+    render(<PrimaryActionButton fullWidth={false}>Submit</PrimaryActionButton>);
+    expect(screen.getByRole('button')).not.toHaveClass('w-full');
   });
 });

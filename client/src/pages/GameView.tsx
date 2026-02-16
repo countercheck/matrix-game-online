@@ -97,12 +97,14 @@ export default function GameView() {
   const game = data?.data;
 
   // Get timeout hours for the current phase (before early returns to avoid hook issues)
-  const phaseTimeoutMap: Record<string, number | undefined> = game ? {
-    PROPOSAL: game.settings.proposalTimeoutHours,
-    ARGUMENTATION: game.settings.argumentationTimeoutHours,
-    VOTING: game.settings.votingTimeoutHours,
-    NARRATION: game.settings.narrationTimeoutHours,
-  } : {};
+  const phaseTimeoutMap: Record<string, number | undefined> = game
+    ? {
+        PROPOSAL: game.settings.proposalTimeoutHours,
+        ARGUMENTATION: game.settings.argumentationTimeoutHours,
+        VOTING: game.settings.votingTimeoutHours,
+        NARRATION: game.settings.narrationTimeoutHours,
+      }
+    : {};
   const currentTimeoutHours = game ? phaseTimeoutMap[game.currentPhase] : undefined;
 
   // Check if timeout is expired (for host notification)
@@ -292,14 +294,14 @@ export default function GameView() {
                   game.currentPhase === 'PROPOSAL'
                     ? 'bg-blue-500 text-white'
                     : game.currentPhase === 'ARGUMENTATION'
-                    ? 'bg-purple-500 text-white'
-                    : game.currentPhase === 'VOTING'
-                    ? 'bg-orange-500 text-white'
-                    : game.currentPhase === 'RESOLUTION'
-                    ? 'bg-green-500 text-white'
-                    : game.currentPhase === 'NARRATION'
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-gray-500 text-white'
+                      ? 'bg-purple-500 text-white'
+                      : game.currentPhase === 'VOTING'
+                        ? 'bg-orange-500 text-white'
+                        : game.currentPhase === 'RESOLUTION'
+                          ? 'bg-green-500 text-white'
+                          : game.currentPhase === 'NARRATION'
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-gray-500 text-white'
                 }`}
               >
                 {game.currentPhase}
@@ -329,35 +331,33 @@ export default function GameView() {
             </div>
           </div>
           <div className="text-right">
-          <div className="flex items-center justify-end gap-2">
-            <PhaseCountdown
-              phaseStartedAt={game.phaseStartedAt}
-              timeoutHours={currentTimeoutHours}
-              currentPhase={game.currentPhase}
-            />
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                game.currentPhase === 'PROPOSAL'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                  : game.currentPhase === 'ARGUMENTATION'
-                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-                  : game.currentPhase === 'VOTING'
-                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                  : game.currentPhase === 'RESOLUTION'
-                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-                  : game.currentPhase === 'NARRATION'
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-              }`}
-            >
-              {game.currentPhase.replace('_', ' ')}
-            </span>
-          </div>
-          {myPlayer && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Playing as {myPlayer.playerName}
-            </p>
-          )}
+            <div className="flex items-center justify-end gap-2">
+              <PhaseCountdown
+                phaseStartedAt={game.phaseStartedAt}
+                timeoutHours={currentTimeoutHours}
+                currentPhase={game.currentPhase}
+              />
+              <span
+                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                  game.currentPhase === 'PROPOSAL'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                    : game.currentPhase === 'ARGUMENTATION'
+                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                      : game.currentPhase === 'VOTING'
+                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                        : game.currentPhase === 'RESOLUTION'
+                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                          : game.currentPhase === 'NARRATION'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                }`}
+              >
+                {game.currentPhase.replace('_', ' ')}
+              </span>
+            </div>
+            {myPlayer && (
+              <p className="text-xs text-muted-foreground mt-1">Playing as {myPlayer.playerName}</p>
+            )}
           </div>
         </div>
       )}

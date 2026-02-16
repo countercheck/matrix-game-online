@@ -483,6 +483,7 @@ export async function selectPersona(gameId: string, userId: string, personaId: s
 
   const settings = (game.settings as GameSettings) || {};
   const oldPersonaId = player.personaId;
+  const wasPersonaLead = player.isPersonaLead;
 
   // If selecting a persona (not clearing)
   if (personaId) {
@@ -507,7 +508,7 @@ export async function selectPersona(gameId: string, userId: string, personaId: s
     newIsPersonaLead = false;
   } else if (personaId === player.personaId) {
     // Re-selecting same persona — preserve current lead status
-    newIsPersonaLead = player.isPersonaLead;
+    newIsPersonaLead = wasPersonaLead;
   } else {
     // New persona — become lead only if no one else has claimed it
     const persona = game.personas.find((p) => p.id === personaId)!;
@@ -525,7 +526,7 @@ export async function selectPersona(gameId: string, userId: string, personaId: s
   });
 
   // If player was lead and cleared/changed persona, auto-promote next member
-  if (oldPersonaId && oldPersonaId !== personaId && player.isPersonaLead) {
+  if (oldPersonaId && oldPersonaId !== personaId && wasPersonaLead) {
     const remainingMembers = game.players.filter(
       (p) => p.id !== player.id && p.personaId === oldPersonaId && p.isActive && !p.isNpc
     );

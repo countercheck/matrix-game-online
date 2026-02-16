@@ -431,9 +431,9 @@ export default function CreateGame() {
           {showTimeouts && (
             <div className="p-4 border-t space-y-4">
               <p className="text-sm text-muted-foreground">
-                Set time limits for each game phase. When a timeout expires, the
-                host will be prompted to extend or skip. Argumentation and voting
-                phases auto-resolve when they time out.
+                Set time limits for each game phase. When a timeout expires, the host will be
+                prompted to extend or skip. Argumentation and voting phases auto-resolve when they
+                time out.
               </p>
 
               <TimeoutSelect

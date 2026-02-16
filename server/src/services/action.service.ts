@@ -295,7 +295,7 @@ export async function getAction(actionId: string, userId: string) {
 export async function addArgument(actionId: string, userId: string, data: ArgumentInput) {
   const action = await db.action.findUnique({
     where: { id: actionId },
-    include: { game: true },
+    include: { game: true, initiator: { select: { id: true, personaId: true } } },
   });
 
   if (!action) {
@@ -315,7 +315,16 @@ export async function addArgument(actionId: string, userId: string, data: Argume
   }
 
   // Check if initiator is trying to add clarification
-  const isInitiator = action.initiatorId === player.id;
+  // When shared personas are enabled, any member of the initiator's persona
+  // counts as "the initiator" for clarification purposes
+  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const isDirectInitiator = action.initiatorId === player.id;
+  const isPersonaInitiator =
+    settings.allowSharedPersonas &&
+    player.personaId !== null &&
+    action.initiator.personaId === player.personaId;
+  const isInitiator = isDirectInitiator || isPersonaInitiator;
+
   if (isInitiator && data.argumentType !== 'CLARIFICATION') {
     throw new BadRequestError('Initiator can only add clarification arguments');
   }
@@ -324,7 +333,6 @@ export async function addArgument(actionId: string, userId: string, data: Argume
   }
 
   // Check argument limits
-  const settings = (action.game.settings as Record<string, unknown>) || {};
   const argumentLimit = (settings.argumentLimit as number) || 3;
 
   if (

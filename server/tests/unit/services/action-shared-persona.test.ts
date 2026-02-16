@@ -221,6 +221,121 @@ describe('Action Service - Shared Personas', () => {
     });
   });
 
+  describe('addArgument - clarification for shared persona initiators', () => {
+    it('should allow persona member to add clarification when another member initiated', async () => {
+      const player = {
+        id: 'p2',
+        userId: 'u2',
+        personaId: 'persona-1',
+        isActive: true,
+        isNpc: false,
+      };
+
+      mockDb.action.findUnique.mockResolvedValue({
+        id: 'action-1',
+        status: 'ARGUING',
+        gameId: 'game-1',
+        initiatorId: 'p1', // Different player, same persona
+        initiator: { id: 'p1', personaId: 'persona-1' },
+        game: {
+          id: 'game-1',
+          settings: {
+            argumentLimit: 3,
+            allowSharedPersonas: true,
+            sharedPersonaArguments: 'independent',
+          },
+        },
+      });
+      mockDb.gamePlayer.findFirst.mockResolvedValue(player);
+      mockDb.argument.count.mockResolvedValue(0);
+      mockDb.argument.findFirst.mockResolvedValue(null);
+      mockDb.argument.create.mockResolvedValue({
+        id: 'arg-1',
+        player: { user: { displayName: 'Bob' } },
+      });
+
+      const result = await addArgument('action-1', 'u2', {
+        argumentType: 'CLARIFICATION',
+        content: 'Let me clarify our intent',
+      });
+
+      expect(result.id).toBe('arg-1');
+    });
+
+    it('should block persona member from adding FOR/AGAINST when another member initiated', async () => {
+      const player = {
+        id: 'p2',
+        userId: 'u2',
+        personaId: 'persona-1',
+        isActive: true,
+        isNpc: false,
+      };
+
+      mockDb.action.findUnique.mockResolvedValue({
+        id: 'action-1',
+        status: 'ARGUING',
+        gameId: 'game-1',
+        initiatorId: 'p1',
+        initiator: { id: 'p1', personaId: 'persona-1' },
+        game: {
+          id: 'game-1',
+          settings: {
+            argumentLimit: 3,
+            allowSharedPersonas: true,
+          },
+        },
+      });
+      mockDb.gamePlayer.findFirst.mockResolvedValue(player);
+
+      await expect(
+        addArgument('action-1', 'u2', {
+          argumentType: 'FOR',
+          content: 'I agree',
+        })
+      ).rejects.toThrow(BadRequestError);
+    });
+
+    it('should not treat different-persona player as initiator', async () => {
+      const player = {
+        id: 'p3',
+        userId: 'u3',
+        personaId: 'persona-2', // Different persona from initiator
+        isActive: true,
+        isNpc: false,
+      };
+
+      mockDb.action.findUnique.mockResolvedValue({
+        id: 'action-1',
+        status: 'ARGUING',
+        gameId: 'game-1',
+        initiatorId: 'p1',
+        initiator: { id: 'p1', personaId: 'persona-1' },
+        game: {
+          id: 'game-1',
+          settings: {
+            argumentLimit: 3,
+            allowSharedPersonas: true,
+          },
+        },
+      });
+      mockDb.gamePlayer.findFirst.mockResolvedValue(player);
+      mockDb.argument.count.mockResolvedValue(0);
+      mockDb.argument.findFirst.mockResolvedValue(null);
+      mockDb.argument.create.mockResolvedValue({
+        id: 'arg-1',
+        player: { user: { displayName: 'Charlie' } },
+      });
+
+      // Different persona player can add FOR arguments (not treated as initiator)
+      const result = await addArgument('action-1', 'u3', {
+        argumentType: 'FOR',
+        content: 'This is a good idea',
+      });
+
+      expect(result.id).toBe('arg-1');
+    });
+  });
+
   describe('addArgument - shared_pool', () => {
     it('should count arguments across all persona members in shared_pool mode', async () => {
       const player = {
@@ -234,7 +349,9 @@ describe('Action Service - Shared Personas', () => {
       mockDb.action.findUnique.mockResolvedValue({
         id: 'action-1',
         status: 'ARGUING',
+        gameId: 'game-1',
         initiatorId: 'p-other',
+        initiator: { id: 'p-other', personaId: 'persona-other' },
         game: {
           id: 'game-1',
           settings: {
@@ -274,6 +391,7 @@ describe('Action Service - Shared Personas', () => {
         status: 'ARGUING',
         gameId: 'game-1',
         initiatorId: 'p-other',
+        initiator: { id: 'p-other', personaId: 'persona-other' },
         game: {
           id: 'game-1',
           settings: {
@@ -436,9 +554,9 @@ describe('Action Service - Shared Personas', () => {
       // Another member already voted
       mockDb.vote.findFirst.mockResolvedValue({ id: 'vote-1', playerId: 'p1' });
 
-      await expect(
-        submitVote('action-1', 'u2', { voteType: 'LIKELY_SUCCESS' })
-      ).rejects.toThrow(ConflictError);
+      await expect(submitVote('action-1', 'u2', { voteType: 'LIKELY_SUCCESS' })).rejects.toThrow(
+        ConflictError
+      );
     });
 
     it('should allow first persona member to vote in one_per_persona mode', async () => {

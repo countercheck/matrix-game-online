@@ -1,6 +1,5 @@
-import { randomBytes } from 'crypto';
 import { db } from '../config/database.js';
-import { ResultType, GamePhase } from '@prisma/client';
+import { GamePhase, Prisma } from '@prisma/client';
 import {
   BadRequestError,
   NotFoundError,
@@ -24,6 +23,7 @@ import {
   notifyNarrationNeeded,
   notifyRoundSummaryNeeded,
 } from './notification.service.js';
+import { getStrategy } from './resolution/index.js';
 
 /**
  * Check if NPC should auto-propose and do it if needed.
@@ -480,14 +480,18 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
     throw new ConflictError('You have already voted');
   }
 
-  // Map vote type to tokens
-  const tokenMap = {
-    LIKELY_SUCCESS: { successTokens: 2, failureTokens: 0 },
-    LIKELY_FAILURE: { successTokens: 0, failureTokens: 2 },
-    UNCERTAIN: { successTokens: 1, failureTokens: 1 },
-  };
+  // Look up game for resolution strategy and player list
+  const game = await db.game.findUnique({
+    where: { id: action.gameId },
+    include: {
+      players: { where: { isActive: true } },
+    },
+  });
 
-  const tokens = tokenMap[data.voteType];
+  // Map vote type to tokens using the game's resolution strategy
+  const settings = (game?.settings as Record<string, unknown>) || {};
+  const strategy = getStrategy((settings.resolutionMethod as string) || 'token_draw');
+  const tokens = strategy.mapVoteToTokens(data.voteType);
 
   const vote = await db.vote.create({
     data: {
@@ -499,14 +503,6 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
   });
 
   await logGameEvent(action.gameId, userId, 'VOTE_CAST', { actionId });
-
-  // Check if all players have voted (excluding NPC - they don't vote)
-  const game = await db.game.findUnique({
-    where: { id: action.gameId },
-    include: {
-      players: { where: { isActive: true } },
-    },
-  });
 
   const voteCount = await db.vote.count({ where: { actionId } });
   const humanPlayers = game?.players.filter((p) => !p.isNpc) || [];
@@ -577,7 +573,7 @@ export async function drawTokens(actionId: string, userId: string) {
   const action = await db.action.findUnique({
     where: { id: actionId },
     include: {
-      game: { select: { name: true } },
+      game: { select: { name: true, settings: true } },
       initiator: true,
       votes: true,
     },
@@ -596,7 +592,12 @@ export async function drawTokens(actionId: string, userId: string) {
     throw new ForbiddenError('Only the initiator can draw tokens');
   }
 
-  // Check if already drawn
+  // Check if already resolved
+  if (action.resolutionData) {
+    throw new ConflictError('Action has already been resolved');
+  }
+
+  // Also check legacy TokenDraw table for backward compat
   const existingDraw = await db.tokenDraw.findUnique({
     where: { actionId },
   });
@@ -605,49 +606,73 @@ export async function drawTokens(actionId: string, userId: string) {
     throw new ConflictError('Tokens have already been drawn');
   }
 
-  // Calculate token pool
-  // Base: 1 success + 1 failure
-  // Plus votes
-  const totalSuccess = 1 + action.votes.reduce((sum, v) => sum + v.successTokens, 0);
-  const totalFailure = 1 + action.votes.reduce((sum, v) => sum + v.failureTokens, 0);
+  // Resolve using the game's strategy
+  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const strategyId = (settings.resolutionMethod as string) || 'token_draw';
+  const strategy = getStrategy(strategyId);
 
-  // Draw tokens
-  const drawResult = performTokenDraw(totalSuccess, totalFailure);
-
-  // Store result
-  const tokenDraw = await db.tokenDraw.create({
-    data: {
-      actionId,
-      totalSuccessTokens: totalSuccess,
-      totalFailureTokens: totalFailure,
-      randomSeed: drawResult.seed,
-      drawnSuccess: drawResult.drawnSuccess,
-      drawnFailure: drawResult.drawnFailure,
-      resultValue: drawResult.resultValue,
-      resultType: drawResult.resultType,
-      drawnTokens: {
-        create: drawResult.tokens.map((type, index) => ({
-          drawSequence: index + 1,
-          tokenType: type,
-        })),
-      },
-    },
-    include: {
-      drawnTokens: true,
-    },
+  const resolutionResult = strategy.resolve({
+    votes: action.votes.map((v) => ({
+      playerId: v.playerId,
+      voteType: v.voteType as 'LIKELY_SUCCESS' | 'LIKELY_FAILURE' | 'UNCERTAIN',
+      successTokens: v.successTokens,
+      failureTokens: v.failureTokens,
+    })),
   });
 
+  // Store resolution data on the action
   await db.action.update({
     where: { id: actionId },
-    data: { resolvedAt: new Date() },
+    data: {
+      resolvedAt: new Date(),
+      resolutionMethod: strategyId,
+      resolutionData: resolutionResult.strategyData as Record<
+        string,
+        unknown
+      > as Prisma.InputJsonValue,
+    },
   });
+
+  // For token_draw strategy, also write to TokenDraw table for backward compat
+  let tokenDraw = null;
+  if (strategyId === 'token_draw') {
+    const sd = resolutionResult.strategyData as {
+      seed: string;
+      totalSuccessTokens: number;
+      totalFailureTokens: number;
+      drawnSuccess: number;
+      drawnFailure: number;
+      drawnTokens: Array<{ drawSequence: number; tokenType: string }>;
+    };
+    tokenDraw = await db.tokenDraw.create({
+      data: {
+        actionId,
+        totalSuccessTokens: sd.totalSuccessTokens,
+        totalFailureTokens: sd.totalFailureTokens,
+        randomSeed: sd.seed,
+        drawnSuccess: sd.drawnSuccess,
+        drawnFailure: sd.drawnFailure,
+        resultValue: resolutionResult.resultValue,
+        resultType: resolutionResult.resultType,
+        drawnTokens: {
+          create: sd.drawnTokens.map((t) => ({
+            drawSequence: t.drawSequence,
+            tokenType: t.tokenType as 'SUCCESS' | 'FAILURE',
+          })),
+        },
+      },
+      include: {
+        drawnTokens: true,
+      },
+    });
+  }
 
   // Update NPC momentum if this is an NPC action
   if (action.initiator.isNpc) {
     await db.game.update({
       where: { id: action.gameId },
       data: {
-        npcMomentum: { increment: drawResult.resultValue },
+        npcMomentum: { increment: resolutionResult.resultValue },
       },
     });
   }
@@ -656,8 +681,9 @@ export async function drawTokens(actionId: string, userId: string) {
 
   await logGameEvent(action.gameId, userId, 'TOKENS_DRAWN', {
     actionId,
-    result: drawResult.resultType,
-    value: drawResult.resultValue,
+    strategy: strategyId,
+    result: resolutionResult.resultType,
+    value: resolutionResult.resultValue,
     isNpcAction: action.initiator.isNpc,
   });
 
@@ -666,73 +692,20 @@ export async function drawTokens(actionId: string, userId: string) {
     action.gameId,
     action.game.name,
     userId,
-    drawResult.resultType,
-    drawResult.resultValue
+    resolutionResult.resultType,
+    resolutionResult.resultValue
   ).catch(() => {});
 
-  return tokenDraw;
-}
-
-function performTokenDraw(successCount: number, failureCount: number) {
-  const seed = randomBytes(32).toString('hex');
-
-  // Create token pool
-  const tokens: ('SUCCESS' | 'FAILURE')[] = [
-    ...Array(successCount).fill('SUCCESS'),
-    ...Array(failureCount).fill('FAILURE'),
-  ];
-
-  // Fisher-Yates shuffle with crypto randomness
-  for (let i = tokens.length - 1; i > 0; i--) {
-    const j = getSecureRandomInt(0, i);
-    [tokens[i], tokens[j]] = [tokens[j]!, tokens[i]!];
-  }
-
-  // Draw first 3 tokens
-  const drawn = tokens.slice(0, 3) as ('SUCCESS' | 'FAILURE')[];
-  const drawnSuccess = drawn.filter((t) => t === 'SUCCESS').length;
-  const drawnFailure = 3 - drawnSuccess;
-
-  // Calculate result: -3, -1, +1, +3
-  const resultValue = drawnSuccess * 2 - 3;
-
-  const resultType = getResultType(drawnSuccess);
-
-  return {
-    seed,
-    tokens: drawn,
-    drawnSuccess,
-    drawnFailure,
-    resultValue,
-    resultType,
-  };
-}
-
-function getSecureRandomInt(min: number, max: number): number {
-  const range = max - min + 1;
-  const bytesNeeded = Math.ceil(Math.log2(range) / 8) || 1;
-  const maxValid = Math.floor(256 ** bytesNeeded / range) * range - 1;
-
-  let randomInt;
-  do {
-    const bytes = randomBytes(bytesNeeded);
-    randomInt = bytes.readUIntBE(0, bytesNeeded);
-  } while (randomInt > maxValid);
-
-  return min + (randomInt % range);
-}
-
-function getResultType(successCount: number): ResultType {
-  switch (successCount) {
-    case 3:
-      return ResultType.TRIUMPH;
-    case 2:
-      return ResultType.SUCCESS_BUT;
-    case 1:
-      return ResultType.FAILURE_BUT;
-    default:
-      return ResultType.DISASTER;
-  }
+  // Return resolution result with backward-compatible shape
+  return (
+    tokenDraw ?? {
+      actionId,
+      resultType: resolutionResult.resultType,
+      resultValue: resolutionResult.resultValue,
+      resolutionMethod: strategyId,
+      ...resolutionResult.strategyData,
+    }
+  );
 }
 
 export async function getDrawResult(actionId: string, userId: string) {
@@ -746,6 +719,16 @@ export async function getDrawResult(actionId: string, userId: string) {
 
   await requireMember(action.gameId, userId);
 
+  // Return resolutionData if available (new strategy-based resolution)
+  if (action.resolutionData) {
+    return {
+      actionId,
+      resolutionMethod: action.resolutionMethod,
+      ...(action.resolutionData as Record<string, unknown>),
+    };
+  }
+
+  // Fall back to legacy TokenDraw table
   const tokenDraw = await db.tokenDraw.findUnique({
     where: { actionId },
     include: { drawnTokens: true },
@@ -986,14 +969,17 @@ export async function skipVoting(actionId: string, userId: string) {
   const missingVoters = humanPlayers.filter((p) => !votedPlayerIds.has(p.id));
 
   // Auto-fill missing votes as UNCERTAIN with wasSkipped=true
+  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const strategy = getStrategy((settings.resolutionMethod as string) || 'token_draw');
+  const uncertainTokens = strategy.mapVoteToTokens('UNCERTAIN');
+
   if (missingVoters.length > 0) {
     await db.vote.createMany({
       data: missingVoters.map((player) => ({
         actionId,
         playerId: player.id,
         voteType: 'UNCERTAIN',
-        successTokens: 1,
-        failureTokens: 1,
+        ...uncertainTokens,
         wasSkipped: true,
       })),
     });

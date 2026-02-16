@@ -4,6 +4,7 @@ export { AddArgument } from './AddArgument';
 export { ArgumentationPhase } from './ArgumentationPhase';
 export { VotingPanel } from './VotingPanel';
 export { TokenDraw } from './TokenDraw';
+export { ResolutionPhase } from './resolution';
 export { NarrationForm } from './NarrationForm';
 export { RoundSummary } from './RoundSummary';
 export { GameHistory } from './GameHistory';

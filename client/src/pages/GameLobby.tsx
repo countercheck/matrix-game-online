@@ -38,6 +38,7 @@ interface Game {
   personas: Persona[];
   settings: {
     personasRequired?: boolean;
+    resolutionMethod?: string;
     proposalTimeoutHours?: number;
     argumentationTimeoutHours?: number;
     votingTimeoutHours?: number;
@@ -60,6 +61,13 @@ export default function GameLobby() {
     queryKey: ['game', gameId],
     queryFn: () => api.get(`/games/${gameId}`).then((res) => res.data),
     refetchInterval: 3000, // Poll for new players
+  });
+
+  const { data: methodsData } = useQuery<{
+    data: Array<{ id: string; displayName: string; description: string }>;
+  }>({
+    queryKey: ['resolutionMethods'],
+    queryFn: () => api.get('/games/resolution-methods').then((res) => res.data),
   });
 
   const startMutation = useMutation({
@@ -89,8 +97,11 @@ export default function GameLobby() {
   });
 
   const updateGameMutation = useMutation({
-    mutationFn: (data: { name: string; description: string | null; settings?: Record<string, unknown> }) =>
-      api.put(`/games/${gameId}`, data),
+    mutationFn: (data: {
+      name: string;
+      description: string | null;
+      settings?: Record<string, unknown>;
+    }) => api.put(`/games/${gameId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
     },
@@ -291,6 +302,43 @@ export default function GameLobby() {
           </p>
         )}
       </div>
+
+      {/* Resolution Method */}
+      {(methodsData?.data?.length ?? 0) > 0 && (
+        <div className="p-4 border rounded-lg space-y-2">
+          <h2 className="font-semibold">Resolution Method</h2>
+          {isHost && (methodsData?.data?.length ?? 0) > 1 ? (
+            <select
+              value={game.settings.resolutionMethod || 'token_draw'}
+              onChange={async (e) => {
+                await updateGameMutation.mutateAsync({
+                  name: game.name,
+                  description: game.description || null,
+                  settings: { ...game.settings, resolutionMethod: e.target.value },
+                });
+              }}
+              className="w-full px-3 py-2 border rounded-md bg-background"
+            >
+              {methodsData?.data?.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.displayName}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-sm">
+              {methodsData?.data?.find(
+                (m) => m.id === (game.settings.resolutionMethod || 'token_draw')
+              )?.displayName || 'Token Draw'}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {methodsData?.data?.find(
+              (m) => m.id === (game.settings.resolutionMethod || 'token_draw')
+            )?.description || 'How action outcomes are determined'}
+          </p>
+        </div>
+      )}
 
       {/* Persona Selection for Current Player */}
       {hasPersonas && currentPlayer && (

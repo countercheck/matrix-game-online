@@ -67,16 +67,21 @@ describe('CreateGame Page', () => {
     await user.click(screen.getByRole('button', { name: /create game/i }));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith('/games', {
-        name: 'Test Game',
-        description: undefined,
-        settings: {
-          proposalTimeoutHours: -1,
-          argumentationTimeoutHours: -1,
-          votingTimeoutHours: -1,
-          narrationTimeoutHours: -1,
+      expect(mockPost).toHaveBeenCalledWith(
+        '/games',
+        {
+          name: 'Test Game',
+          description: undefined,
+          settings: {
+            resolutionMethod: 'token_draw',
+            proposalTimeoutHours: -1,
+            argumentationTimeoutHours: -1,
+            votingTimeoutHours: -1,
+            narrationTimeoutHours: -1,
+          },
         },
-      }, undefined);
+        undefined
+      );
     });
   });
 
@@ -179,16 +184,22 @@ describe('CreateGame Page', () => {
     });
 
     // Verify first call is game creation
-    expect(mockPost).toHaveBeenNthCalledWith(1, '/games', {
-      name: 'Test Game',
-      description: undefined,
-      settings: {
-        proposalTimeoutHours: -1,
-        argumentationTimeoutHours: -1,
-        votingTimeoutHours: -1,
-        narrationTimeoutHours: -1,
+    expect(mockPost).toHaveBeenNthCalledWith(
+      1,
+      '/games',
+      {
+        name: 'Test Game',
+        description: undefined,
+        settings: {
+          resolutionMethod: 'token_draw',
+          proposalTimeoutHours: -1,
+          argumentationTimeoutHours: -1,
+          votingTimeoutHours: -1,
+          narrationTimeoutHours: -1,
+        },
       },
-    }, undefined);
+      undefined
+    );
 
     // Verify second call is image upload with FormData and Content-Type undefined
     const secondCall = mockPost.mock.calls[1];
@@ -216,14 +227,14 @@ describe('CreateGame Page', () => {
     render(<CreateGame />);
 
     const timeoutButton = screen.getByRole('button', { name: /phase timeouts/i });
-    
+
     // Section should be collapsed initially
     expect(screen.queryByText(/time for players to propose actions/i)).not.toBeInTheDocument();
 
     // Click to expand
     await user.click(timeoutButton);
     expect(screen.getByText(/time for players to propose actions/i)).toBeInTheDocument();
-    
+
     // Click to collapse
     await user.click(timeoutButton);
     expect(screen.queryByText(/time for players to propose actions/i)).not.toBeInTheDocument();
@@ -264,7 +275,7 @@ describe('CreateGame Page', () => {
     const selects = screen.getAllByRole('combobox');
     const proposalSelect = selects[0]; // First is Proposal
     const argumentationSelect = selects[1]; // Second is Argumentation
-    
+
     await user.selectOptions(proposalSelect, '24');
     await user.selectOptions(argumentationSelect, '48');
 
@@ -273,16 +284,21 @@ describe('CreateGame Page', () => {
     await user.click(screen.getByRole('button', { name: /create game/i }));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith('/games', {
-        name: 'Test Game',
-        description: undefined,
-        settings: {
-          proposalTimeoutHours: 24,
-          argumentationTimeoutHours: 48,
-          votingTimeoutHours: -1,
-          narrationTimeoutHours: -1,
+      expect(mockPost).toHaveBeenCalledWith(
+        '/games',
+        {
+          name: 'Test Game',
+          description: undefined,
+          settings: {
+            resolutionMethod: 'token_draw',
+            proposalTimeoutHours: 24,
+            argumentationTimeoutHours: 48,
+            votingTimeoutHours: -1,
+            narrationTimeoutHours: -1,
+          },
         },
-      }, undefined);
+        undefined
+      );
     });
   });
 
@@ -294,7 +310,7 @@ describe('CreateGame Page', () => {
 
     const selects = screen.getAllByRole('combobox');
     expect(selects.length).toBe(4);
-    
+
     // Verify the labels are present
     expect(screen.getByText('Proposal')).toBeInTheDocument();
     expect(screen.getByText('Argumentation')).toBeInTheDocument();

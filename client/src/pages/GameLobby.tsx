@@ -8,6 +8,7 @@ import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 import { EditGameModal } from '../components/game/EditGameModal';
 import { EditPersonaModal } from '../components/game/EditPersonaModal';
 import { getApiErrorMessage } from '../utils/apiError';
+import { decodeHtmlEntities } from '../utils/decodeEntities';
 
 interface Persona {
   id: string;
@@ -89,8 +90,11 @@ export default function GameLobby() {
   });
 
   const updateGameMutation = useMutation({
-    mutationFn: (data: { name: string; description: string | null; settings?: Record<string, unknown> }) =>
-      api.put(`/games/${gameId}`, data),
+    mutationFn: (data: {
+      name: string;
+      description: string | null;
+      settings?: Record<string, unknown>;
+    }) => api.put(`/games/${gameId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', gameId] });
     },
@@ -144,7 +148,7 @@ export default function GameLobby() {
       disabled={selectPersonaMutation.isPending}
       className="w-full p-3 text-left border rounded-md hover:bg-muted/50 transition-colors"
     >
-      <div className="font-medium">{persona.name}</div>
+      <div className="font-medium">{decodeHtmlEntities(persona.name)}</div>
       {persona.description && (
         <RichTextDisplay
           content={persona.description}
@@ -206,7 +210,7 @@ export default function GameLobby() {
         <div className="relative w-full h-48 sm:h-64 rounded-lg overflow-hidden">
           <img src={game.imageUrl} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-            <h1 className="text-3xl font-bold text-white p-6">{game.name}</h1>
+            <h1 className="text-3xl font-bold text-white p-6">{decodeHtmlEntities(game.name)}</h1>
           </div>
         </div>
       )}
@@ -214,7 +218,7 @@ export default function GameLobby() {
       <div>
         {!game.imageUrl && (
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">{game.name}</h1>
+            <h1 className="text-2xl font-bold">{decodeHtmlEntities(game.name)}</h1>
             {isHost && (
               <button
                 onClick={() => setShowEditGameModal(true)}
@@ -272,10 +276,10 @@ export default function GameLobby() {
               className="flex items-center justify-between p-2 bg-muted rounded-md"
             >
               <div className="flex items-center gap-2">
-                <span>{player.playerName}</span>
+                <span>{decodeHtmlEntities(player.playerName)}</span>
                 {player.persona && (
                   <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded">
-                    {player.persona.name}
+                    {decodeHtmlEntities(player.persona.name)}
                   </span>
                 )}
               </div>
@@ -302,7 +306,7 @@ export default function GameLobby() {
           {currentPlayer.persona ? (
             <div className="space-y-3">
               <div className="p-3 bg-primary/5 border border-primary/20 rounded-md">
-                <div className="font-medium">{currentPlayer.persona.name}</div>
+                <div className="font-medium">{decodeHtmlEntities(currentPlayer.persona.name)}</div>
                 {(() => {
                   const currentPersona = game.personas.find(
                     (p) => p.id === currentPlayer.persona?.id
@@ -364,7 +368,7 @@ export default function GameLobby() {
               >
                 <div className="flex justify-between items-center">
                   <span className="font-medium flex items-center gap-2">
-                    {persona.name}
+                    {decodeHtmlEntities(persona.name)}
                     {persona.isNpc && (
                       <span className="text-xs bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 rounded">
                         NPC
@@ -377,7 +381,9 @@ export default function GameLobby() {
                         Auto-controlled
                       </span>
                     ) : persona.claimedBy ? (
-                      <span className="text-xs">{persona.claimedBy.playerName}</span>
+                      <span className="text-xs">
+                        {decodeHtmlEntities(persona.claimedBy.playerName)}
+                      </span>
                     ) : (
                       <span className="text-xs text-green-600 dark:text-green-400">Available</span>
                     )}
@@ -407,7 +413,8 @@ export default function GameLobby() {
       {/* Start Game Warning */}
       {isHost && personasRequired && playersWithoutPersona.length > 0 && (
         <div className="p-3 text-sm bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-md">
-          Cannot start: {playersWithoutPersona.map((p) => p.playerName).join(', ')}{' '}
+          Cannot start:{' '}
+          {playersWithoutPersona.map((p) => decodeHtmlEntities(p.playerName)).join(', ')}{' '}
           {playersWithoutPersona.length === 1 ? 'needs' : 'need'} to select a persona.
         </div>
       )}

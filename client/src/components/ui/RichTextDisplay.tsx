@@ -1,19 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-/**
- * Decode HTML entities that may have been encoded by server-side sanitization.
- * This is needed because the server encodes strings on input (e.g., " → &quot;)
- * but react-markdown treats them as literal text, not HTML.
- */
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'");
-}
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
 interface RichTextDisplayProps {
   content: string;

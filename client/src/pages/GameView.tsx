@@ -18,6 +18,7 @@ import {
 } from '../components/game';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
+import { decodeHtmlEntities } from '../utils/decodeEntities';
 
 interface Persona {
   id: string;
@@ -97,12 +98,14 @@ export default function GameView() {
   const game = data?.data;
 
   // Get timeout hours for the current phase (before early returns to avoid hook issues)
-  const phaseTimeoutMap: Record<string, number | undefined> = game ? {
-    PROPOSAL: game.settings.proposalTimeoutHours,
-    ARGUMENTATION: game.settings.argumentationTimeoutHours,
-    VOTING: game.settings.votingTimeoutHours,
-    NARRATION: game.settings.narrationTimeoutHours,
-  } : {};
+  const phaseTimeoutMap: Record<string, number | undefined> = game
+    ? {
+        PROPOSAL: game.settings.proposalTimeoutHours,
+        ARGUMENTATION: game.settings.argumentationTimeoutHours,
+        VOTING: game.settings.votingTimeoutHours,
+        NARRATION: game.settings.narrationTimeoutHours,
+      }
+    : {};
   const currentTimeoutHours = game ? phaseTimeoutMap[game.currentPhase] : undefined;
 
   // Check if timeout is expired (for host notification)
@@ -272,7 +275,7 @@ export default function GameView() {
                 </svg>
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-white">{game.name}</h1>
+                <h1 className="text-2xl font-bold text-white">{decodeHtmlEntities(game.name)}</h1>
                 {game.currentRound && (
                   <p className="text-sm text-white/90">
                     Round {game.currentRound.roundNumber} • {game.currentRound.actionsCompleted}/
@@ -292,14 +295,14 @@ export default function GameView() {
                   game.currentPhase === 'PROPOSAL'
                     ? 'bg-blue-500 text-white'
                     : game.currentPhase === 'ARGUMENTATION'
-                    ? 'bg-purple-500 text-white'
-                    : game.currentPhase === 'VOTING'
-                    ? 'bg-orange-500 text-white'
-                    : game.currentPhase === 'RESOLUTION'
-                    ? 'bg-green-500 text-white'
-                    : game.currentPhase === 'NARRATION'
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-gray-500 text-white'
+                      ? 'bg-purple-500 text-white'
+                      : game.currentPhase === 'VOTING'
+                        ? 'bg-orange-500 text-white'
+                        : game.currentPhase === 'RESOLUTION'
+                          ? 'bg-green-500 text-white'
+                          : game.currentPhase === 'NARRATION'
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-gray-500 text-white'
                 }`}
               >
                 {game.currentPhase}
@@ -325,39 +328,39 @@ export default function GameView() {
                   />
                 </svg>
               </Link>
-              <h1 className="text-2xl font-bold">{game.name}</h1>
+              <h1 className="text-2xl font-bold">{decodeHtmlEntities(game.name)}</h1>
             </div>
           </div>
           <div className="text-right">
-          <div className="flex items-center justify-end gap-2">
-            <PhaseCountdown
-              phaseStartedAt={game.phaseStartedAt}
-              timeoutHours={currentTimeoutHours}
-              currentPhase={game.currentPhase}
-            />
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                game.currentPhase === 'PROPOSAL'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                  : game.currentPhase === 'ARGUMENTATION'
-                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-                  : game.currentPhase === 'VOTING'
-                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                  : game.currentPhase === 'RESOLUTION'
-                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-                  : game.currentPhase === 'NARRATION'
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-              }`}
-            >
-              {game.currentPhase.replace('_', ' ')}
-            </span>
-          </div>
-          {myPlayer && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Playing as {myPlayer.playerName}
-            </p>
-          )}
+            <div className="flex items-center justify-end gap-2">
+              <PhaseCountdown
+                phaseStartedAt={game.phaseStartedAt}
+                timeoutHours={currentTimeoutHours}
+                currentPhase={game.currentPhase}
+              />
+              <span
+                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                  game.currentPhase === 'PROPOSAL'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                    : game.currentPhase === 'ARGUMENTATION'
+                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                      : game.currentPhase === 'VOTING'
+                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                        : game.currentPhase === 'RESOLUTION'
+                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                          : game.currentPhase === 'NARRATION'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                }`}
+              >
+                {game.currentPhase.replace('_', ' ')}
+              </span>
+            </div>
+            {myPlayer && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Playing as {decodeHtmlEntities(myPlayer.playerName)}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -415,12 +418,16 @@ export default function GameView() {
                           </span>
                         )}
                         <span>
-                          {player.persona ? player.persona.name : player.playerName}
+                          {decodeHtmlEntities(
+                            player.persona ? player.persona.name : player.playerName
+                          )}
                           {player.userId === currentUserId && ' (you)'}
                         </span>
                       </div>
                       {player.persona && (
-                        <p className="text-xs text-muted-foreground pl-4">{player.playerName}</p>
+                        <p className="text-xs text-muted-foreground pl-4">
+                          {decodeHtmlEntities(player.playerName)}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -480,7 +487,7 @@ export default function GameView() {
           {game.players.some((p) => p.isNpc) && (
             <NpcMomentumDisplay
               momentum={game.npcMomentum || 0}
-              npcName={game.players.find((p) => p.isNpc)?.playerName || 'NPC'}
+              npcName={decodeHtmlEntities(game.players.find((p) => p.isNpc)?.playerName || 'NPC')}
             />
           )}
 
@@ -488,9 +495,9 @@ export default function GameView() {
           {game.currentAction && game.currentPhase !== 'PROPOSAL' && (
             <div className="p-4 border rounded-lg">
               <h3 className="font-semibold mb-2">Current Action</h3>
-              <p className="text-sm">{game.currentAction.actionDescription}</p>
+              <RichTextDisplay content={game.currentAction.actionDescription} className="text-sm" />
               <p className="text-xs text-muted-foreground mt-2">
-                By {game.currentAction.initiator.playerName}
+                By {decodeHtmlEntities(game.currentAction.initiator.playerName)}
               </p>
             </div>
           )}

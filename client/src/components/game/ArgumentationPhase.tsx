@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { ArgumentList } from './ArgumentList';
 import { AddArgument } from './AddArgument';
 import { EditActionModal } from './EditActionModal';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
 interface Action {
   id: string;
@@ -82,12 +83,13 @@ export function ArgumentationPhase({
           )}
         </div>
         <div className="p-4 bg-muted rounded-md">
-          <p className="font-medium">{action.actionDescription}</p>
+          <p className="font-medium">{decodeHtmlEntities(action.actionDescription)}</p>
           <p className="text-sm text-muted-foreground mt-2">
-            <span className="font-medium">Desired outcome:</span> {action.desiredOutcome}
+            <span className="font-medium">Desired outcome:</span>{' '}
+            {decodeHtmlEntities(action.desiredOutcome)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Proposed by {action.initiator.playerName}
+            Proposed by {decodeHtmlEntities(action.initiator.playerName)}
           </p>
         </div>
       </div>

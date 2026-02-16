@@ -6,6 +6,7 @@ import { SkeletonGameCard } from '../components/ui/Skeleton';
 import { RichTextDisplay } from '../components/ui/RichTextDisplay';
 import { downloadBlob } from '../utils/download';
 import { getApiErrorMessage } from '../utils/apiError';
+import { decodeHtmlEntities } from '../utils/decodeEntities';
 
 interface Game {
   id: string;
@@ -205,7 +206,7 @@ export default function Dashboard() {
                       )}
 
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold truncate">{game.name}</h3>
+                        <h3 className="font-semibold truncate">{decodeHtmlEntities(game.name)}</h3>
                         <span
                           className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
                             game.status === 'ACTIVE'
@@ -239,7 +240,8 @@ export default function Dashboard() {
                       </div>
 
                       <div className="mt-2 text-xs text-muted-foreground">
-                        Playing as <span className="font-medium">{game.playerName}</span>
+                        Playing as{' '}
+                        <span className="font-medium">{decodeHtmlEntities(game.playerName)}</span>
                       </div>
 
                       {game.status === 'ACTIVE' && (

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { RichTextDisplay } from '../ui/RichTextDisplay';
 import { EditRoundSummaryModal } from './EditRoundSummaryModal';
+import { decodeHtmlEntities } from '../../utils/decodeEntities';
 
 interface RoundHistoryProps {
   gameId: string;
@@ -284,7 +285,9 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm">{action.actionDescription}</p>
+                            <p className="text-sm">
+                              {decodeHtmlEntities(action.actionDescription)}
+                            </p>
                           </div>
                           {action.tokenDraw && (
                             <div className="shrink-0 text-right">

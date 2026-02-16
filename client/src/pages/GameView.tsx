@@ -77,6 +77,7 @@ interface Game {
     id: string;
     playerName: string;
     isHost: boolean;
+    isPersonaLead: boolean;
     hasProposedThisRound: boolean;
     remainingArguments: number;
     hasCompletedArgumentation: boolean;
@@ -373,7 +374,18 @@ export default function GameView() {
 
       {/* Main Game Area */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">{renderPhaseContent()}</div>
+        <div className="lg:col-span-2">
+          {myPlayer &&
+            myPlayer.isPersonaLead === false &&
+            (game.currentPhase === 'PROPOSAL' || game.currentPhase === 'NARRATION') && (
+              <div className="mb-4 p-3 text-sm bg-muted/50 border rounded-md text-muted-foreground">
+                Your persona lead handles{' '}
+                {game.currentPhase === 'PROPOSAL' ? 'proposals' : 'narration'} for your shared
+                persona. You can participate in argumentation and voting.
+              </div>
+            )}
+          {renderPhaseContent()}
+        </div>
 
         {/* Sidebar */}
         <div className="space-y-4">

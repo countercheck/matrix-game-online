@@ -85,12 +85,12 @@ Layout (`components/layout/Layout.tsx`) renders the header (logo, nav: Dashboard
 ### 2.3 API client and auth
 
 - **`services/api.ts`** creates an axios instance:
-  - `baseURL`: `VITE_API_URL` if set (e.g. production), else `''` so relative `/api` is used (dev proxy).
+  - `baseURL`: `${VITE_API_URL}/api` when `VITE_API_URL` is set (e.g. production), otherwise `/api` (dev/test).
   - Sets `Content-Type: application/json` and `X-Requested-With: XMLHttpRequest` (for CSRF).
   - Response interceptor: on **401**, clears `localStorage` auth and redirects to `/login`.
 - **Auth** is stored in `localStorage` (`auth_token`, `auth_user`). On load, `useAuth` reads these and sets `api.defaults.headers.common['Authorization'] = 'Bearer ' + token`. Login/register set the same header and localStorage; logout clears them.
 
-So every API call from the client either uses the dev proxy (`/api` → `http://localhost:3000`) or a full `VITE_API_URL`; the backend sees the JWT in the `Authorization` header.
+So every API call from the client is sent to an `/api/...` path—either via the dev proxy (`/api` → `http://localhost:3000`) or via `${VITE_API_URL}/api` in production; the backend sees the JWT in the `Authorization` header.
 
 ### 2.4 Data flow (TanStack Query)
 

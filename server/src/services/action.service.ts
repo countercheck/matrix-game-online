@@ -61,7 +61,7 @@ export async function checkAndProposeNpcAction(gameId: string) {
 
   // Count how many human acting units have proposed this round
   const humanPlayers = game.players.filter((p) => !p.isNpc);
-  const humanActingUnits = countActingUnits(game.players);
+  const humanActingUnits = countActingUnits(humanPlayers);
   const humanProposals = await db.action.count({
     where: {
       roundId: game.currentRound.id,
@@ -470,7 +470,7 @@ export async function completeArgumentation(actionId: string, userId: string) {
   let completionThreshold: number;
   if (settings.allowSharedPersonas) {
     // One completion per acting unit is enough
-    completionThreshold = countActingUnits(action.game.players);
+    completionThreshold = countActingUnits(humanPlayers);
   } else {
     completionThreshold = humanPlayers.length;
   }
@@ -610,7 +610,7 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
     gameSettings.sharedPersonaVoting === 'one_per_persona' &&
     game
   ) {
-    voteThreshold = countActingUnits(game.players);
+    voteThreshold = countActingUnits(humanPlayers);
   } else {
     voteThreshold = humanPlayers.length;
   }

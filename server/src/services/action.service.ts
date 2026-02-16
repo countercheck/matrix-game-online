@@ -24,6 +24,7 @@ import {
   notifyRoundSummaryNeeded,
 } from './notification.service.js';
 import { getStrategy } from './resolution/index.js';
+import { countActingUnits, getPersonaMemberIds } from './shared/persona-helpers.js';
 
 /**
  * Check if NPC should auto-propose and do it if needed.
@@ -58,8 +59,9 @@ export async function checkAndProposeNpcAction(gameId: string) {
   });
   if (npcAction) return null;
 
-  // Count how many human players have proposed this round
+  // Count how many human acting units have proposed this round
   const humanPlayers = game.players.filter((p) => !p.isNpc);
+  const humanActingUnits = countActingUnits(game.players);
   const humanProposals = await db.action.count({
     where: {
       roundId: game.currentRound.id,
@@ -67,8 +69,8 @@ export async function checkAndProposeNpcAction(gameId: string) {
     },
   });
 
-  // If all humans have proposed, NPC auto-proposes
-  if (humanProposals < humanPlayers.length) return null;
+  // If all human acting units have proposed, NPC auto-proposes
+  if (humanProposals < humanActingUnits) return null;
 
   // Create NPC action using scripted proposal from persona
   const npcName = npcPlayer.persona?.name || npcPlayer.playerName;
@@ -134,7 +136,10 @@ export async function proposeAction(gameId: string, userId: string, data: Action
 
   const game = await db.game.findUnique({
     where: { id: gameId },
-    include: { currentRound: true },
+    include: {
+      currentRound: true,
+      players: { where: { isActive: true } },
+    },
   });
 
   if (!game || game.deletedAt || !game.currentRound) {
@@ -145,16 +150,37 @@ export async function proposeAction(gameId: string, userId: string, data: Action
     throw new BadRequestError('Game is not in proposal phase');
   }
 
-  // Check if player already proposed this round
-  const existingAction = await db.action.findFirst({
-    where: {
-      roundId: game.currentRound.id,
-      initiatorId: player.id,
-    },
-  });
+  const settings = (game.settings as Record<string, unknown>) || {};
 
-  if (existingAction) {
-    throw new ConflictError('You have already proposed an action this round');
+  // Shared persona checks
+  if (settings.allowSharedPersonas && player.personaId) {
+    // Only the lead can propose for the shared persona
+    if (!player.isPersonaLead) {
+      throw new ForbiddenError('Only the persona lead can propose actions');
+    }
+
+    // Check if any member of this persona already proposed this round
+    const memberIds = getPersonaMemberIds(game.players, player.personaId);
+    const personaAction = await db.action.findFirst({
+      where: {
+        roundId: game.currentRound.id,
+        initiatorId: { in: memberIds },
+      },
+    });
+    if (personaAction) {
+      throw new ConflictError('Your persona has already proposed an action this round');
+    }
+  } else {
+    // Standard check: has this player already proposed?
+    const existingAction = await db.action.findFirst({
+      where: {
+        roundId: game.currentRound.id,
+        initiatorId: player.id,
+      },
+    });
+    if (existingAction) {
+      throw new ConflictError('You have already proposed an action this round');
+    }
   }
 
   // Get next sequence number
@@ -298,15 +324,32 @@ export async function addArgument(actionId: string, userId: string, data: Argume
   }
 
   // Check argument limits
-  const existingArgs = await db.argument.findMany({
-    where: { actionId, playerId: player.id },
-  });
-
   const settings = (action.game.settings as Record<string, unknown>) || {};
   const argumentLimit = (settings.argumentLimit as number) || 3;
 
-  if (existingArgs.length >= argumentLimit) {
-    throw new BadRequestError(`Maximum ${argumentLimit} arguments per player`);
+  if (
+    settings.allowSharedPersonas &&
+    settings.sharedPersonaArguments === 'shared_pool' &&
+    player.personaId
+  ) {
+    // Shared pool: count arguments across all persona members
+    const allPlayers = await db.gamePlayer.findMany({
+      where: { gameId: action.gameId, isActive: true },
+    });
+    const memberIds = getPersonaMemberIds(allPlayers, player.personaId);
+    const poolCount = await db.argument.count({
+      where: { actionId, playerId: { in: memberIds } },
+    });
+    if (poolCount >= argumentLimit) {
+      throw new BadRequestError(`Maximum ${argumentLimit} arguments for your persona`);
+    }
+  } else {
+    const existingArgs = await db.argument.count({
+      where: { actionId, playerId: player.id },
+    });
+    if (existingArgs >= argumentLimit) {
+      throw new BadRequestError(`Maximum ${argumentLimit} arguments per player`);
+    }
   }
 
   // Get next sequence
@@ -412,19 +455,47 @@ export async function completeArgumentation(actionId: string, userId: string) {
     update: {},
   });
 
-  // NPC doesn't participate in argumentation
+  const settings = (action.game.settings as Record<string, unknown>) || {};
   const humanPlayers = action.game.players.filter((p) => !p.isNpc);
 
-  // Check if all human players have completed argumentation
-  const completedCount = await db.argumentationComplete.count({
-    where: { actionId },
-  });
+  // Determine the threshold for completion
+  let completionThreshold: number;
+  if (settings.allowSharedPersonas) {
+    // One completion per acting unit is enough
+    completionThreshold = countActingUnits(action.game.players);
+  } else {
+    completionThreshold = humanPlayers.length;
+  }
 
-  if (completedCount < humanPlayers.length) {
-    // Not all players have marked themselves as done
+  // Count completed players, treating shared persona members as one unit
+  const completedRecords = await db.argumentationComplete.findMany({
+    where: { actionId },
+    select: { playerId: true },
+  });
+  const completedPlayerIds = new Set(completedRecords.map((r) => r.playerId));
+
+  let completedUnits: number;
+  if (settings.allowSharedPersonas) {
+    // Count distinct acting units that have completed
+    const completedPersonas = new Set<string>();
+    let completedSolo = 0;
+    for (const hp of humanPlayers) {
+      if (!completedPlayerIds.has(hp.id)) continue;
+      if (hp.personaId) {
+        completedPersonas.add(hp.personaId);
+      } else {
+        completedSolo++;
+      }
+    }
+    completedUnits = completedPersonas.size + completedSolo;
+  } else {
+    completedUnits = completedPlayerIds.size;
+  }
+
+  if (completedUnits < completionThreshold) {
     return {
       message: 'Marked as done. Waiting for other players to finish.',
-      playersRemaining: humanPlayers.length - completedCount,
+      playersRemaining: completionThreshold - completedUnits,
     };
   }
 
@@ -488,6 +559,23 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
     },
   });
 
+  // one_per_persona: block if another member of the persona already voted
+  const gameSettings = (game?.settings as Record<string, unknown>) || {};
+  if (
+    gameSettings.allowSharedPersonas &&
+    gameSettings.sharedPersonaVoting === 'one_per_persona' &&
+    player.personaId &&
+    game
+  ) {
+    const memberIds = getPersonaMemberIds(game.players, player.personaId);
+    const personaVote = await db.vote.findFirst({
+      where: { actionId, playerId: { in: memberIds } },
+    });
+    if (personaVote) {
+      throw new ConflictError('Your persona has already voted');
+    }
+  }
+
   // Map vote type to tokens using the game's resolution strategy
   const settings = (game?.settings as Record<string, unknown>) || {};
   const strategy = getStrategy((settings.resolutionMethod as string) || 'token_draw');
@@ -507,7 +595,19 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
   const voteCount = await db.vote.count({ where: { actionId } });
   const humanPlayers = game?.players.filter((p) => !p.isNpc) || [];
 
-  if (game && !game.deletedAt && voteCount >= humanPlayers.length) {
+  // Determine vote threshold based on settings
+  let voteThreshold: number;
+  if (
+    gameSettings.allowSharedPersonas &&
+    gameSettings.sharedPersonaVoting === 'one_per_persona' &&
+    game
+  ) {
+    voteThreshold = countActingUnits(game.players);
+  } else {
+    voteThreshold = humanPlayers.length;
+  }
+
+  if (game && !game.deletedAt && voteCount >= voteThreshold) {
     // Get full action details for notification
     const fullAction = await db.action.findUnique({
       where: { id: actionId },
@@ -967,10 +1067,30 @@ export async function skipVoting(actionId: string, userId: string) {
 
   await requireHost(action.gameId, userId);
 
-  // Find players who haven't voted (excluding NPC)
+  // Determine which voters are missing based on settings
+  const skipSettings = (action.game.settings as Record<string, unknown>) || {};
   const humanPlayers = action.game.players.filter((p) => !p.isNpc);
   const votedPlayerIds = new Set(action.votes.map((v) => v.playerId));
-  const missingVoters = humanPlayers.filter((p) => !votedPlayerIds.has(p.id));
+
+  let missingVoters: typeof humanPlayers;
+  if (skipSettings.allowSharedPersonas && skipSettings.sharedPersonaVoting === 'one_per_persona') {
+    // For one_per_persona: only need one vote per persona (use lead)
+    const votedPersonas = new Set<string>();
+    for (const hp of humanPlayers) {
+      if (hp.personaId && votedPlayerIds.has(hp.id)) {
+        votedPersonas.add(hp.personaId);
+      }
+    }
+    // Missing = leads of personas that haven't voted + solo players that haven't voted
+    missingVoters = humanPlayers.filter((p) => {
+      if (p.personaId) {
+        return p.isPersonaLead && !votedPersonas.has(p.personaId);
+      }
+      return !votedPlayerIds.has(p.id);
+    });
+  } else {
+    missingVoters = humanPlayers.filter((p) => !votedPlayerIds.has(p.id));
+  }
 
   // Auto-fill missing votes as UNCERTAIN with wasSkipped=true
   const settings = (action.game.settings as Record<string, unknown>) || {};

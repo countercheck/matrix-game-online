@@ -98,7 +98,7 @@ describe('Timeout Service (Refactored)', () => {
 
     it('should skip games without timeout configured', async () => {
       const futureTime = new Date(Date.now() + 3600000); // 1 hour in future
-      
+
       mockDb.game.findMany.mockResolvedValue([
         {
           id: 'game-1',
@@ -109,7 +109,7 @@ describe('Timeout Service (Refactored)', () => {
           settings: { proposalTimeoutHours: -1 }, // No timeout
         },
       ]);
-      
+
       mockGetGameTimeoutSettings.mockReturnValue({
         proposalTimeoutMs: null, // -1 converts to null
         argumentationTimeoutMs: null,
@@ -125,7 +125,7 @@ describe('Timeout Service (Refactored)', () => {
 
     it('should skip games that have not timed out yet', async () => {
       const recentTime = new Date(Date.now() - 3600000); // 1 hour ago
-      
+
       mockDb.game.findMany.mockResolvedValue([
         {
           id: 'game-1',
@@ -136,7 +136,7 @@ describe('Timeout Service (Refactored)', () => {
           settings: { proposalTimeoutHours: 24 }, // 24 hour timeout
         },
       ]);
-      
+
       mockGetGameTimeoutSettings.mockReturnValue({
         proposalTimeoutMs: 24 * 60 * 60 * 1000, // 24 hours
         argumentationTimeoutMs: null,
@@ -152,7 +152,7 @@ describe('Timeout Service (Refactored)', () => {
 
     it('should process PROPOSAL timeout and notify host', async () => {
       const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25 hours ago
-      
+
       mockDb.game.findMany.mockResolvedValue([
         {
           id: 'game-1',
@@ -163,7 +163,7 @@ describe('Timeout Service (Refactored)', () => {
           settings: { proposalTimeoutHours: 24 },
         },
       ]);
-      
+
       mockGetGameTimeoutSettings.mockReturnValue({
         proposalTimeoutMs: 24 * 60 * 60 * 1000,
         argumentationTimeoutMs: null,
@@ -189,17 +189,14 @@ describe('Timeout Service (Refactored)', () => {
         playersAffected: 0,
         hostNotified: true,
       });
-      expect(mockNotifyTimeoutOccurred).toHaveBeenCalledWith(
-        'game-1',
-        'Test Game',
-        'PROPOSAL',
-        ['user-1']
-      );
+      expect(mockNotifyTimeoutOccurred).toHaveBeenCalledWith('game-1', 'Test Game', 'PROPOSAL', [
+        'user-1',
+      ]);
     });
 
     it('should handle PROPOSAL timeout without host', async () => {
       const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
-      
+
       mockDb.game.findMany.mockResolvedValue([
         {
           id: 'game-1',
@@ -210,7 +207,7 @@ describe('Timeout Service (Refactored)', () => {
           settings: { proposalTimeoutHours: 24 },
         },
       ]);
-      
+
       mockGetGameTimeoutSettings.mockReturnValue({
         proposalTimeoutMs: 24 * 60 * 60 * 1000,
         argumentationTimeoutMs: null,
@@ -236,7 +233,7 @@ describe('Timeout Service (Refactored)', () => {
 
     it('should collect errors without stopping the batch', async () => {
       const oldTime = new Date(Date.now() - 25 * 60 * 60 * 1000);
-      
+
       mockDb.game.findMany.mockResolvedValue([
         {
           id: 'game-1',
@@ -255,7 +252,7 @@ describe('Timeout Service (Refactored)', () => {
           settings: { argumentationTimeoutHours: 24 },
         },
       ]);
-      
+
       mockGetGameTimeoutSettings.mockReturnValue({
         proposalTimeoutMs: 24 * 60 * 60 * 1000,
         argumentationTimeoutMs: 24 * 60 * 60 * 1000,

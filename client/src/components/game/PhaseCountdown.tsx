@@ -38,10 +38,7 @@ export function PhaseCountdown({
   const nonTimedPhases = ['WAITING', 'RESOLUTION', 'ROUND_SUMMARY', 'COMPLETED'];
 
   const isInfinite = timeoutHours === undefined || timeoutHours === -1;
-  const shouldShow =
-    !isInfinite &&
-    phaseStartedAt &&
-    !nonTimedPhases.includes(currentPhase);
+  const shouldShow = !isInfinite && phaseStartedAt && !nonTimedPhases.includes(currentPhase);
 
   useEffect(() => {
     if (!shouldShow || !phaseStartedAt || timeoutHours === undefined) {

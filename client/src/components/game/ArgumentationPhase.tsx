@@ -147,6 +147,7 @@ export function ArgumentationPhase({
               onClick={() => completeMutation.mutate()}
               loading={completeMutation.isPending}
               loadingText="Submitting..."
+              fullWidth={false}
             >
               I'm Done
             </PrimaryActionButton>

@@ -461,21 +461,24 @@ export default function GameLobby() {
                                 Lead
                               </span>
                             )}
-                            {isHost && allowSharedPersonas && !member.isPersonaLead && (
-                              <button
-                                onClick={() =>
-                                  setPersonaLeadMutation.mutate({
-                                    personaId: persona.id,
-                                    playerId: member.id,
-                                  })
-                                }
-                                disabled={setPersonaLeadMutation.isPending}
-                                className="text-xs text-muted-foreground hover:text-foreground"
-                                title={`Make ${member.playerName} the lead`}
-                              >
-                                Make Lead
-                              </button>
-                            )}
+                            {isHost &&
+                              allowSharedPersonas &&
+                              !member.isPersonaLead &&
+                              persona.claimedBy.length > 1 && (
+                                <button
+                                  onClick={() =>
+                                    setPersonaLeadMutation.mutate({
+                                      personaId: persona.id,
+                                      playerId: member.id,
+                                    })
+                                  }
+                                  disabled={setPersonaLeadMutation.isPending}
+                                  className="text-xs text-muted-foreground hover:text-foreground"
+                                  title={`Make ${member.playerName} the lead`}
+                                >
+                                  Make Lead
+                                </button>
+                              )}
                           </div>
                         ))}
                       </div>

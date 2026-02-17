@@ -337,7 +337,7 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                       <button
                         type="button"
                         onClick={() => setExpandedAction(null)}
-                        aria-label="Collapse action"
+                        aria-label={`Collapse action ${action.sequenceNumber}`}
                         className="p-1 rounded hover:bg-muted/50 transition-colors"
                       >
                         <svg

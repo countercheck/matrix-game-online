@@ -28,7 +28,7 @@ CREATE TABLE "chat_channel_members" (
 CREATE TABLE "chat_messages" (
     "id" TEXT NOT NULL,
     "channel_id" TEXT NOT NULL,
-    "sender_player_id" TEXT NOT NULL,
+    "sender_player_id" TEXT,
     "content" TEXT NOT NULL,
     "reply_to_id" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

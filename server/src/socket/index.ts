@@ -3,6 +3,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { socketAuthMiddleware, type AuthenticatedSocket } from './auth.js';
 import { handleChatEvents } from './chat.handlers.js';
 import { logger } from '../utils/logger.js';
+import { db } from '../config/database.js';
 
 let io: SocketIOServer | null = null;
 
@@ -25,12 +26,26 @@ export function initializeSocket(httpServer: HttpServer, corsOrigin: string): So
       userId: authedSocket.data.userId,
     });
 
-    // Game room management
-    socket.on('join-game', (gameId: string) => {
-      if (typeof gameId === 'string' && gameId.length > 0) {
-        socket.join(`game:${gameId}`);
-        logger.debug('Socket joined game room', { socketId: socket.id, gameId });
+    // Game room management - verify membership before joining
+    socket.on('join-game', async (gameId: string) => {
+      if (typeof gameId !== 'string' || gameId.length === 0) return;
+
+      const player = await db.gamePlayer.findFirst({
+        where: { gameId, userId: authedSocket.data.userId, isActive: true },
+        select: { id: true },
+      });
+
+      if (!player) {
+        logger.warn('Socket join-game denied: not a game member', {
+          socketId: socket.id,
+          userId: authedSocket.data.userId,
+          gameId,
+        });
+        return;
       }
+
+      socket.join(`game:${gameId}`);
+      logger.debug('Socket joined game room', { socketId: socket.id, gameId });
     });
 
     socket.on('leave-game', (gameId: string) => {

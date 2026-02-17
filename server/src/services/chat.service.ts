@@ -54,7 +54,7 @@ export async function isChannelMember(userId: string, channelId: string): Promis
   if (!channel) return false;
 
   const player = await db.gamePlayer.findFirst({
-    where: { gameId: channel.gameId, userId },
+    where: { gameId: channel.gameId, userId, isActive: true },
     select: { id: true },
   });
 
@@ -321,17 +321,18 @@ export async function getMyChannels(gameId: string, userId: string) {
   const unreadCountByChannelId: Record<string, number> = {};
 
   const membershipsWithLastRead = memberships.filter((m) => m.lastReadAt);
-  for (const membership of membershipsWithLastRead) {
-    const count = await db.chatMessage.count({
-      where: {
-        channelId: membership.channelId,
-        createdAt: { gt: membership.lastReadAt! },
-        senderPlayerId: { not: player.id }, // Exclude user's own messages
-      },
-    });
-
-    unreadCountByChannelId[membership.channelId] = count;
-  }
+  await Promise.all(
+    membershipsWithLastRead.map(async (membership) => {
+      const count = await db.chatMessage.count({
+        where: {
+          channelId: membership.channelId,
+          createdAt: { gt: membership.lastReadAt! },
+          senderPlayerId: { not: player.id }, // Exclude user's own messages
+        },
+      });
+      unreadCountByChannelId[membership.channelId] = count;
+    })
+  );
 
   // For channels with no lastReadAt (never read), count all messages except own
   const neverReadChannels = memberships.filter((m) => !m.lastReadAt);

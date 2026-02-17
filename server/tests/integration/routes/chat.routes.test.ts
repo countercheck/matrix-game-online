@@ -20,8 +20,7 @@ describe('Chat Routes - Integration Tests', () => {
       data: {
         email: 'chat-test@example.com',
         displayName: 'Chat Tester',
-        password: hashedPassword,
-        isEmailVerified: true,
+        passwordHash: hashedPassword,
       },
     });
     userId = user.id;
@@ -31,8 +30,7 @@ describe('Chat Routes - Integration Tests', () => {
       data: {
         email: 'chat-other@example.com',
         displayName: 'Other Tester',
-        password: hashedPassword,
-        isEmailVerified: true,
+        passwordHash: hashedPassword,
       },
     });
     otherUserId = otherUser.id;
@@ -53,9 +51,6 @@ describe('Chat Routes - Integration Tests', () => {
         status: 'ACTIVE',
         currentPhase: 'PROPOSAL',
         settings: {},
-        minPlayers: 2,
-        maxPlayers: 6,
-        roundsToWin: 5,
       },
     });
     gameId = game.id;
@@ -66,8 +61,8 @@ describe('Chat Routes - Integration Tests', () => {
         gameId,
         userId,
         playerName: 'Chat Tester',
+        joinOrder: 1,
         isHost: true,
-        isActive: true,
       },
     });
     playerId = player.id;
@@ -77,8 +72,8 @@ describe('Chat Routes - Integration Tests', () => {
         gameId,
         userId: otherUserId,
         playerName: 'Other Tester',
+        joinOrder: 2,
         isHost: false,
-        isActive: true,
       },
     });
     otherPlayerId = otherPlayer.id;
@@ -137,8 +132,7 @@ describe('Chat Routes - Integration Tests', () => {
         data: {
           email: 'non-member@example.com',
           displayName: 'Non Member',
-          password: hashedPassword,
-          isEmailVerified: true,
+          passwordHash: hashedPassword,
         },
       });
 
@@ -254,14 +248,14 @@ describe('Chat Routes - Integration Tests', () => {
         data: {
           gameId,
           name: 'Persona One',
-          characterSheet: 'test',
+          description: 'test',
         },
       });
       const persona2 = await db.persona.create({
         data: {
           gameId,
           name: 'Persona Two',
-          characterSheet: 'test',
+          description: 'test',
         },
       });
 
@@ -299,9 +293,6 @@ describe('Chat Routes - Integration Tests', () => {
           status: 'LOBBY',
           currentPhase: 'WAITING',
           settings: {},
-          minPlayers: 2,
-          maxPlayers: 6,
-          roundsToWin: 5,
         },
       });
 
@@ -310,8 +301,8 @@ describe('Chat Routes - Integration Tests', () => {
           gameId: lobbyGame.id,
           userId,
           playerName: 'Chat Tester',
+          joinOrder: 1,
           isHost: true,
-          isActive: true,
         },
       });
 
@@ -358,7 +349,7 @@ describe('Chat Routes - Integration Tests', () => {
         data: {
           gameId,
           name: 'Test Persona',
-          characterSheet: 'test',
+          description: 'test',
         },
       });
 
@@ -473,8 +464,7 @@ describe('Chat Routes - Integration Tests', () => {
         data: {
           email: 'non-member2@example.com',
           displayName: 'Non Member 2',
-          password: hashedPassword,
-          isEmailVerified: true,
+          passwordHash: hashedPassword,
         },
       });
 
@@ -625,8 +615,7 @@ describe('Chat Routes - Integration Tests', () => {
         data: {
           email: 'non-member3@example.com',
           displayName: 'Non Member 3',
-          password: hashedPassword,
-          isEmailVerified: true,
+          passwordHash: hashedPassword,
         },
       });
 
@@ -651,9 +640,7 @@ describe('Chat Routes - Integration Tests', () => {
 
     it('should return 404 for non-existent channel', async () => {
       const response = await request(app)
-        .post(
-          `/api/games/${gameId}/chat/channels/00000000-0000-0000-0000-000000000000/messages`
-        )
+        .post(`/api/games/${gameId}/chat/channels/00000000-0000-0000-0000-000000000000/messages`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           content: 'Message to nowhere',
@@ -733,8 +720,7 @@ describe('Chat Routes - Integration Tests', () => {
         data: {
           email: 'non-member4@example.com',
           displayName: 'Non Member 4',
-          password: hashedPassword,
-          isEmailVerified: true,
+          passwordHash: hashedPassword,
         },
       });
 

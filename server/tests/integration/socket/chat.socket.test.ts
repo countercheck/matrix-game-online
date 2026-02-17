@@ -41,8 +41,16 @@ describe('Chat Socket Handlers - Integration Tests', () => {
     // Setup socket authentication
     setupSocketAuth(io);
 
-    // Setup chat event handlers
+    // Setup connection handlers
     io.on('connection', (socket: AuthenticatedSocket) => {
+      // Game room management
+      socket.on('join-game', (gameId: string) => {
+        if (typeof gameId === 'string' && gameId.length > 0) {
+          socket.join(`game:${gameId}`);
+        }
+      });
+
+      // Chat event handlers
       handleChatEvents(io, socket);
     });
 
@@ -66,8 +74,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       data: {
         email: 'socket-test@example.com',
         displayName: 'Socket Tester',
-        password: hashedPassword,
-        isEmailVerified: true,
+        passwordHash: hashedPassword,
       },
     });
     userId = user.id;
@@ -76,8 +83,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       data: {
         email: 'socket-other@example.com',
         displayName: 'Other Socket Tester',
-        password: hashedPassword,
-        isEmailVerified: true,
+        passwordHash: hashedPassword,
       },
     });
     otherUserId = otherUser.id;
@@ -104,9 +110,6 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         status: 'ACTIVE',
         currentPhase: 'PROPOSAL',
         settings: {},
-        minPlayers: 2,
-        maxPlayers: 6,
-        roundsToWin: 5,
       },
     });
     gameId = game.id;
@@ -117,8 +120,8 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         gameId,
         userId,
         playerName: 'Socket Tester',
+        joinOrder: 1,
         isHost: true,
-        isActive: true,
       },
     });
     playerId = player.id;
@@ -128,8 +131,8 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         gameId,
         userId: otherUserId,
         playerName: 'Other Socket Tester',
+        joinOrder: 2,
         isHost: false,
-        isActive: true,
       },
     });
     otherPlayerId = otherPlayer.id;
@@ -158,7 +161,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         clientSocket.on('connect', () => {
           // Join game room
           clientSocket.emit('join-game', gameId);
-          setTimeout((resolve) => resolve(), SOCKET_SETUP_DELAY);
+          setTimeout(() => resolve(), SOCKET_SETUP_DELAY);
         });
         clientSocket.on('connect_error', reject);
       }),
@@ -170,7 +173,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         otherClientSocket.on('connect', () => {
           // Join game room
           otherClientSocket.emit('join-game', gameId);
-          setTimeout((resolve) => resolve(), SOCKET_SETUP_DELAY);
+          setTimeout(() => resolve(), SOCKET_SETUP_DELAY);
         });
         otherClientSocket.on('connect_error', reject);
       }),
@@ -459,7 +462,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       clientSocket.emit('typing', typingData);
 
       // Wait a bit to ensure no self-broadcast
-      await new Promise((resolve) => setTimeout((resolve) => resolve(), SOCKET_BROADCAST_DELAY));
+      await new Promise((resolve) => setTimeout(() => resolve(), SOCKET_BROADCAST_DELAY));
 
       expect(selfReceived).toBe(false);
     });
@@ -491,7 +494,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       clientSocket.emit('typing', typingData);
 
       // Wait to ensure no broadcast
-      await new Promise((resolve) => setTimeout((resolve) => resolve(), SOCKET_BROADCAST_DELAY));
+      await new Promise((resolve) => setTimeout(() => resolve(), SOCKET_BROADCAST_DELAY));
 
       expect(typingReceived).toBe(false);
     });
@@ -506,7 +509,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       clientSocket.emit('typing', typingData);
 
       // Wait to ensure server is still responsive
-      await new Promise((resolve) => setTimeout((resolve) => resolve(), SOCKET_BROADCAST_DELAY));
+      await new Promise((resolve) => setTimeout(() => resolve(), SOCKET_BROADCAST_DELAY));
 
       expect(clientSocket.connected).toBe(true);
     });
@@ -578,9 +581,6 @@ describe('Chat Socket Handlers - Integration Tests', () => {
           status: 'ACTIVE',
           currentPhase: 'PROPOSAL',
           settings: {},
-          minPlayers: 2,
-          maxPlayers: 6,
-          roundsToWin: 5,
         },
       });
 
@@ -590,8 +590,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         data: {
           email: 'third-user@example.com',
           displayName: 'Third User',
-          password: hashedPassword,
-          isEmailVerified: true,
+          passwordHash: hashedPassword,
         },
       });
 
@@ -609,7 +608,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       await new Promise<void>((resolve) => {
         thirdClient.on('connect', () => {
           thirdClient.emit('join-game', otherGame.id);
-          setTimeout((resolve) => resolve(), SOCKET_SETUP_DELAY);
+          setTimeout(() => resolve(), SOCKET_SETUP_DELAY);
         });
       });
 
@@ -626,7 +625,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       clientSocket.emit('send-message', messageData);
 
       // Wait to ensure no cross-game broadcast
-      await new Promise((resolve) => setTimeout((resolve) => resolve(), SOCKET_BROADCAST_DELAY));
+      await new Promise((resolve) => setTimeout(() => resolve(), SOCKET_BROADCAST_DELAY));
 
       expect(thirdClientReceived).toBe(false);
 

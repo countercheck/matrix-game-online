@@ -18,6 +18,9 @@ export async function cleanDatabase(retries = 3): Promise<void> {
     try {
       // Delete in order respecting foreign key constraints
       await prisma.$transaction([
+        prisma.chatMessage.deleteMany(),
+        prisma.chatChannelMember.deleteMany(),
+        prisma.chatChannel.deleteMany(),
         prisma.drawnToken.deleteMany(),
         prisma.tokenDraw.deleteMany(),
         prisma.narration.deleteMany(),

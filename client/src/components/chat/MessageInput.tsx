@@ -49,10 +49,12 @@ export function MessageInput({
         }, 2000);
       } else if (typingRef.current) {
         // Input cleared — stop typing immediately
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+        }
         typingRef.current = false;
         onTyping(false);
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        typingTimeoutRef.current = null;
       }
     },
     [onTyping]

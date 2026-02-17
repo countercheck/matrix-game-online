@@ -412,7 +412,13 @@ export async function joinGame(
   });
 
   // Add to game chat channel if it exists (async, don't wait)
-  chatService.addPlayerToGameChannel(gameId, player.id).catch(() => {});
+  chatService.addPlayerToGameChannel(gameId, player.id).catch((error) => {
+    console.error('Failed to add player to game chat channel', {
+      gameId,
+      playerId: player.id,
+      error,
+    });
+  });
 
   return player;
 }

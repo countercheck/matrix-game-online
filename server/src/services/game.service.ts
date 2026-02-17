@@ -779,7 +779,9 @@ export async function startGame(gameId: string, userId: string) {
   await logGameEvent(gameId, null, 'ROUND_STARTED', { roundNumber: 1 });
 
   // Create game chat channel (async, don't wait)
-  chatService.createGameChannel(gameId).catch(() => {});
+  chatService.createGameChannel(gameId).catch((error) => {
+    console.error(`Failed to create chat channel for game ${gameId}:`, error);
+  });
 
   // Send notifications (async, don't wait)
   notifyGameStarted(gameId, game.name).catch(() => {});

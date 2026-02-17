@@ -57,6 +57,9 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(csrfProtection);
 }
 
+// Initialize Socket.io before registering routes
+initializeSocket(httpServer, corsOrigin);
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -84,9 +87,6 @@ app.use((req, res) => {
     },
   });
 });
-
-// Initialize Socket.io
-initializeSocket(httpServer, corsOrigin);
 
 httpServer.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);

@@ -67,7 +67,7 @@ ALTER TABLE "chat_channel_members" ADD CONSTRAINT "chat_channel_members_player_i
 ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_channel_id_fkey" FOREIGN KEY ("channel_id") REFERENCES "chat_channels"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_sender_player_id_fkey" FOREIGN KEY ("sender_player_id") REFERENCES "game_players"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_sender_player_id_fkey" FOREIGN KEY ("sender_player_id") REFERENCES "game_players"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_reply_to_id_fkey" FOREIGN KEY ("reply_to_id") REFERENCES "chat_messages"("id") ON DELETE SET NULL ON UPDATE CASCADE;

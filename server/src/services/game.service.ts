@@ -376,18 +376,30 @@ export async function joinGame(
     return player;
   }
 
-  const player = await db.gamePlayer.create({
-    data: {
-      gameId,
-      userId,
-      playerName,
-      personaId: personaId || null,
-      joinOrder: game.players.length + 1,
-      isHost: false,
-      isPersonaLead: personaId ? isFirstClaim : false,
-    },
-    include: { persona: true },
-  });
+  let player;
+  try {
+    player = await db.gamePlayer.create({
+      data: {
+        gameId,
+        userId,
+        playerName,
+        personaId: personaId || null,
+        joinOrder: game.players.length + 1,
+        isHost: false,
+        isPersonaLead: personaId ? isFirstClaim : false,
+      },
+      include: { persona: true },
+    });
+  } catch (error) {
+    // Handle unique constraint violation for concurrent join attempts
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const target = error.meta?.target as string[] | undefined;
+      if (target?.includes('userId') || target?.includes('user_id')) {
+        throw new ConflictError('Already in this game');
+      }
+    }
+    throw error;
+  }
 
   await db.game.update({
     where: { id: gameId },

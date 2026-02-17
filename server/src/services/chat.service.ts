@@ -530,15 +530,43 @@ export async function getMessages(
 
   if (!membership) throw new ForbiddenError('Not a member of this channel');
 
-  // Build cursor condition
-  const cursor = beforeId ? { id: beforeId } : undefined;
+  // Build where condition for cursor pagination
+  let whereCondition: {
+    channelId: string;
+    OR?: Array<{ createdAt: { lt: Date } } | { createdAt: Date; id: { lt: string } }>;
+  } = { channelId };
+
+  if (beforeId) {
+    // Get the reference message to find its timestamp
+    const referenceMessage = await db.chatMessage.findUnique({
+      where: { id: beforeId },
+      select: { id: true, createdAt: true, channelId: true },
+    });
+
+    if (!referenceMessage) {
+      throw new BadRequestError('Reference message not found');
+    }
+
+    if (referenceMessage.channelId !== channelId) {
+      throw new BadRequestError('Reference message is not in this channel');
+    }
+
+    // Get messages that are either:
+    // 1. Older than the reference message (createdAt < referenceMessage.createdAt)
+    // 2. Same timestamp but with a smaller ID (to handle messages created simultaneously)
+    whereCondition = {
+      channelId,
+      OR: [
+        { createdAt: { lt: referenceMessage.createdAt } },
+        { createdAt: referenceMessage.createdAt, id: { lt: referenceMessage.id } },
+      ],
+    };
+  }
 
   const messages = await db.chatMessage.findMany({
-    where: { channelId },
-    orderBy: { createdAt: 'desc' },
+    where: whereCondition,
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: limit,
-    skip: cursor ? 1 : 0,
-    cursor,
     include: {
       sender: {
         select: {

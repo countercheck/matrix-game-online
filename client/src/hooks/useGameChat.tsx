@@ -105,13 +105,10 @@ export function useGameChat(gameId: string) {
 
     const handleNewMessage = (message: ChatMessage) => {
       // Append to active channel messages cache (dedupe by ID)
-      queryClient.setQueryData<ChatMessage[]>(
-        ['chat-messages', message.channelId],
-        (old = []) => {
-          if (old.some((m) => m.id === message.id)) return old;
-          return [...old, message];
-        }
-      );
+      queryClient.setQueryData<ChatMessage[]>(['chat-messages', message.channelId], (old = []) => {
+        if (old.some((m) => m.id === message.id)) return old;
+        return [...old, message];
+      });
 
       // Invalidate channels to update unread counts and last message
       queryClient.invalidateQueries({ queryKey: ['chat-channels', gameId] });
@@ -159,7 +156,7 @@ export function useGameChat(gameId: string) {
       socket.off('new-message', handleNewMessage);
       socket.off('typing', handleTyping);
     };
-  }, [socket, gameId, queryClient]);
+  }, [socket, gameId, queryClient, user]);
 
   // Send message
   const sendMessage = useCallback(
@@ -236,16 +233,15 @@ export function useGameChat(gameId: string) {
   const loadOlderMessages = useCallback(async () => {
     if (!activeChannelId || !messages.length) return;
     const oldestId = messages[0]?.id;
-    const res = await api.get(
-      `/games/${gameId}/chat/channels/${activeChannelId}/messages`,
-      { params: { before: oldestId, limit: 50 } }
-    );
+    const res = await api.get(`/games/${gameId}/chat/channels/${activeChannelId}/messages`, {
+      params: { before: oldestId, limit: 50 },
+    });
     const olderMessages: ChatMessage[] = res.data.data.reverse();
     if (olderMessages.length > 0) {
-      queryClient.setQueryData<ChatMessage[]>(
-        ['chat-messages', activeChannelId],
-        (old = []) => [...olderMessages, ...old]
-      );
+      queryClient.setQueryData<ChatMessage[]>(['chat-messages', activeChannelId], (old = []) => [
+        ...olderMessages,
+        ...old,
+      ]);
     }
     return olderMessages.length;
   }, [activeChannelId, messages, gameId, queryClient]);

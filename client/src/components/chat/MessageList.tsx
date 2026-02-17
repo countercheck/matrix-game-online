@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChatMessage } from '../../hooks/useGameChat';
 
 interface MessageListProps {
@@ -19,6 +19,7 @@ export function MessageList({
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const prevLengthRef = useRef(messages.length);
+  const [loadingOlder, setLoadingOlder] = useState(false);
 
   // Auto-scroll to bottom on new messages only if user is near bottom
   useEffect(() => {
@@ -60,10 +61,18 @@ export function MessageList({
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto space-y-1 p-3">
       <button
-        onClick={onLoadOlder}
-        className="w-full py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        onClick={async () => {
+          setLoadingOlder(true);
+          try {
+            await onLoadOlder();
+          } finally {
+            setLoadingOlder(false);
+          }
+        }}
+        disabled={loadingOlder}
+        className="w-full py-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
       >
-        Load older messages
+        {loadingOlder ? 'Loading...' : 'Load older messages'}
       </button>
 
       {messages.map((msg) => {
@@ -86,9 +95,7 @@ export function MessageList({
 
             <div
               className={`max-w-[85%] rounded-lg px-3 py-2 ${
-                isOwn
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted/50 text-foreground'
+                isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-foreground'
               }`}
             >
               {!isOwn && (
@@ -101,9 +108,7 @@ export function MessageList({
               )}
               <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
               <div className="flex items-center justify-between mt-0.5">
-                <time className="text-[10px] opacity-60">
-                  {formatTime(msg.createdAt)}
-                </time>
+                <time className="text-[10px] opacity-60">{formatTime(msg.createdAt)}</time>
                 <button
                   onClick={() => onReply(msg)}
                   className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/10 ${
@@ -140,7 +145,9 @@ function formatTime(isoString: string): string {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+  return (
+    date.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
     ' ' +
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  );
 }

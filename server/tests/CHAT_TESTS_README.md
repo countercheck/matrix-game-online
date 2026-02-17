@@ -191,7 +191,16 @@ The integration and socket tests follow the existing patterns but require:
 2. Test database: `mosaic_game_test`
 3. Environment variables set in `tests/setup.ts`
 
-In CI environments without a database, only the unit tests will run successfully. This is expected and matches the behavior of other integration tests in the repository.
+**CI Environment Behavior:**
+- In CI environments without a configured database, integration tests will fail with connection errors
+- This is expected and matches the behavior of other integration tests in the repository
+- The unit tests provide comprehensive coverage and pass in all environments
+- To run integration tests in CI, the pipeline would need to:
+  - Configure a PostgreSQL service/container
+  - Set DATABASE_URL environment variable
+  - Run database migrations before tests
+  
+Currently, the project focuses on unit test coverage in CI, with integration tests run locally during development.
 
 ## Test Patterns Used
 

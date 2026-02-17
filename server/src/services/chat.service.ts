@@ -321,28 +321,20 @@ export async function getMyChannels(gameId: string, userId: string) {
     },
   });
 
-  // Calculate unread counts efficiently in a single query
-  const channelIds = memberships.map((m) => m.channelId);
-  const unreadMessages = await db.chatMessage.groupBy({
-    by: ['channelId'],
-    where: {
-      channelId: { in: channelIds },
-      OR: memberships
-        .filter((m) => m.lastReadAt) // Only check for messages after lastReadAt
-        .map((membership) => ({
-          channelId: membership.channelId,
-          createdAt: { gt: membership.lastReadAt! },
-          senderPlayerId: { not: player.id }, // Exclude user's own messages
-        })),
-    },
-    _count: {
-      _all: true,
-    },
-  });
-
+  // Calculate unread counts per channel
   const unreadCountByChannelId: Record<string, number> = {};
-  for (const result of unreadMessages) {
-    unreadCountByChannelId[result.channelId] = result._count._all;
+
+  const membershipsWithLastRead = memberships.filter((m) => m.lastReadAt);
+  for (const membership of membershipsWithLastRead) {
+    const count = await db.chatMessage.count({
+      where: {
+        channelId: membership.channelId,
+        createdAt: { gt: membership.lastReadAt! },
+        senderPlayerId: { not: player.id }, // Exclude user's own messages
+      },
+    });
+
+    unreadCountByChannelId[membership.channelId] = count;
   }
 
   // For channels with no lastReadAt (never read), count all messages except own

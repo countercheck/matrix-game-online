@@ -93,7 +93,9 @@ export function ChatPanel({
                 setActiveChannelId(id);
                 setReplyTarget(null);
                 // On small screens, collapse channel list after selection
-                if (window.innerWidth < 640) setShowChannelList(false);
+                if (typeof window !== 'undefined' && window.innerWidth < 640) {
+                  setShowChannelList(false);
+                }
               }}
               onNewChannel={() => setShowNewChannel(true)}
             />

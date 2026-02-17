@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useSocket } from './useSocket';
@@ -52,7 +52,7 @@ interface TypingEvent {
 export function useGameChat(gameId: string) {
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
-  const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
   const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -67,10 +67,7 @@ export function useGameChat(gameId: string) {
   }, [socket, isConnected, gameId]);
 
   // Fetch channels
-  const {
-    data: channels = [],
-    isLoading: channelsLoading,
-  } = useQuery<ChatChannel[]>({
+  const { data: channels = [], isLoading: channelsLoading } = useQuery<ChatChannel[]>({
     queryKey: ['chat-channels', gameId],
     queryFn: async () => {
       const res = await api.get(`/games/${gameId}/chat/channels`);
@@ -80,11 +77,16 @@ export function useGameChat(gameId: string) {
     enabled: !!gameId,
   });
 
+  // Derive active channel: use selected, or fall back to first channel
+  const activeChannelId = useMemo(() => {
+    if (selectedChannelId && channels.some((c) => c.id === selectedChannelId)) {
+      return selectedChannelId;
+    }
+    return channels.length > 0 ? channels[0].id : null;
+  }, [selectedChannelId, channels]);
+
   // Fetch messages for active channel
-  const {
-    data: messages = [],
-    isLoading: messagesLoading,
-  } = useQuery<ChatMessage[]>({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
     queryKey: ['chat-messages', activeChannelId],
     queryFn: async () => {
       if (!activeChannelId) return [];
@@ -194,7 +196,7 @@ export function useGameChat(gameId: string) {
       const res = await api.post(`/games/${gameId}/chat/channels`, input);
       queryClient.invalidateQueries({ queryKey: ['chat-channels', gameId] });
       const channel = res.data.data;
-      setActiveChannelId(channel.id);
+      setSelectedChannelId(channel.id);
       return channel;
     },
     [gameId, queryClient]
@@ -241,13 +243,6 @@ export function useGameChat(gameId: string) {
     return olderMessages.length;
   }, [activeChannelId, messages, gameId, queryClient]);
 
-  // Auto-set first channel as active
-  useEffect(() => {
-    if (!activeChannelId && channels.length > 0) {
-      setActiveChannelId(channels[0].id);
-    }
-  }, [channels, activeChannelId]);
-
   // Mark as read when switching channels
   useEffect(() => {
     if (activeChannelId) {
@@ -264,7 +259,7 @@ export function useGameChat(gameId: string) {
     messages,
     messagesLoading,
     activeChannelId,
-    setActiveChannelId,
+    setActiveChannelId: setSelectedChannelId,
     sendMessage,
     createChannel,
     markRead,

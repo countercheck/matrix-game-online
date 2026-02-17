@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { useAuth } from './useAuth';
 
@@ -15,20 +22,37 @@ const SOCKET_URL = import.meta.env.VITE_API_URL
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth();
-  const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const connectedRef = useRef(false);
+  const listenersRef = useRef(new Set<() => void>());
+
+  // Subscribe function for useSyncExternalStore
+  const subscribe = (listener: () => void) => {
+    listenersRef.current.add(listener);
+    return () => {
+      listenersRef.current.delete(listener);
+    };
+  };
+
+  const notify = () => {
+    listenersRef.current.forEach((l) => l());
+  };
+
+  const getSocketSnapshot = () => socketRef.current;
+  const getConnectedSnapshot = () => connectedRef.current;
 
   useEffect(() => {
     if (!token) {
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
-        setIsConnected(false);
+        connectedRef.current = false;
+        notify();
       }
       return;
     }
 
-    const socket = io(SOCKET_URL, {
+    const newSocket = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -36,22 +60,31 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       reconnectionDelay: 1000,
     });
 
-    socket.on('connect', () => setIsConnected(true));
-    socket.on('disconnect', () => setIsConnected(false));
+    newSocket.on('connect', () => {
+      connectedRef.current = true;
+      notify();
+    });
+    newSocket.on('disconnect', () => {
+      connectedRef.current = false;
+      notify();
+    });
 
-    socketRef.current = socket;
+    socketRef.current = newSocket;
+    notify();
 
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
       socketRef.current = null;
-      setIsConnected(false);
+      connectedRef.current = false;
+      notify();
     };
   }, [token]);
 
+  const socket = useSyncExternalStore(subscribe, getSocketSnapshot, () => null);
+  const isConnected = useSyncExternalStore(subscribe, getConnectedSnapshot, () => false);
+
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current, isConnected }}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={{ socket, isConnected }}>{children}</SocketContext.Provider>
   );
 }
 

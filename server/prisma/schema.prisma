@@ -444,14 +444,14 @@ model ChatChannelMember {
 model ChatMessage {
   id             String   @id @default(uuid())
   channelId      String   @map("channel_id")
-  senderPlayerId String   @map("sender_player_id")
+  senderPlayerId String?  @map("sender_player_id")
   content        String   @db.Text
   replyToId      String?  @map("reply_to_id")
   createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations
   channel ChatChannel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  sender  GamePlayer   @relation("ChatMessageSender", fields: [senderPlayerId], references: [id])
+  sender  GamePlayer?  @relation("ChatMessageSender", fields: [senderPlayerId], references: [id], onDelete: SetNull)
   replyTo ChatMessage? @relation("ChatMessageReplies", fields: [replyToId], references: [id])
   replies ChatMessage[] @relation("ChatMessageReplies")
 

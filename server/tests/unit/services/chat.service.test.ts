@@ -22,6 +22,7 @@ vi.mock('../../../src/config/database.js', () => ({
       findUnique: vi.fn(),
       findMany: vi.fn(),
       groupBy: vi.fn(),
+      count: vi.fn(),
     },
     game: {
       findUnique: vi.fn(),
@@ -128,11 +129,7 @@ describe('Chat Service - Unit Tests', () => {
         name: 'Game Chat',
         members: [],
       };
-      const mockPlayers = [
-        { id: 'player-1' },
-        { id: 'player-2' },
-        { id: 'player-3' },
-      ];
+      const mockPlayers = [{ id: 'player-1' }, { id: 'player-2' }, { id: 'player-3' }];
 
       vi.mocked(db.chatChannel.upsert).mockResolvedValue(mockChannel as any);
       vi.mocked(db.gamePlayer.findMany).mockResolvedValue(mockPlayers as any);
@@ -290,10 +287,7 @@ describe('Chat Service - Unit Tests', () => {
         { id: 'persona-1', name: 'Alice', gameId: 'game-123' },
         { id: 'persona-2', name: 'Bob', gameId: 'game-123' },
       ];
-      const mockPlayers = [
-        { id: 'player-123' },
-        { id: 'player-456' },
-      ];
+      const mockPlayers = [{ id: 'player-123' }, { id: 'player-456' }];
       const mockChannel = {
         id: 'channel-123',
         gameId: 'game-123',
@@ -338,10 +332,7 @@ describe('Chat Service - Unit Tests', () => {
       const mockGame = { status: 'ACTIVE', settings: {} };
       const mockRequestingPlayer = { id: 'player-123', isActive: true };
       const mockPlayers = [{ id: 'player-456', playerName: 'Bob' }];
-      const mockAllPlayers = [
-        { playerName: 'Alice' },
-        { playerName: 'Bob' },
-      ];
+      const mockAllPlayers = [{ playerName: 'Alice' }, { playerName: 'Bob' }];
       const mockChannel = {
         id: 'channel-123',
         gameId: 'game-123',
@@ -452,9 +443,8 @@ describe('Chat Service - Unit Tests', () => {
 
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(mockPlayer as any);
       vi.mocked(db.chatChannelMember.findMany).mockResolvedValue(mockMemberships as any);
-      vi.mocked(db.chatMessage.groupBy).mockResolvedValue([
-        { channelId: 'channel-1', _count: { _all: 5 } },
-      ] as any);
+      // Channels with lastReadAt use db.chatMessage.count()
+      vi.mocked(db.chatMessage.count).mockResolvedValue(5);
 
       const result = await chatService.getMyChannels('game-123', 'user-123');
 
@@ -491,9 +481,10 @@ describe('Chat Service - Unit Tests', () => {
 
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(mockPlayer as any);
       vi.mocked(db.chatChannelMember.findMany).mockResolvedValue(mockMemberships as any);
-      vi.mocked(db.chatMessage.groupBy)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ channelId: 'channel-1', _count: { _all: 10 } }] as any);
+      // Channels with lastReadAt: null use db.chatMessage.groupBy()
+      vi.mocked(db.chatMessage.groupBy).mockResolvedValue([
+        { channelId: 'channel-1', _count: { _all: 10 } },
+      ] as any);
 
       const result = await chatService.getMyChannels('game-123', 'user-123');
 
@@ -541,9 +532,9 @@ describe('Chat Service - Unit Tests', () => {
     it('should throw NotFoundError if channel does not exist', async () => {
       vi.mocked(db.chatChannel.findUnique).mockResolvedValue(null);
 
-      await expect(
-        chatService.sendMessage('user-123', 'channel-123', 'Hello')
-      ).rejects.toThrow(NotFoundError);
+      await expect(chatService.sendMessage('user-123', 'channel-123', 'Hello')).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     it('should throw ForbiddenError if user is not a game member', async () => {
@@ -551,9 +542,9 @@ describe('Chat Service - Unit Tests', () => {
       vi.mocked(db.chatChannel.findUnique).mockResolvedValue(mockChannel as any);
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(null);
 
-      await expect(
-        chatService.sendMessage('user-123', 'channel-123', 'Hello')
-      ).rejects.toThrow('Not a member of this game');
+      await expect(chatService.sendMessage('user-123', 'channel-123', 'Hello')).rejects.toThrow(
+        'Not a member of this game'
+      );
     });
 
     it('should throw ForbiddenError if player is not active', async () => {
@@ -562,9 +553,9 @@ describe('Chat Service - Unit Tests', () => {
       vi.mocked(db.chatChannel.findUnique).mockResolvedValue(mockChannel as any);
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(mockPlayer as any);
 
-      await expect(
-        chatService.sendMessage('user-123', 'channel-123', 'Hello')
-      ).rejects.toThrow('You have left this game');
+      await expect(chatService.sendMessage('user-123', 'channel-123', 'Hello')).rejects.toThrow(
+        'You have left this game'
+      );
     });
 
     it('should throw ForbiddenError if user is not a channel member', async () => {
@@ -574,9 +565,9 @@ describe('Chat Service - Unit Tests', () => {
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(mockPlayer as any);
       vi.mocked(db.chatChannelMember.findUnique).mockResolvedValue(null);
 
-      await expect(
-        chatService.sendMessage('user-123', 'channel-123', 'Hello')
-      ).rejects.toThrow('Not a member of this channel');
+      await expect(chatService.sendMessage('user-123', 'channel-123', 'Hello')).rejects.toThrow(
+        'Not a member of this channel'
+      );
     });
 
     it('should throw BadRequestError if reply target is in different channel', async () => {
@@ -682,9 +673,9 @@ describe('Chat Service - Unit Tests', () => {
     it('should throw NotFoundError if channel does not exist', async () => {
       vi.mocked(db.chatChannel.findUnique).mockResolvedValue(null);
 
-      await expect(
-        chatService.getMessages('user-123', 'channel-123', 50)
-      ).rejects.toThrow(NotFoundError);
+      await expect(chatService.getMessages('user-123', 'channel-123', 50)).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     it('should throw ForbiddenError if user is not a game member', async () => {
@@ -692,9 +683,9 @@ describe('Chat Service - Unit Tests', () => {
       vi.mocked(db.chatChannel.findUnique).mockResolvedValue(mockChannel as any);
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(null);
 
-      await expect(
-        chatService.getMessages('user-123', 'channel-123', 50)
-      ).rejects.toThrow('Not a member of this game');
+      await expect(chatService.getMessages('user-123', 'channel-123', 50)).rejects.toThrow(
+        'Not a member of this game'
+      );
     });
 
     it('should throw ForbiddenError if user is not a channel member', async () => {
@@ -704,9 +695,9 @@ describe('Chat Service - Unit Tests', () => {
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(mockPlayer as any);
       vi.mocked(db.chatChannelMember.findUnique).mockResolvedValue(null);
 
-      await expect(
-        chatService.getMessages('user-123', 'channel-123', 50)
-      ).rejects.toThrow('Not a member of this channel');
+      await expect(chatService.getMessages('user-123', 'channel-123', 50)).rejects.toThrow(
+        'Not a member of this channel'
+      );
     });
 
     it('should return messages for valid request', async () => {

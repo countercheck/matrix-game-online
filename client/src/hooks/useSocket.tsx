@@ -47,7 +47,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.userId || null;
-    } catch (error) {
+    } catch {
       return null;
     }
   };
@@ -68,7 +68,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const existingSocket = socketRef.current;
 
     let existingUserId: string | null = null;
-    if (existingSocket && typeof (existingSocket as Socket & { auth?: unknown }).auth === 'object') {
+    if (
+      existingSocket &&
+      typeof (existingSocket as Socket & { auth?: unknown }).auth === 'object'
+    ) {
       const existingAuth = (existingSocket as Socket & { auth?: { token?: unknown } }).auth;
       const existingToken =
         existingAuth && typeof existingAuth.token === 'string' ? existingAuth.token : null;

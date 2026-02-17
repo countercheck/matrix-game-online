@@ -14,9 +14,11 @@ export function initializeSocket(httpServer: HttpServer, corsOrigin: string): So
     },
   });
 
-  io.use(socketAuthMiddleware);
+  const server = io;
 
-  io.on('connection', (socket) => {
+  server.use(socketAuthMiddleware);
+
+  server.on('connection', (socket) => {
     const authedSocket = socket as AuthenticatedSocket;
     logger.info('Socket connected', {
       socketId: socket.id,
@@ -39,14 +41,14 @@ export function initializeSocket(httpServer: HttpServer, corsOrigin: string): So
     });
 
     // Chat event handlers
-    handleChatEvents(io!, authedSocket);
+    handleChatEvents(server, authedSocket);
 
     socket.on('disconnect', () => {
       logger.debug('Socket disconnected', { socketId: socket.id });
     });
   });
 
-  return io;
+  return server;
 }
 
 export function getIO(): SocketIOServer {

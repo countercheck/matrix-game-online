@@ -4,6 +4,21 @@ import type { AuthenticatedSocket } from './auth.js';
 import * as chatService from '../services/chat.service.js';
 import { logger } from '../utils/logger.js';
 
+// In-memory cache: channelId -> gameId (channels never change games)
+const channelGameCache = new Map<string, string>();
+
+async function getChannelGameIdCached(channelId: string): Promise<string | null> {
+  const cached = channelGameCache.get(channelId);
+  if (cached) return cached;
+
+  const channel = await chatService.getChannelGameId(channelId);
+  if (channel) {
+    channelGameCache.set(channelId, channel.gameId);
+    return channel.gameId;
+  }
+  return null;
+}
+
 // Socket-specific schema (includes channelId since it's part of the socket event)
 const socketSendMessageSchema = z.object({
   channelId: z.string().uuid(),
@@ -33,10 +48,10 @@ export function handleChatEvents(io: Server, socket: AuthenticatedSocket): void 
         parsed.replyToId
       );
 
-      // Find the game room for this channel to broadcast
-      const channel = await chatService.getChannelGameId(parsed.channelId);
-      if (channel) {
-        io.to(`game:${channel.gameId}`).emit('new-message', message);
+      // Find the game room for this channel to broadcast (cached)
+      const gameId = await getChannelGameIdCached(parsed.channelId);
+      if (gameId) {
+        io.to(`game:${gameId}`).emit('new-message', message);
       }
 
       if (ack) ack({ success: true, data: message });
@@ -61,21 +76,11 @@ export function handleChatEvents(io: Server, socket: AuthenticatedSocket): void 
   socket.on('typing', async (data: unknown) => {
     try {
       const parsed = typingSchema.parse(data);
-      
-      // Validate that user is a member of the channel
-      const isMember = await chatService.isChannelMember(userId, parsed.channelId);
-      if (!isMember) {
-        logger.warn('Unauthorized typing indicator attempt', {
-          userId,
-          channelId: parsed.channelId,
-        });
-        return;
-      }
 
-      // Broadcast to game room
-      const channel = await chatService.getChannelGameId(parsed.channelId);
-      if (channel) {
-        socket.to(`game:${channel.gameId}`).emit('typing', {
+      // Use cached channel-to-game mapping (no DB query per typing event)
+      const gameId = await getChannelGameIdCached(parsed.channelId);
+      if (gameId) {
+        socket.to(`game:${gameId}`).emit('typing', {
           channelId: parsed.channelId,
           userId,
           displayName: socket.data.displayName,

@@ -43,6 +43,33 @@ export async function getChannelGameId(channelId: string) {
 }
 
 /**
+ * Get the gameId and scope for a given channel. Used by socket handlers
+ * to determine broadcast routing (game room vs. user rooms).
+ */
+export async function getChannelInfo(channelId: string) {
+  return db.chatChannel.findUnique({
+    where: { id: channelId },
+    select: { gameId: true, scope: true },
+  });
+}
+
+/**
+ * Get the userIds for all members of a channel.
+ * Used to target Socket.io user rooms for PERSONA/DIRECT channels.
+ */
+export async function getChannelMemberUserIds(channelId: string): Promise<string[]> {
+  const members = await db.chatChannelMember.findMany({
+    where: { channelId },
+    select: {
+      player: {
+        select: { userId: true },
+      },
+    },
+  });
+  return members.map((m) => m.player.userId);
+}
+
+/**
  * Check if a user is a member of a channel.
  */
 export async function isChannelMember(userId: string, channelId: string): Promise<boolean> {

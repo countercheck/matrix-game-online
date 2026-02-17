@@ -43,6 +43,9 @@ describe('Chat Socket Handlers - Integration Tests', () => {
 
     // Setup connection handlers
     io.on('connection', (socket: AuthenticatedSocket) => {
+      // Join user room for private channel routing
+      socket.join(`user:${socket.data.userId}`);
+
       // Game room management
       socket.on('join-game', (gameId: string) => {
         if (typeof gameId === 'string' && gameId.length > 0) {
@@ -467,9 +470,8 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       expect(selfReceived).toBe(false);
     });
 
-    it('should broadcast typing even if user is not a channel member (best-effort)', async () => {
-      // Typing indicators skip membership checks for performance.
-      // The broadcast goes to the game room, so all game members see it.
+    it('should deliver private channel typing only to channel members', async () => {
+      // Private channels route typing events to member user rooms only.
       const privateChannel = await db.chatChannel.create({
         data: {
           gameId,
@@ -487,16 +489,26 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         isTyping: true,
       };
 
-      let typingReceived = false;
+      // otherClientSocket IS a member - should receive typing
+      let memberReceived = false;
       otherClientSocket.on('typing', () => {
-        typingReceived = true;
+        memberReceived = true;
       });
 
+      // clientSocket is NOT a member - should NOT receive typing
+      let nonMemberReceived = false;
+      clientSocket.on('typing', () => {
+        nonMemberReceived = true;
+      });
+
+      // clientSocket emits typing on the private channel
       clientSocket.emit('typing', typingData);
 
       await new Promise((resolve) => setTimeout(() => resolve(), SOCKET_BROADCAST_DELAY));
 
-      expect(typingReceived).toBe(true);
+      // Member receives the event, non-member does not
+      expect(memberReceived).toBe(true);
+      expect(nonMemberReceived).toBe(false);
     });
 
     it('should handle invalid channel ID format', async () => {

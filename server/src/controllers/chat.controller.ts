@@ -6,6 +6,7 @@ import {
   sendMessageSchema,
 } from '../utils/chat.validators.js';
 import { getIO } from '../socket/index.js';
+import { emitToChannel } from '../socket/chat.handlers.js';
 import { logger } from '../utils/logger.js';
 
 export async function getChannels(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -54,13 +55,10 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
     const { content, replyToId } = sendMessageSchema.parse(req.body);
     const message = await chatService.sendMessage(userId, channelId, content, replyToId);
 
-    // Broadcast via Socket.io
+    // Broadcast via Socket.io using privacy-aware channel routing
     try {
       const io = getIO();
-      const channel = await chatService.getChannelGameId(channelId);
-      if (channel) {
-        io.to(`game:${channel.gameId}`).emit('new-message', message);
-      }
+      await emitToChannel(io, channelId, 'new-message', message);
     } catch (err) {
       logger.error('Failed to broadcast message via socket', { error: err });
       // Continue even if socket broadcast fails - message is still saved

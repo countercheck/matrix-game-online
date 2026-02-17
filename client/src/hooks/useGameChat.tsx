@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useSocket } from './useSocket';
+import { useAuth } from './useAuth';
 
 export interface ChatChannel {
   id: string;
@@ -51,6 +52,7 @@ interface TypingEvent {
 
 export function useGameChat(gameId: string) {
   const { socket, isConnected } = useSocket();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
@@ -116,6 +118,11 @@ export function useGameChat(gameId: string) {
     };
 
     const handleTyping = (event: TypingEvent) => {
+      // Filter out current user's own typing events
+      if (user && event.userId === user.id) {
+        return;
+      }
+
       setTypingUsers((prev) => {
         const next = new Map(prev);
         if (event.isTyping) {
@@ -245,10 +252,17 @@ export function useGameChat(gameId: string) {
 
   // Mark as read when switching channels
   useEffect(() => {
-    if (activeChannelId) {
-      markRead(activeChannelId);
-    }
-  }, [activeChannelId, markRead]);
+    if (!activeChannelId) return;
+
+    (async () => {
+      if (socket?.connected) {
+        socket.emit('mark-read', { channelId: activeChannelId });
+      } else {
+        await api.post(`/games/${gameId}/chat/channels/${activeChannelId}/read`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['chat-channels', gameId] });
+    })();
+  }, [activeChannelId, socket, gameId, queryClient]);
 
   // Total unread across all channels
   const totalUnread = channels.reduce((sum, ch) => sum + ch.unreadCount, 0);

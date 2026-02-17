@@ -20,10 +20,18 @@ export function MessageList({
   const containerRef = useRef<HTMLDivElement>(null);
   const prevLengthRef = useRef(messages.length);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom on new messages only if user is near bottom
   useEffect(() => {
     if (messages.length > prevLengthRef.current) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const container = containerRef.current;
+      if (container) {
+        // Check if user is near the bottom (within 100px)
+        const isNearBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        if (isNearBottom) {
+          bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
     }
     prevLengthRef.current = messages.length;
   }, [messages.length]);

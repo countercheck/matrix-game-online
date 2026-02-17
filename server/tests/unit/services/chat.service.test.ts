@@ -16,6 +16,7 @@ vi.mock('../../../src/config/database.js', () => ({
       createMany: vi.fn(),
       upsert: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     chatMessage: {
       create: vi.fn(),
@@ -797,13 +798,14 @@ describe('Chat Service - Unit Tests', () => {
       const mockPlayer = { id: 'player-123' };
       vi.mocked(db.chatChannel.findUnique).mockResolvedValue(mockChannel as any);
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(mockPlayer as any);
-      vi.mocked(db.chatChannelMember.update).mockResolvedValue({} as any);
+      vi.mocked(db.chatChannelMember.updateMany).mockResolvedValue({ count: 1 } as any);
 
       await chatService.markChannelRead('user-123', 'channel-123');
 
-      expect(db.chatChannelMember.update).toHaveBeenCalledWith({
+      expect(db.chatChannelMember.updateMany).toHaveBeenCalledWith({
         where: {
-          channelId_playerId: { channelId: 'channel-123', playerId: 'player-123' },
+          channelId: 'channel-123',
+          playerId: 'player-123',
         },
         data: { lastReadAt: expect.any(Date) },
       });

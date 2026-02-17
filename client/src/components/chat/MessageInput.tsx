@@ -36,16 +36,24 @@ export function MessageInput({
   const handleTypingChange = useCallback(
     (value: string) => {
       setContent(value);
-      if (value.length > 0 && !typingRef.current) {
-        typingRef.current = true;
-        onTyping(true);
-      }
-      // Reset typing timeout
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = setTimeout(() => {
+      if (value.length > 0) {
+        if (!typingRef.current) {
+          typingRef.current = true;
+          onTyping(true);
+        }
+        // Reset typing timeout
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+          typingRef.current = false;
+          onTyping(false);
+        }, 2000);
+      } else if (typingRef.current) {
+        // Input cleared — stop typing immediately
         typingRef.current = false;
         onTyping(false);
-      }, 2000);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
     },
     [onTyping]
   );

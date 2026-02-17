@@ -471,7 +471,42 @@ describe('Chat Socket Handlers - Integration Tests', () => {
     });
 
     it('should deliver private channel typing only to channel members', async () => {
-      // Private channels route typing events to member user rooms only.
+      // Create a DIRECT channel with both players as members
+      const privateChannel = await db.chatChannel.create({
+        data: {
+          gameId,
+          scope: 'DIRECT',
+          name: 'Private DM',
+          scopeKey: `${playerId}:${otherPlayerId}`,
+          members: {
+            create: [{ playerId }, { playerId: otherPlayerId }],
+          },
+        },
+      });
+
+      const typingData = {
+        channelId: privateChannel.id,
+        isTyping: true,
+      };
+
+      // otherClientSocket IS a member - should receive typing from clientSocket
+      const typingPromise = new Promise<any>((resolve) => {
+        otherClientSocket.on('typing', resolve);
+      });
+
+      // clientSocket (a member) emits typing on the private channel
+      clientSocket.emit('typing', typingData);
+
+      const typingEvent = await typingPromise;
+      expect(typingEvent).toMatchObject({
+        channelId: privateChannel.id,
+        userId,
+        isTyping: true,
+      });
+    });
+
+    it('should not broadcast typing from non-member on private channel', async () => {
+      // Create a DIRECT channel with ONLY otherPlayer as member
       const privateChannel = await db.chatChannel.create({
         data: {
           gameId,
@@ -489,25 +524,23 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         isTyping: true,
       };
 
-      // otherClientSocket IS a member - should receive typing
+      // Neither socket should receive typing from a non-member
       let memberReceived = false;
       otherClientSocket.on('typing', () => {
         memberReceived = true;
       });
 
-      // clientSocket is NOT a member - should NOT receive typing
       let nonMemberReceived = false;
       clientSocket.on('typing', () => {
         nonMemberReceived = true;
       });
 
-      // clientSocket emits typing on the private channel
+      // clientSocket is NOT a member - typing should be silently dropped
       clientSocket.emit('typing', typingData);
 
       await new Promise((resolve) => setTimeout(() => resolve(), SOCKET_BROADCAST_DELAY));
 
-      // Member receives the event, non-member does not
-      expect(memberReceived).toBe(true);
+      expect(memberReceived).toBe(false);
       expect(nonMemberReceived).toBe(false);
     });
 
@@ -582,6 +615,46 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         channelId,
         content: 'Broadcast test',
       });
+    });
+
+    it('should not deliver private channel messages to non-member game participants', async () => {
+      // Create a DIRECT channel with only otherPlayer as member
+      const privateChannel = await db.chatChannel.create({
+        data: {
+          gameId,
+          scope: 'DIRECT',
+          name: 'Private DM',
+          scopeKey: otherPlayerId,
+          members: {
+            create: [{ playerId: otherPlayerId }],
+          },
+        },
+      });
+
+      // clientSocket (non-member of this channel) should NOT receive the message
+      let nonMemberReceived = false;
+      clientSocket.on('new-message', (msg: any) => {
+        if (msg.channelId === privateChannel.id) {
+          nonMemberReceived = true;
+        }
+      });
+
+      // otherClientSocket IS a member - send a message via the channel
+      const messageData = {
+        channelId: privateChannel.id,
+        content: 'Private message',
+      };
+
+      const ackResponse = await new Promise<any>((resolve) => {
+        otherClientSocket.emit('send-message', messageData, resolve);
+      });
+
+      expect(ackResponse.success).toBe(true);
+
+      // Wait to ensure non-member doesn't receive the broadcast
+      await new Promise((resolve) => setTimeout(() => resolve(), SOCKET_BROADCAST_DELAY));
+
+      expect(nonMemberReceived).toBe(false);
     });
 
     it('should not broadcast to clients in different game rooms', async () => {

@@ -141,6 +141,16 @@ export function handleChatEvents(io: Server, socket: AuthenticatedSocket): void 
     try {
       const parsed = typingSchema.parse(data);
 
+      // Validate sender is a channel member before broadcasting
+      const entry = await getChannelCached(parsed.channelId);
+      if (!entry) return;
+
+      if (entry.scope !== 'GAME') {
+        // For PERSONA/DIRECT channels, verify sender is an actual member
+        const memberUserIds = await getChannelMembersCached(parsed.channelId);
+        if (!memberUserIds.includes(userId)) return;
+      }
+
       // Broadcast typing to channel members only, excluding sender
       await emitToChannel(
         io,

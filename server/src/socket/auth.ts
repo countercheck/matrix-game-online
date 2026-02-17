@@ -1,3 +1,4 @@
+import type { Server as SocketIOServer } from 'socket.io';
 import type { Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { db } from '../config/database.js';
@@ -54,4 +55,8 @@ export async function socketAuthMiddleware(
     logger.error('Socket auth error', { error: err });
     next(new Error('Authentication failed'));
   }
+}
+
+export function setupSocketAuth(io: SocketIOServer): void {
+  io.use(socketAuthMiddleware as any);
 }

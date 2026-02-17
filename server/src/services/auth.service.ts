@@ -13,6 +13,10 @@ import { sendPasswordResetEmail } from './email.service.js';
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
 
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
+}
+
 export async function register(data: RegisterInput) {
   const existingUser = await db.user.findUnique({
     where: { email: data.email },

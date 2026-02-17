@@ -256,7 +256,10 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                 <button
                   type="button"
                   onClick={() => setExpandedAction(action.id)}
-                  aria-label="Expand action"
+                  aria-label={`Expand action: ${(() => {
+                    const description = decodeHtmlEntities(action.actionDescription);
+                    return description.length > 50 ? description.slice(0, 47) + '...' : description;
+                  })()}`}
                   className="p-1 rounded hover:bg-muted/50 transition-colors"
                 >
                   <svg

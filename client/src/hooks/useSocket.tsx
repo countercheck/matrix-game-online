@@ -48,8 +48,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.userId || null;
     } catch (error) {
-      // Log parsing errors to help with debugging authentication issues
-      console.warn('Failed to parse user ID from token:', error);
       return null;
     }
   };

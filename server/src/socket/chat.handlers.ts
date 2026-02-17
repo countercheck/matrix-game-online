@@ -4,7 +4,8 @@ import type { AuthenticatedSocket } from './auth.js';
 import * as chatService from '../services/chat.service.js';
 import { logger } from '../utils/logger.js';
 
-const sendMessageSchema = z.object({
+// Socket-specific schema (includes channelId since it's part of the socket event)
+const socketSendMessageSchema = z.object({
   channelId: z.string().uuid(),
   content: z.string().min(1).max(5000),
   replyToId: z.string().uuid().optional(),
@@ -24,7 +25,7 @@ export function handleChatEvents(io: Server, socket: AuthenticatedSocket): void 
 
   socket.on('send-message', async (data: unknown, ack?: (response: unknown) => void) => {
     try {
-      const parsed = sendMessageSchema.parse(data);
+      const parsed = socketSendMessageSchema.parse(data);
       const message = await chatService.sendMessage(
         userId,
         parsed.channelId,
@@ -57,21 +58,35 @@ export function handleChatEvents(io: Server, socket: AuthenticatedSocket): void 
     }
   });
 
-  socket.on('typing', (data: unknown) => {
+  socket.on('typing', async (data: unknown) => {
     try {
       const parsed = typingSchema.parse(data);
-      // Broadcast to game room (find via channel membership)
-      chatService.getChannelGameId(parsed.channelId).then((channel) => {
-        if (channel) {
-          socket.to(`game:${channel.gameId}`).emit('typing', {
-            channelId: parsed.channelId,
-            userId,
-            displayName: socket.data.displayName,
-            isTyping: parsed.isTyping,
-          });
-        }
+      
+      // Validate that user is a member of the channel
+      const isMember = await chatService.isChannelMember(userId, parsed.channelId);
+      if (!isMember) {
+        logger.warn('Unauthorized typing indicator attempt', {
+          userId,
+          channelId: parsed.channelId,
+        });
+        return;
+      }
+
+      // Broadcast to game room
+      const channel = await chatService.getChannelGameId(parsed.channelId);
+      if (channel) {
+        socket.to(`game:${channel.gameId}`).emit('typing', {
+          channelId: parsed.channelId,
+          userId,
+          displayName: socket.data.displayName,
+          isTyping: parsed.isTyping,
+        });
+      }
+    } catch (error) {
+      logger.error('Socket typing error', {
+        error,
+        userId,
       });
-    } catch {
       // Typing is best-effort, no ack needed
     }
   });

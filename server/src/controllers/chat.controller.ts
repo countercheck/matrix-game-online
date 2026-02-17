@@ -56,12 +56,14 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
 
     // Broadcast via Socket.io
     try {
+      const io = getIO();
       const channel = await chatService.getChannelGameId(channelId);
       if (channel) {
-        getIO().to(`game:${channel.gameId}`).emit('new-message', message);
+        io.to(`game:${channel.gameId}`).emit('new-message', message);
       }
     } catch (err) {
       logger.error('Failed to broadcast message via socket', { error: err });
+      // Continue even if socket broadcast fails - message is still saved
     }
 
     res.status(201).json({ success: true, data: message });

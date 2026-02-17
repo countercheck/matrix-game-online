@@ -12,10 +12,10 @@ export interface AuthenticatedSocket extends Socket {
   };
 }
 
-export function socketAuthMiddleware(
+export async function socketAuthMiddleware(
   socket: Socket,
   next: (err?: Error) => void
-): void {
+): Promise<void> {
   const token = socket.handshake.auth.token as string | undefined;
 
   if (!token) {
@@ -32,31 +32,26 @@ export function socketAuthMiddleware(
   try {
     const payload = jwt.verify(token, secret) as JWTPayload;
 
-    db.user
-      .findUnique({
-        where: { id: payload.userId },
-        select: { id: true, email: true, displayName: true, isBanned: true },
-      })
-      .then((user) => {
-        if (!user) {
-          next(new Error('User not found'));
-          return;
-        }
-        if (user.isBanned) {
-          next(new Error('Account banned'));
-          return;
-        }
+    const user = await db.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, displayName: true, isBanned: true },
+    });
 
-        socket.data.userId = user.id;
-        socket.data.email = user.email;
-        socket.data.displayName = user.displayName;
-        next();
-      })
-      .catch((err) => {
-        logger.error('Socket auth DB error', { error: err });
-        next(new Error('Authentication failed'));
-      });
-  } catch {
-    next(new Error('Invalid token'));
+    if (!user) {
+      next(new Error('User not found'));
+      return;
+    }
+    if (user.isBanned) {
+      next(new Error('Account banned'));
+      return;
+    }
+
+    socket.data.userId = user.id;
+    socket.data.email = user.email;
+    socket.data.displayName = user.displayName;
+    next();
+  } catch (err) {
+    logger.error('Socket auth error', { error: err });
+    next(new Error('Authentication failed'));
   }
 }

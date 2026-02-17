@@ -32,6 +32,10 @@ interface CreateGameData {
     allowSharedPersonas?: boolean;
     sharedPersonaVoting?: string;
     sharedPersonaArguments?: string;
+    chat?: {
+      enablePersonaChat?: boolean;
+      enableDirectChat?: boolean;
+    };
   };
   personas?: Persona[];
 }
@@ -67,6 +71,9 @@ export default function CreateGame() {
   const [allowSharedPersonas, setAllowSharedPersonas] = useState(false);
   const [sharedPersonaVoting, setSharedPersonaVoting] = useState('each_member');
   const [sharedPersonaArguments, setSharedPersonaArguments] = useState('independent');
+  const [enablePersonaChat, setEnablePersonaChat] = useState(true);
+  const [enableDirectChat, setEnableDirectChat] = useState(true);
+  const [showChatSettings, setShowChatSettings] = useState(false);
 
   const { data: methodsData } = useQuery<{ data: ResolutionMethod[] }>({
     queryKey: ['resolutionMethods'],
@@ -209,6 +216,10 @@ export default function CreateGame() {
       allowSharedPersonas,
       sharedPersonaVoting,
       sharedPersonaArguments,
+      chat: {
+        enablePersonaChat,
+        enableDirectChat,
+      },
     };
 
     createMutation.mutate(data);
@@ -547,6 +558,49 @@ export default function CreateGame() {
                 onChange={setNarrationTimeout}
                 description="Time for the initiator to narrate"
               />
+            </div>
+          )}
+        </div>
+
+        {/* Chat Settings Section */}
+        <div className="border rounded-md">
+          <button
+            type="button"
+            onClick={() => setShowChatSettings(!showChatSettings)}
+            className="w-full px-4 py-3 text-left font-medium flex justify-between items-center hover:bg-muted/50"
+          >
+            <span>Chat Settings (Optional)</span>
+            <span className="text-muted-foreground text-sm">
+              {!enablePersonaChat || !enableDirectChat ? 'Restricted' : 'All enabled'}
+            </span>
+          </button>
+
+          {showChatSettings && (
+            <div className="p-4 border-t space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Control which chat channels are available during the game. Game-wide chat is always
+                enabled.
+              </p>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={enablePersonaChat}
+                  onChange={(e) => setEnablePersonaChat(e.target.checked)}
+                  className="rounded"
+                />
+                Enable persona chat channels
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={enableDirectChat}
+                  onChange={(e) => setEnableDirectChat(e.target.checked)}
+                  className="rounded"
+                />
+                Enable direct messages between players
+              </label>
             </div>
           )}
         </div>

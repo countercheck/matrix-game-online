@@ -144,7 +144,7 @@ export function requestLogger(req: Request, _res: Response, next: NextFunction):
     path: req.path,
     ip: req.ip,
     userAgent: req.get('User-Agent'),
-    userId: (req as any).user?.id,
+    userId: req.user?.id,
   };
 
   logger.debug(`Request: ${JSON.stringify(logData)}`);

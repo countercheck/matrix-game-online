@@ -199,7 +199,6 @@ export function useGameChat(gameId: string) {
         });
       } catch (error) {
         // Provide user-visible feedback if sending fails via REST fallback
-        // eslint-disable-next-line no-console
         console.error('Failed to send chat message via REST fallback', error);
         window.alert('Failed to send message. Please check your connection and try again.');
         throw error;

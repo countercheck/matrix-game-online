@@ -8,6 +8,7 @@ import {
 } from '../middleware/errorHandler.js';
 import type { CreateGameInput, UpdatePersonaInput } from '../utils/validators.js';
 import { notifyGameStarted } from './notification.service.js';
+import * as chatService from './chat.service.js';
 import { countActingUnits } from './shared/persona-helpers.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -398,6 +399,9 @@ export async function joinGame(
     personaName: player.persona?.name,
   });
 
+  // Add to game chat channel if it exists (async, don't wait)
+  chatService.addPlayerToGameChannel(gameId, player.id).catch(() => {});
+
   return player;
 }
 
@@ -755,6 +759,9 @@ export async function startGame(gameId: string, userId: string) {
 
   await logGameEvent(gameId, userId, 'GAME_STARTED', {});
   await logGameEvent(gameId, null, 'ROUND_STARTED', { roundNumber: 1 });
+
+  // Create game chat channel (async, don't wait)
+  chatService.createGameChannel(gameId).catch(() => {});
 
   // Send notifications (async, don't wait)
   notifyGameStarted(gameId, game.name).catch(() => {});

@@ -58,5 +58,7 @@ export async function socketAuthMiddleware(
 }
 
 export function setupSocketAuth(io: SocketIOServer): void {
-  io.use(socketAuthMiddleware as any);
+  io.use((socket, next) => {
+    socketAuthMiddleware(socket, next);
+  });
 }

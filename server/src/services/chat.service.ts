@@ -42,15 +42,38 @@ export async function getChannelGameId(channelId: string) {
 }
 
 /**
+ * Check if a user is a member of a channel.
+ */
+export async function isChannelMember(userId: string, channelId: string): Promise<boolean> {
+  const channel = await db.chatChannel.findUnique({
+    where: { id: channelId },
+    select: { gameId: true },
+  });
+
+  if (!channel) return false;
+
+  const player = await db.gamePlayer.findFirst({
+    where: { gameId: channel.gameId, userId },
+    select: { id: true },
+  });
+
+  if (!player) return false;
+
+  const membership = await db.chatChannelMember.findUnique({
+    where: {
+      channelId_playerId: { channelId, playerId: player.id },
+    },
+  });
+
+  return !!membership;
+}
+
+/**
  * Create the GAME-scoped channel when a game starts.
  * Adds all active players as members.
  */
 export async function createGameChannel(gameId: string) {
-  const players = await db.gamePlayer.findMany({
-    where: { gameId, isActive: true },
-    select: { id: true },
-  });
-
+  // Use upsert with a transaction-like approach to handle race conditions
   const channel = await db.chatChannel.upsert({
     where: {
       gameId_scope_scopeKey: { gameId, scope: 'GAME', scopeKey: '' },
@@ -61,11 +84,35 @@ export async function createGameChannel(gameId: string) {
       name: 'Game Chat',
       scopeKey: '',
       members: {
-        create: players.map((p) => ({ playerId: p.id })),
+        create: [],
       },
     },
     update: {},
+    include: {
+      members: {
+        select: { playerId: true },
+      },
+    },
   });
+
+  // Add all active players to the channel if not already members
+  const players = await db.gamePlayer.findMany({
+    where: { gameId, isActive: true },
+    select: { id: true },
+  });
+
+  const existingMemberIds = new Set(channel.members.map((m) => m.playerId));
+  const newMemberIds = players.filter((p) => !existingMemberIds.has(p.id)).map((p) => p.id);
+
+  if (newMemberIds.length > 0) {
+    await db.chatChannelMember.createMany({
+      data: newMemberIds.map((playerId) => ({
+        channelId: channel.id,
+        playerId,
+      })),
+      skipDuplicates: true,
+    });
+  }
 
   return channel;
 }
@@ -269,47 +316,80 @@ export async function getMyChannels(gameId: string, userId: string) {
     },
   });
 
-  // Calculate unread counts
-  const channels = await Promise.all(
-    memberships.map(async (membership) => {
-      const unreadCount = await db.chatMessage.count({
-        where: {
+  // Calculate unread counts efficiently in a single query
+  const channelIds = memberships.map((m) => m.channelId);
+  const unreadMessages = await db.chatMessage.groupBy({
+    by: ['channelId'],
+    where: {
+      channelId: { in: channelIds },
+      OR: memberships
+        .filter((m) => m.lastReadAt) // Only check for messages after lastReadAt
+        .map((membership) => ({
           channelId: membership.channelId,
-          createdAt: membership.lastReadAt
-            ? { gt: membership.lastReadAt }
-            : undefined,
-        },
-      });
-
-      const lastMessage = membership.channel.messages[0] || null;
-
-      return {
-        id: membership.channel.id,
-        gameId: membership.channel.gameId,
-        scope: membership.channel.scope,
-        name: membership.channel.name,
-        members: membership.channel.members.map((m) => ({
-          playerId: m.player.id,
-          playerName: m.player.playerName,
-          personaName: m.player.persona?.name || null,
+          createdAt: { gt: membership.lastReadAt! },
+          senderPlayerId: { not: player.id }, // Exclude user's own messages
         })),
-        unreadCount,
-        lastMessage: lastMessage
-          ? {
-              id: lastMessage.id,
-              content:
-                lastMessage.content.length > 100
-                  ? lastMessage.content.slice(0, 100) + '...'
-                  : lastMessage.content,
-              senderName: lastMessage.sender.playerName,
-              senderPersona: lastMessage.sender.persona?.name || null,
-              createdAt: lastMessage.createdAt.toISOString(),
-            }
-          : null,
-        createdAt: membership.channel.createdAt.toISOString(),
-      };
-    })
-  );
+    },
+    _count: {
+      _all: true,
+    },
+  });
+
+  const unreadCountByChannelId: Record<string, number> = {};
+  for (const result of unreadMessages) {
+    unreadCountByChannelId[result.channelId] = result._count._all;
+  }
+
+  // For channels with no lastReadAt (never read), count all messages except own
+  const neverReadChannels = memberships.filter((m) => !m.lastReadAt);
+  if (neverReadChannels.length > 0) {
+    const neverReadCounts = await db.chatMessage.groupBy({
+      by: ['channelId'],
+      where: {
+        channelId: { in: neverReadChannels.map((m) => m.channelId) },
+        senderPlayerId: { not: player.id }, // Exclude user's own messages
+      },
+      _count: {
+        _all: true,
+      },
+    });
+
+    for (const result of neverReadCounts) {
+      unreadCountByChannelId[result.channelId] = result._count._all;
+    }
+  }
+
+  const channels = memberships.map((membership) => {
+    const unreadCount = unreadCountByChannelId[membership.channelId] || 0;
+
+    const lastMessage = membership.channel.messages[0] || null;
+
+    return {
+      id: membership.channel.id,
+      gameId: membership.channel.gameId,
+      scope: membership.channel.scope,
+      name: membership.channel.name,
+      members: membership.channel.members.map((m) => ({
+        playerId: m.player.id,
+        playerName: m.player.playerName,
+        personaName: m.player.persona?.name || null,
+      })),
+      unreadCount,
+      lastMessage: lastMessage
+        ? {
+            id: lastMessage.id,
+            content:
+              lastMessage.content.length > 100
+                ? lastMessage.content.slice(0, 100) + '...'
+                : lastMessage.content,
+            senderName: lastMessage.sender.playerName,
+            senderPersona: lastMessage.sender.persona?.name || null,
+            createdAt: lastMessage.createdAt.toISOString(),
+          }
+        : null,
+      createdAt: membership.channel.createdAt.toISOString(),
+    };
+  });
 
   return channels;
 }

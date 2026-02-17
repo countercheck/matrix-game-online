@@ -192,10 +192,18 @@ export function useGameChat(gameId: string) {
       }
 
       // REST fallback
-      await api.post(`/games/${gameId}/chat/channels/${activeChannelId}/messages`, {
-        content,
-        replyToId,
-      });
+      try {
+        await api.post(`/games/${gameId}/chat/channels/${activeChannelId}/messages`, {
+          content,
+          replyToId,
+        });
+      } catch (error) {
+        // Provide user-visible feedback if sending fails via REST fallback
+        // eslint-disable-next-line no-console
+        console.error('Failed to send chat message via REST fallback', error);
+        window.alert('Failed to send message. Please check your connection and try again.');
+        throw error;
+      }
     },
     [socket, activeChannelId, gameId]
   );

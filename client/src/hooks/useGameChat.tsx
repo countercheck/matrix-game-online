@@ -198,10 +198,8 @@ export function useGameChat(gameId: string) {
           replyToId,
         });
       } catch (error) {
-        // Provide user-visible feedback if sending fails via REST fallback
         console.error('Failed to send chat message via REST fallback', error);
-        window.alert('Failed to send message. Please check your connection and try again.');
-        throw error;
+        throw new Error('Failed to send message. Please check your connection and try again.');
       }
     },
     [socket, activeChannelId, gameId]

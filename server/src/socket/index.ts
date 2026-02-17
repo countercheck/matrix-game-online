@@ -21,6 +21,7 @@ export function initializeSocket(httpServer: HttpServer, corsOrigin: string): So
 
   server.on('connection', (socket) => {
     const authedSocket = socket as AuthenticatedSocket;
+    socket.join(`user:${authedSocket.data.userId}`);
     logger.info('Socket connected', {
       socketId: socket.id,
       userId: authedSocket.data.userId,

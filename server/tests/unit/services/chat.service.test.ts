@@ -74,6 +74,60 @@ describe('Chat Service - Unit Tests', () => {
     });
   });
 
+  describe('getChannelInfo', () => {
+    it('should return gameId and scope for a valid channel', async () => {
+      const mockChannel = { gameId: 'game-123', scope: 'DIRECT' };
+      vi.mocked(db.chatChannel.findUnique).mockResolvedValue(mockChannel as any);
+
+      const result = await chatService.getChannelInfo('channel-123');
+
+      expect(result).toEqual({ gameId: 'game-123', scope: 'DIRECT' });
+      expect(db.chatChannel.findUnique).toHaveBeenCalledWith({
+        where: { id: 'channel-123' },
+        select: { gameId: true, scope: true },
+      });
+    });
+
+    it('should return null for non-existent channel', async () => {
+      vi.mocked(db.chatChannel.findUnique).mockResolvedValue(null);
+
+      const result = await chatService.getChannelInfo('invalid-id');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getChannelMemberUserIds', () => {
+    it('should return userIds of all channel members', async () => {
+      const mockMembers = [
+        { player: { userId: 'user-1' } },
+        { player: { userId: 'user-2' } },
+        { player: { userId: 'user-3' } },
+      ];
+      vi.mocked(db.chatChannelMember.findMany).mockResolvedValue(mockMembers as any);
+
+      const result = await chatService.getChannelMemberUserIds('channel-123');
+
+      expect(result).toEqual(['user-1', 'user-2', 'user-3']);
+      expect(db.chatChannelMember.findMany).toHaveBeenCalledWith({
+        where: { channelId: 'channel-123' },
+        select: {
+          player: {
+            select: { userId: true },
+          },
+        },
+      });
+    });
+
+    it('should return empty array for channel with no members', async () => {
+      vi.mocked(db.chatChannelMember.findMany).mockResolvedValue([]);
+
+      const result = await chatService.getChannelMemberUserIds('channel-123');
+
+      expect(result).toEqual([]);
+    });
+  });
+
   describe('isChannelMember', () => {
     it('should return true if user is a channel member', async () => {
       const mockChannel = { gameId: 'game-123' };

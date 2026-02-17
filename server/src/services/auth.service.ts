@@ -13,6 +13,12 @@ import { sendPasswordResetEmail } from './email.service.js';
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
 
+/**
+ * Password hashing helper.
+ *
+ * Note: This function is exported primarily for use in tests and should not be
+ * treated as part of the stable public API of the auth service.
+ */
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, BCRYPT_ROUNDS);
 }

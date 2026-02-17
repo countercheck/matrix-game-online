@@ -8,6 +8,10 @@ import { hashPassword } from '../../../src/services/auth.service.js';
 import { setupSocketAuth, AuthenticatedSocket } from '../../../src/socket/auth.js';
 import { handleChatEvents } from '../../../src/socket/chat.handlers.js';
 
+// Test timing constants
+const SOCKET_SETUP_DELAY = 100; // Time to wait for socket connection setup
+const SOCKET_BROADCAST_DELAY = 200; // Time to wait for broadcast delivery
+
 describe('Chat Socket Handlers - Integration Tests', () => {
   let httpServer: ReturnType<typeof createServer>;
   let io: SocketIOServer;
@@ -154,7 +158,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         clientSocket.on('connect', () => {
           // Join game room
           clientSocket.emit('join-game', gameId);
-          setTimeout(resolve, 100);
+          setTimeout((resolve) => resolve(), SOCKET_SETUP_DELAY);
         });
         clientSocket.on('connect_error', reject);
       }),
@@ -166,7 +170,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         otherClientSocket.on('connect', () => {
           // Join game room
           otherClientSocket.emit('join-game', gameId);
-          setTimeout(resolve, 100);
+          setTimeout((resolve) => resolve(), SOCKET_SETUP_DELAY);
         });
         otherClientSocket.on('connect_error', reject);
       }),
@@ -457,7 +461,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       clientSocket.emit('typing', typingData);
 
       // Wait a bit to ensure no self-broadcast
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout((resolve) => resolve(), SOCKET_BROADCAST_DELAY));
 
       expect(selfReceived).toBe(false);
     });
@@ -489,7 +493,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       clientSocket.emit('typing', typingData);
 
       // Wait to ensure no broadcast
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout((resolve) => resolve(), SOCKET_BROADCAST_DELAY));
 
       expect(typingReceived).toBe(false);
     });
@@ -504,7 +508,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       clientSocket.emit('typing', typingData);
 
       // Wait to ensure server is still responsive
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout((resolve) => resolve(), SOCKET_BROADCAST_DELAY));
 
       expect(clientSocket.connected).toBe(true);
     });
@@ -607,7 +611,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       await new Promise<void>((resolve) => {
         thirdClient.on('connect', () => {
           thirdClient.emit('join-game', otherGame.id);
-          setTimeout(resolve, 100);
+          setTimeout((resolve) => resolve(), SOCKET_SETUP_DELAY);
         });
       });
 
@@ -624,7 +628,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       clientSocket.emit('send-message', messageData);
 
       // Wait to ensure no cross-game broadcast
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout((resolve) => resolve(), SOCKET_BROADCAST_DELAY));
 
       expect(thirdClientReceived).toBe(false);
 

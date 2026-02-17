@@ -746,20 +746,37 @@ describe('Chat Service - Unit Tests', () => {
       const mockChannel = { id: 'channel-123', gameId: 'game-123' };
       const mockPlayer = { id: 'player-123' };
       const mockMembership = { channelId: 'channel-123', playerId: 'player-123' };
+      const mockReferenceMessage = {
+        id: 'msg-100',
+        channelId: 'channel-123',
+        createdAt: new Date('2024-01-01T12:00:00Z'),
+      };
 
       vi.mocked(db.chatChannel.findUnique).mockResolvedValue(mockChannel as any);
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue(mockPlayer as any);
       vi.mocked(db.chatChannelMember.findUnique).mockResolvedValue(mockMembership as any);
+      vi.mocked(db.chatMessage.findUnique).mockResolvedValue(mockReferenceMessage as any);
       vi.mocked(db.chatMessage.findMany).mockResolvedValue([]);
 
       await chatService.getMessages('user-123', 'channel-123', 20, 'msg-100');
 
+      // Should fetch the reference message first
+      expect(db.chatMessage.findUnique).toHaveBeenCalledWith({
+        where: { id: 'msg-100' },
+        select: { id: true, createdAt: true, channelId: true },
+      });
+
+      // Should query with OR condition for timestamp-based pagination
       expect(db.chatMessage.findMany).toHaveBeenCalledWith({
-        where: { channelId: 'channel-123' },
-        orderBy: { createdAt: 'desc' },
+        where: {
+          channelId: 'channel-123',
+          OR: [
+            { createdAt: { lt: mockReferenceMessage.createdAt } },
+            { createdAt: mockReferenceMessage.createdAt, id: { lt: 'msg-100' } },
+          ],
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: 20,
-        skip: 1,
-        cursor: { id: 'msg-100' },
         include: expect.any(Object),
       });
     });

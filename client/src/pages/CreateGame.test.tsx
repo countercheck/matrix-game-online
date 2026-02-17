@@ -97,6 +97,10 @@ describe('CreateGame Page', () => {
             allowSharedPersonas: false,
             sharedPersonaVoting: 'each_member',
             sharedPersonaArguments: 'independent',
+            chat: {
+              enablePersonaChat: true,
+              enableDirectChat: true,
+            },
           },
         },
         undefined
@@ -218,6 +222,10 @@ describe('CreateGame Page', () => {
           allowSharedPersonas: false,
           sharedPersonaVoting: 'each_member',
           sharedPersonaArguments: 'independent',
+          chat: {
+            enablePersonaChat: true,
+            enableDirectChat: true,
+          },
         },
       },
       undefined
@@ -320,6 +328,10 @@ describe('CreateGame Page', () => {
             allowSharedPersonas: false,
             sharedPersonaVoting: 'each_member',
             sharedPersonaArguments: 'independent',
+            chat: {
+              enablePersonaChat: true,
+              enableDirectChat: true,
+            },
           },
         },
         undefined

@@ -1084,7 +1084,7 @@ socket.emit('typing', {
 
 **new-message**
 
-Receive new messages in real-time (broadcast to all members of the game).
+Receive new messages in real-time for channels you are a member of (including private PERSONA and DIRECT channels).
 
 ```javascript
 socket.on('new-message', (message) => {

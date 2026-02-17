@@ -186,10 +186,11 @@ describe('Chat Socket Handlers - Integration Tests', () => {
       otherClientSocket.disconnect();
     }
 
-    // Clean up database
+    // Clean up database - order matters due to foreign key constraints
     await db.chatMessage.deleteMany();
     await db.chatChannelMember.deleteMany();
     await db.chatChannel.deleteMany();
+    await db.action.deleteMany();
     await db.gamePlayer.deleteMany();
     await db.game.deleteMany();
     await db.user.deleteMany();
@@ -212,10 +213,7 @@ describe('Chat Socket Handlers - Integration Tests', () => {
         clientSocket.emit('send-message', messageData, resolve);
       });
 
-      const [ackResponse, broadcastMessage] = await Promise.all([
-        ackPromise,
-        broadcastPromise,
-      ]);
+      const [ackResponse, broadcastMessage] = await Promise.all([ackPromise, broadcastPromise]);
 
       // Verify acknowledgment
       expect(ackResponse.success).toBe(true);

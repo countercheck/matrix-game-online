@@ -64,6 +64,7 @@ model Game {
   rounds         Round[]       @relation("GameRounds")
   actions        Action[]      @relation("GameActions")
   events         GameEvent[]
+  chatChannels   ChatChannel[]
 
   @@index([creatorId])
   @@index([status, currentPhase])
@@ -133,6 +134,8 @@ model GamePlayer {
   narrations             Narration[]
   roundSummaries         RoundSummary[]
   argumentationCompletes ArgumentationComplete[]
+  chatChannelMemberships ChatChannelMember[]
+  chatMessages           ChatMessage[]          @relation("ChatMessageSender")
 
   @@unique([gameId, userId])
   @@index([gameId, isActive])
@@ -396,4 +399,63 @@ enum ResultType {
 enum TokenType {
   SUCCESS
   FAILURE
+}
+
+enum ChatChannelScope {
+  GAME
+  PERSONA
+  DIRECT
+}
+
+model ChatChannel {
+  id        String           @id @default(uuid())
+  gameId    String           @map("game_id")
+  scope     ChatChannelScope
+  name      String?          @db.VarChar(100)
+  scopeKey  String           @default("") @map("scope_key") @db.VarChar(500)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  game     Game                @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  members  ChatChannelMember[]
+  messages ChatMessage[]
+
+  @@unique([gameId, scope, scopeKey])
+  @@index([gameId])
+  @@map("chat_channels")
+}
+
+model ChatChannelMember {
+  id         String    @id @default(uuid())
+  channelId  String    @map("channel_id")
+  playerId   String    @map("player_id")
+  lastReadAt DateTime? @map("last_read_at")
+  joinedAt   DateTime  @default(now()) @map("joined_at")
+
+  // Relations
+  channel ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  player  GamePlayer  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, playerId])
+  @@index([playerId])
+  @@map("chat_channel_members")
+}
+
+model ChatMessage {
+  id             String   @id @default(uuid())
+  channelId      String   @map("channel_id")
+  senderPlayerId String   @map("sender_player_id")
+  content        String   @db.Text
+  replyToId      String?  @map("reply_to_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  channel ChatChannel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sender  GamePlayer   @relation("ChatMessageSender", fields: [senderPlayerId], references: [id])
+  replyTo ChatMessage? @relation("ChatMessageReplies", fields: [replyToId], references: [id])
+  replies ChatMessage[] @relation("ChatMessageReplies")
+
+  @@index([channelId, createdAt])
+  @@index([senderPlayerId])
+  @@map("chat_messages")
 }

@@ -620,10 +620,15 @@ export async function markChannelRead(userId: string, channelId: string) {
 
   if (!player) throw new ForbiddenError('Not a member of this game');
 
-  await db.chatChannelMember.update({
+  const result = await db.chatChannelMember.updateMany({
     where: {
-      channelId_playerId: { channelId, playerId: player.id },
+      channelId,
+      playerId: player.id,
     },
     data: { lastReadAt: new Date() },
   });
+
+  if (result.count === 0) {
+    throw new ForbiddenError('Not a member of this channel');
+  }
 }

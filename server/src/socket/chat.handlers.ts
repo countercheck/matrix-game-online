@@ -19,6 +19,15 @@ async function getChannelGameIdCached(channelId: string): Promise<string | null>
   return null;
 }
 
+/** Clear all cached entries for a given game (call when game ends). */
+export function clearChannelGameCache(gameId: string): void {
+  for (const [channelId, cachedGameId] of channelGameCache) {
+    if (cachedGameId === gameId) {
+      channelGameCache.delete(channelId);
+    }
+  }
+}
+
 // Socket-specific schema (includes channelId since it's part of the socket event)
 const socketSendMessageSchema = z.object({
   channelId: z.string().uuid(),

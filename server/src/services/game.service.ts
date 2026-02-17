@@ -9,6 +9,7 @@ import {
 import type { CreateGameInput, UpdatePersonaInput } from '../utils/validators.js';
 import { notifyGameStarted } from './notification.service.js';
 import * as chatService from './chat.service.js';
+import { logger } from '../utils/logger.js';
 import { countActingUnits } from './shared/persona-helpers.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -413,7 +414,7 @@ export async function joinGame(
 
   // Add to game chat channel if it exists (async, don't wait)
   chatService.addPlayerToGameChannel(gameId, player.id).catch((error) => {
-    console.error('Failed to add player to game chat channel', {
+    logger.error('Failed to add player to game chat channel', {
       gameId,
       playerId: player.id,
       error,

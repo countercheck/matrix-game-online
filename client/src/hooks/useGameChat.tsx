@@ -251,12 +251,16 @@ export function useGameChat(gameId: string) {
     if (!activeChannelId) return;
 
     (async () => {
-      if (socket?.connected) {
-        socket.emit('mark-read', { channelId: activeChannelId });
-      } else {
-        await api.post(`/games/${gameId}/chat/channels/${activeChannelId}/read`);
+      try {
+        if (socket?.connected) {
+          socket.emit('mark-read', { channelId: activeChannelId });
+        } else {
+          await api.post(`/games/${gameId}/chat/channels/${activeChannelId}/read`);
+        }
+        queryClient.invalidateQueries({ queryKey: ['chat-channels', gameId] });
+      } catch (error) {
+        console.error('Failed to mark channel as read', error);
       }
-      queryClient.invalidateQueries({ queryKey: ['chat-channels', gameId] });
     })();
   }, [activeChannelId, socket, gameId, queryClient]);
 

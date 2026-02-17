@@ -57,7 +57,10 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(csrfProtection);
 }
 
-// Initialize Socket.io before registering routes
+// Initialize Socket.io with the HTTP server and CORS configuration.
+// Socket.io in this application uses JWT-based auth and does not rely on
+// cookies or the Express CSRF middleware, so its initialization order is
+// independent of CSRF protection for REST API routes.
 initializeSocket(httpServer, corsOrigin);
 
 // Health check

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '../test/test-utils';
 import Register from './Register';
@@ -111,7 +111,13 @@ describe('Register Page', () => {
   });
 
   it('should show loading state while submitting', async () => {
-    mockRegister.mockImplementation(() => new Promise(() => {}));
+    let resolveRegister: () => void;
+    mockRegister.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRegister = resolve;
+        })
+    );
     const user = userEvent.setup();
     render(<Register />);
 
@@ -121,5 +127,10 @@ describe('Register Page', () => {
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(screen.getByRole('button', { name: /creating account/i })).toBeInTheDocument();
+
+    // Resolve the pending promise inside act() so React processes the state update
+    await act(async () => {
+      resolveRegister!();
+    });
   });
 });

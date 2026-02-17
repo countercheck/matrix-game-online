@@ -141,7 +141,7 @@ describe('GameHistory', () => {
       });
 
       // Click the expand chevron
-      await user.click(screen.getByLabelText('Expand action'));
+      await user.click(screen.getByLabelText(/^Expand action/));
 
       // Should now show expanded details
       await waitFor(() => {
@@ -160,13 +160,13 @@ describe('GameHistory', () => {
       });
 
       // Expand first
-      await user.click(screen.getByLabelText('Expand action'));
+      await user.click(screen.getByLabelText(/^Expand action/));
       await waitFor(() => {
         expect(screen.getByText('Triumph')).toBeInTheDocument();
       });
 
       // Click the collapse chevron
-      await user.click(screen.getByLabelText('Collapse action'));
+      await user.click(screen.getByLabelText(/^Collapse action/));
 
       // Should return to collapsed state
       await waitFor(() => {
@@ -202,8 +202,8 @@ describe('GameHistory', () => {
       });
 
       // No expand/collapse chevrons in full mode
-      expect(screen.queryByLabelText('Expand action')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Collapse action')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Expand action/)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Collapse action/)).not.toBeInTheDocument();
     });
   });
 });

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { ReplyPreview } from './ReplyPreview';
 import type { ChatMessage } from '../../hooks/useGameChat';
 
@@ -23,6 +23,15 @@ export function MessageInput({
   const [sending, setSending] = useState(false);
   const typingRef = useRef(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleTypingChange = useCallback(
     (value: string) => {

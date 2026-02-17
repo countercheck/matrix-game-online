@@ -1,10 +1,6 @@
 import { db } from '../config/database.js';
 import { ChatChannelScope } from '@prisma/client';
-import {
-  BadRequestError,
-  NotFoundError,
-  ForbiddenError,
-} from '../middleware/errorHandler.js';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
 import type { CreateChannelInput } from '../utils/chat.validators.js';
 
 interface ChatSettings {
@@ -379,8 +375,8 @@ export async function getMyChannels(gameId: string, userId: string) {
               lastMessage.content.length > 100
                 ? lastMessage.content.slice(0, 100) + '...'
                 : lastMessage.content,
-            senderName: lastMessage.sender.playerName,
-            senderPersona: lastMessage.sender.persona?.name || null,
+            senderName: lastMessage.sender?.playerName ?? null,
+            senderPersona: lastMessage.sender?.persona?.name || null,
             createdAt: lastMessage.createdAt.toISOString(),
           }
         : null,
@@ -471,9 +467,9 @@ export async function sendMessage(
     channelId: message.channelId,
     content: message.content,
     sender: {
-      playerId: message.sender.id,
-      playerName: message.sender.playerName,
-      personaName: message.sender.persona?.name || null,
+      playerId: message.sender?.id ?? null,
+      playerName: message.sender?.playerName ?? null,
+      personaName: message.sender?.persona?.name || null,
     },
     replyTo: message.replyTo
       ? {
@@ -482,8 +478,8 @@ export async function sendMessage(
             message.replyTo.content.length > 100
               ? message.replyTo.content.slice(0, 100) + '...'
               : message.replyTo.content,
-          senderName: message.replyTo.sender.playerName,
-          senderPersona: message.replyTo.sender.persona?.name || null,
+          senderName: message.replyTo.sender?.playerName ?? null,
+          senderPersona: message.replyTo.sender?.persona?.name || null,
         }
       : null,
     createdAt: message.createdAt.toISOString(),
@@ -587,9 +583,9 @@ export async function getMessages(
     channelId: msg.channelId,
     content: msg.content,
     sender: {
-      playerId: msg.sender.id,
-      playerName: msg.sender.playerName,
-      personaName: msg.sender.persona?.name || null,
+      playerId: msg.sender?.id ?? null,
+      playerName: msg.sender?.playerName ?? null,
+      personaName: msg.sender?.persona?.name || null,
     },
     replyTo: msg.replyTo
       ? {
@@ -598,8 +594,8 @@ export async function getMessages(
             msg.replyTo.content.length > 100
               ? msg.replyTo.content.slice(0, 100) + '...'
               : msg.replyTo.content,
-          senderName: msg.replyTo.sender.playerName,
-          senderPersona: msg.replyTo.sender.persona?.name || null,
+          senderName: msg.replyTo.sender?.playerName ?? null,
+          senderPersona: msg.replyTo.sender?.persona?.name || null,
         }
       : null,
     createdAt: msg.createdAt.toISOString(),

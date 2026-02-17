@@ -807,3 +807,312 @@ Skip remaining proposals in the current round and move to round summary. Only av
 - `400 Bad Request` - Not in PROPOSAL phase or no actions proposed yet
 
 ---
+
+## Chat
+
+Real-time in-game chat system with three channel scopes: game-wide, persona-targeted, and direct messages.
+
+### REST API
+
+#### GET /games/:gameId/chat/channels
+
+Get all chat channels for the authenticated user in a game, including unread counts and last message.
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "channel-uuid",
+      "gameId": "game-uuid",
+      "scope": "GAME",
+      "name": "Game Chat",
+      "members": [
+        {
+          "playerId": "player-uuid",
+          "playerName": "Alice",
+          "personaName": "The Detective"
+        }
+      ],
+      "unreadCount": 3,
+      "lastMessage": {
+        "id": "message-uuid",
+        "content": "Hello everyone!",
+        "senderName": "Bob",
+        "senderPersona": "The Thief",
+        "createdAt": "2026-02-17T12:00:00.000Z"
+      },
+      "createdAt": "2026-02-17T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Channel Scopes:**
+
+- `GAME` - Game-wide channel (auto-created when game starts)
+- `PERSONA` - Channel for players with specific personas
+- `DIRECT` - Direct message channel between specific players
+
+**Errors:**
+
+- `403 Forbidden` - Not a member of the game
+
+---
+
+#### POST /games/:gameId/chat/channels
+
+Create a new persona or direct message channel. Game channels are auto-created.
+
+**Request Body (Persona Channel):**
+
+```json
+{
+  "scope": "PERSONA",
+  "personaIds": ["persona-uuid-1", "persona-uuid-2"]
+}
+```
+
+**Request Body (Direct Message):**
+
+```json
+{
+  "scope": "DIRECT",
+  "playerIds": ["player-uuid-1", "player-uuid-2"],
+  "name": "Alice & Bob" // Optional, auto-generated if not provided
+}
+```
+
+**Response:** `201 Created`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "channel-uuid",
+    "gameId": "game-uuid",
+    "scope": "DIRECT",
+    "name": "Alice & Bob",
+    "members": [...]
+  }
+}
+```
+
+**Errors:**
+
+- `400 Bad Request` - Invalid scope, missing IDs, or chat not available yet (game in LOBBY)
+- `403 Forbidden` - Not a member of the game, or channel type disabled by host
+- `404 Not Found` - Game not found
+
+---
+
+#### GET /games/:gameId/chat/channels/:channelId/messages
+
+Get messages from a channel with cursor-based pagination.
+
+**Query Parameters:**
+
+- `limit` (optional, default: 50, max: 100) - Number of messages to return
+- `before` (optional) - Message ID to fetch messages before (for loading older messages)
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "message-uuid",
+      "channelId": "channel-uuid",
+      "content": "Hello!",
+      "sender": {
+        "playerId": "player-uuid",
+        "playerName": "Alice",
+        "personaName": "The Detective"
+      },
+      "replyTo": {
+        "id": "replied-message-uuid",
+        "content": "Hi Alice!",
+        "senderName": "Bob",
+        "senderPersona": "The Thief"
+      },
+      "createdAt": "2026-02-17T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Note:** Messages are returned in descending order (newest first).
+
+**Errors:**
+
+- `403 Forbidden` - Not a member of the channel
+- `404 Not Found` - Channel not found
+
+---
+
+#### POST /games/:gameId/chat/channels/:channelId/messages
+
+Send a message to a channel.
+
+**Request Body:**
+
+```json
+{
+  "content": "Hello everyone!",
+  "replyToId": "message-uuid" // Optional
+}
+```
+
+**Response:** `201 Created`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "message-uuid",
+    "channelId": "channel-uuid",
+    "content": "Hello everyone!",
+    "sender": {
+      "playerId": "player-uuid",
+      "playerName": "Alice",
+      "personaName": "The Detective"
+    },
+    "replyTo": null,
+    "createdAt": "2026-02-17T12:00:00.000Z"
+  }
+}
+```
+
+**Errors:**
+
+- `400 Bad Request` - Content empty or too long (max 5000 characters), or invalid reply target
+- `403 Forbidden` - Not a member of the channel
+- `404 Not Found` - Channel not found
+
+---
+
+#### POST /games/:gameId/chat/channels/:channelId/read
+
+Mark a channel as read, updating the user's last read timestamp.
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true
+}
+```
+
+**Errors:**
+
+- `403 Forbidden` - Not a member of the channel
+- `404 Not Found` - Channel not found
+
+---
+
+### Socket.io Events
+
+Chat uses Socket.io for real-time updates. Connect with JWT authentication:
+
+```javascript
+const socket = io('http://localhost:3000', {
+  auth: { token: 'your-jwt-token' }
+});
+```
+
+#### Client → Server Events
+
+**join-game**
+
+Join a game room to receive chat events for that game.
+
+```javascript
+socket.emit('join-game', gameId);
+```
+
+**leave-game**
+
+Leave a game room.
+
+```javascript
+socket.emit('leave-game', gameId);
+```
+
+**send-message**
+
+Send a message via Socket.io (alternative to REST API).
+
+```javascript
+socket.emit('send-message', {
+  channelId: 'channel-uuid',
+  content: 'Hello!',
+  replyToId: 'message-uuid' // Optional
+}, (response) => {
+  if (response.success) {
+    console.log('Message sent:', response.data);
+  } else {
+    console.error('Error:', response.error);
+  }
+});
+```
+
+**mark-read**
+
+Mark a channel as read via Socket.io.
+
+```javascript
+socket.emit('mark-read', {
+  channelId: 'channel-uuid'
+});
+```
+
+**typing**
+
+Broadcast typing indicator to other channel members.
+
+```javascript
+socket.emit('typing', {
+  channelId: 'channel-uuid',
+  isTyping: true // or false to stop
+});
+```
+
+#### Server → Client Events
+
+**new-message**
+
+Receive new messages in real-time (broadcast to all members of the game).
+
+```javascript
+socket.on('new-message', (message) => {
+  console.log('New message:', message);
+  // message structure same as POST /messages response
+});
+```
+
+**typing**
+
+Receive typing indicators from other users.
+
+```javascript
+socket.on('typing', (event) => {
+  console.log('Typing event:', event);
+  // {
+  //   channelId: 'channel-uuid',
+  //   userId: 'user-uuid',
+  //   displayName: 'Alice',
+  //   isTyping: true
+  // }
+});
+```
+
+**Notes:**
+
+- Typing indicators are filtered to only show other users (not your own)
+- Typing indicators automatically clear after 3 seconds of inactivity
+- Socket.io automatically handles reconnection and message queuing
+
+---

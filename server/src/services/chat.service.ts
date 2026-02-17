@@ -12,6 +12,11 @@ interface ChatSettings {
   enableDirectChat?: boolean;
 }
 
+/**
+ * Get chat settings from game settings.
+ * Note: Default behavior enables persona and direct chat unless explicitly disabled.
+ * This allows games created before the chat feature to have full chat functionality.
+ */
 function getChatSettings(gameSettings: unknown): ChatSettings {
   const settings = (gameSettings as Record<string, unknown>) || {};
   const chat = (settings.chat as ChatSettings) || {};

@@ -41,6 +41,17 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const getSocketSnapshot = () => socketRef.current;
   const getConnectedSnapshot = () => connectedRef.current;
 
+  // Extract userId from token to avoid reconnecting on token refresh
+  const getUserIdFromToken = (token: string | null): string | null => {
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.userId || null;
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (!token) {
       if (socketRef.current) {
@@ -52,6 +63,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Check if we already have a socket with the same user
+    const currentUserId = getUserIdFromToken(token);
+    const existingSocket = socketRef.current;
+    
+    // Only reconnect if user changed or no existing socket
+    if (existingSocket && currentUserId) {
+      // Update the token in the existing socket's auth
+      existingSocket.auth = { token };
+      return; // Keep existing connection
+    }
+
+    // Create new socket connection
     const newSocket = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket', 'polling'],

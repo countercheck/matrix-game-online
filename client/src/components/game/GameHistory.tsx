@@ -233,14 +233,7 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
         {displayActions.map((action) => (
           <div
             key={action.id}
-            className={`${
-              compact
-                ? 'p-2 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors'
-                : 'p-4 border rounded-lg'
-            }`}
-            onClick={() =>
-              compact && setExpandedAction(expandedAction === action.id ? null : action.id)
-            }
+            className={`${compact ? 'p-2 bg-muted/30 rounded-lg' : 'p-4 border rounded-lg'}`}
           >
             {/* Compact View */}
             {compact && expandedAction !== action.id && (
@@ -260,6 +253,26 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                   {action.tokenDraw?.resultValue !== undefined &&
                     (action.tokenDraw.resultValue > 0 ? '+' : '') + action.tokenDraw.resultValue}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setExpandedAction(action.id)}
+                  aria-label="Expand action"
+                  className="p-1 rounded hover:bg-muted/50 transition-colors"
+                >
+                  <svg
+                    className="w-4 h-4 text-muted-foreground"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
               </div>
             )}
 
@@ -303,20 +316,44 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                       className="text-sm [&_p]:my-0"
                     />
                   </div>
-                  <div className="text-right shrink-0">
-                    <div
-                      className={`text-sm font-medium ${getResultColor(
-                        action.tokenDraw?.resultType
-                      )}`}
-                    >
-                      {getResultLabel(action.tokenDraw?.resultType)}
-                    </div>
-                    {action.tokenDraw && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {action.tokenDraw.drawnSuccess}S / {action.tokenDraw.drawnFailure}F (
-                        {action.tokenDraw.resultValue > 0 ? '+' : ''}
-                        {action.tokenDraw.resultValue})
+                  <div className="flex items-start gap-2 shrink-0">
+                    <div className="text-right">
+                      <div
+                        className={`text-sm font-medium ${getResultColor(
+                          action.tokenDraw?.resultType
+                        )}`}
+                      >
+                        {getResultLabel(action.tokenDraw?.resultType)}
                       </div>
+                      {action.tokenDraw && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {action.tokenDraw.drawnSuccess}S / {action.tokenDraw.drawnFailure}F (
+                          {action.tokenDraw.resultValue > 0 ? '+' : ''}
+                          {action.tokenDraw.resultValue})
+                        </div>
+                      )}
+                    </div>
+                    {compact && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedAction(null)}
+                        aria-label="Collapse action"
+                        className="p-1 rounded hover:bg-muted/50 transition-colors"
+                      >
+                        <svg
+                          className="w-4 h-4 text-muted-foreground rotate-180"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -437,18 +474,6 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
                       Narrated {formatRelativeTime(action.narration.createdAt)}
                     </p>
                   </div>
-                )}
-
-                {compact && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExpandedAction(null);
-                    }}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Collapse
-                  </button>
                 )}
               </div>
             )}

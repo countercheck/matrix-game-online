@@ -68,14 +68,30 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     // Check if we already have a socket with the same user
     const currentUserId = getUserIdFromToken(token);
     const existingSocket = socketRef.current;
-    
-    // Only reconnect if user changed or no existing socket
-    if (existingSocket && currentUserId) {
-      // Update the token in the existing socket's auth
-      existingSocket.auth = { token };
-      return; // Keep existing connection
+
+    let existingUserId: string | null = null;
+    if (existingSocket && typeof (existingSocket as Socket & { auth?: unknown }).auth === 'object') {
+      const existingAuth = (existingSocket as Socket & { auth?: { token?: unknown } }).auth;
+      const existingToken =
+        existingAuth && typeof existingAuth.token === 'string' ? existingAuth.token : null;
+      if (existingToken) {
+        existingUserId = getUserIdFromToken(existingToken);
+      }
     }
 
+    // Reuse existing socket only if it belongs to the same user
+    if (existingSocket && currentUserId && existingUserId === currentUserId) {
+      existingSocket.auth = { token };
+      return; // Keep existing connection for same user, refresh token
+    }
+
+    // If there is an existing socket for a different (or unknown) user, disconnect it
+    if (existingSocket) {
+      existingSocket.disconnect();
+      socketRef.current = null;
+      connectedRef.current = false;
+      notify();
+    }
     // Create new socket connection
     const newSocket = io(SOCKET_URL, {
       auth: { token },

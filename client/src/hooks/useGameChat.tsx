@@ -149,12 +149,23 @@ export function useGameChat(gameId: string) {
       });
     };
 
+    const clearAllTyping = () => {
+      typingTimeouts.current.forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+      typingTimeouts.current.clear();
+      setTypingUsers(new Map());
+    };
+
     socket.on('new-message', handleNewMessage);
     socket.on('typing', handleTyping);
+    socket.on('disconnect', clearAllTyping);
 
     return () => {
       socket.off('new-message', handleNewMessage);
       socket.off('typing', handleTyping);
+      socket.off('disconnect', clearAllTyping);
+      clearAllTyping();
     };
   }, [socket, gameId, queryClient, user]);
 

@@ -1,3 +1,4 @@
+import { createServer } from 'http';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -15,12 +16,16 @@ import gameRoutes from './routes/game.routes.js';
 import actionRoutes from './routes/action.routes.js';
 import roundRoutes from './routes/round.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import chatRoutes from './routes/chat.routes.js';
 import { startTimeoutWorker } from './workers/timeout.worker.js';
+import { initializeSocket } from './socket/index.js';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
+const corsOrigin = process.env.APP_URL || 'http://localhost:5173';
 
 // Security headers
 app.use(securityHeaders);
@@ -28,7 +33,7 @@ app.use(securityHeaders);
 // CORS
 app.use(
   cors({
-    origin: process.env.APP_URL || 'http://localhost:5173',
+    origin: corsOrigin,
     credentials: true,
   })
 );
@@ -64,6 +69,7 @@ app.use('/api/games', gameRoutes);
 app.use('/api/actions', actionRoutes);
 app.use('/api/rounds', roundRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/games/:gameId/chat', chatRoutes);
 
 // Error handling
 app.use(errorHandler);
@@ -79,7 +85,10 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+// Initialize Socket.io
+initializeSocket(httpServer, corsOrigin);
+
+httpServer.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
 
   // Start timeout worker if enabled

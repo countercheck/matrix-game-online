@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { RichTextDisplay, PrimaryActionButton } from '../ui';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { decodeHtmlEntities } from '../../utils/decodeEntities';
+import { ArgumentList } from './ArgumentList';
 
 interface Action {
   id: string;
@@ -155,6 +156,11 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
             Proposed by {decodeHtmlEntities(action.initiator.playerName)}
           </p>
         </div>
+      </div>
+
+      {/* Arguments */}
+      <div className="p-6 border rounded-lg">
+        <ArgumentList actionId={action.id} gameId={gameId} />
       </div>
 
       {/* Voting status */}

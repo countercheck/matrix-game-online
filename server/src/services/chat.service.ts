@@ -417,16 +417,18 @@ export async function getMyChannels(gameId: string, userId: string) {
 
 /**
  * Send a message to a channel.
+ * @param assertGameId - When provided (REST context), validates the channel belongs to this game.
  */
 export async function sendMessage(
   userId: string,
   channelId: string,
   content: string,
-  replyToId?: string
+  replyToId?: string,
+  assertGameId?: string
 ) {
   // Find the player for this user in the channel's game
-  const channel = await db.chatChannel.findUnique({
-    where: { id: channelId },
+  const channel = await db.chatChannel.findFirst({
+    where: { id: channelId, ...(assertGameId ? { gameId: assertGameId } : {}) },
     select: { id: true, gameId: true },
   });
 
@@ -516,16 +518,18 @@ export async function sendMessage(
 
 /**
  * Get messages for a channel with cursor pagination.
+ * @param assertGameId - When provided (REST context), validates the channel belongs to this game.
  */
 export async function getMessages(
   userId: string,
   channelId: string,
   limit: number,
-  beforeId?: string
+  beforeId?: string,
+  assertGameId?: string
 ) {
   // Verify membership
-  const channel = await db.chatChannel.findUnique({
-    where: { id: channelId },
+  const channel = await db.chatChannel.findFirst({
+    where: { id: channelId, ...(assertGameId ? { gameId: assertGameId } : {}) },
     select: { id: true, gameId: true },
   });
 
@@ -632,10 +636,11 @@ export async function getMessages(
 
 /**
  * Mark a channel as read for a user.
+ * @param assertGameId - When provided (REST context), validates the channel belongs to this game.
  */
-export async function markChannelRead(userId: string, channelId: string) {
-  const channel = await db.chatChannel.findUnique({
-    where: { id: channelId },
+export async function markChannelRead(userId: string, channelId: string, assertGameId?: string) {
+  const channel = await db.chatChannel.findFirst({
+    where: { id: channelId, ...(assertGameId ? { gameId: assertGameId } : {}) },
     select: { gameId: true },
   });
 

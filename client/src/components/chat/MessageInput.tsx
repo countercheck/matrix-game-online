@@ -22,7 +22,7 @@ export function MessageInput({
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
   const typingRef = useRef(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clean up typing timeout on unmount
   useEffect(() => {

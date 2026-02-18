@@ -56,7 +56,7 @@ export function useGameChat(gameId: string) {
   const queryClient = useQueryClient();
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
-  const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const typingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Join/leave game room
   useEffect(() => {

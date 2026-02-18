@@ -164,6 +164,7 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
           actionId={action.id}
           gameId={gameId}
           emptyMessage="No arguments were made during the argumentation phase."
+          polling={false}
         />
       </div>
 

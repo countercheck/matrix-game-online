@@ -289,4 +289,16 @@ describe('ArgumentList', () => {
 
     expect(screen.queryByTitle('Edit argument (host)')).not.toBeInTheDocument();
   });
+
+  it('should fetch once and not poll when polling is false', async () => {
+    mockGet.mockResolvedValue({ data: { data: [] } });
+
+    render(<ArgumentList actionId="action-123" polling={false} />, {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledTimes(1);
+    });
+  });
 });

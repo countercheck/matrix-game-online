@@ -24,6 +24,7 @@ interface ArgumentListProps {
   gameId?: string;
   isHost?: boolean;
   emptyMessage?: string;
+  polling?: boolean;
 }
 
 export function ArgumentList({
@@ -31,6 +32,7 @@ export function ArgumentList({
   gameId,
   isHost = false,
   emptyMessage = 'No arguments yet. Be the first to add one!',
+  polling = true,
 }: ArgumentListProps) {
   const queryClient = useQueryClient();
   const [editingArgument, setEditingArgument] = useState<Argument | null>(null);
@@ -38,7 +40,7 @@ export function ArgumentList({
   const { data, isLoading, error } = useQuery<{ data: Argument[] }>({
     queryKey: ['arguments', actionId],
     queryFn: () => api.get(`/actions/${actionId}/arguments`).then((res) => res.data),
-    refetchInterval: 5000,
+    refetchInterval: polling ? 5000 : false,
   });
 
   const editArgumentMutation = useMutation({

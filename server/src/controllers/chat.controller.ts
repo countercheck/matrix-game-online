@@ -39,9 +39,10 @@ export async function createChannel(
 export async function getMessages(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
+    const gameId = req.params.gameId as string;
     const channelId = req.params.channelId as string;
     const { limit, before } = getMessagesSchema.parse(req.query);
-    const messages = await chatService.getMessages(userId, channelId, limit, before);
+    const messages = await chatService.getMessages(userId, channelId, limit, before, gameId);
     res.json({ success: true, data: messages });
   } catch (error) {
     next(error);
@@ -51,9 +52,10 @@ export async function getMessages(req: Request, res: Response, next: NextFunctio
 export async function sendMessage(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
+    const gameId = req.params.gameId as string;
     const channelId = req.params.channelId as string;
     const { content, replyToId } = sendMessageSchema.parse(req.body);
-    const message = await chatService.sendMessage(userId, channelId, content, replyToId);
+    const message = await chatService.sendMessage(userId, channelId, content, replyToId, gameId);
 
     // Broadcast via Socket.io using privacy-aware channel routing
     try {
@@ -73,8 +75,9 @@ export async function sendMessage(req: Request, res: Response, next: NextFunctio
 export async function markRead(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
+    const gameId = req.params.gameId as string;
     const channelId = req.params.channelId as string;
-    await chatService.markChannelRead(userId, channelId);
+    await chatService.markChannelRead(userId, channelId, gameId);
     res.json({ success: true });
   } catch (error) {
     next(error);

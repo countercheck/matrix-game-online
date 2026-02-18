@@ -160,7 +160,11 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
 
       {/* Arguments */}
       <div className="p-6 border rounded-lg">
-        <ArgumentList actionId={action.id} gameId={gameId} />
+        <ArgumentList
+          actionId={action.id}
+          gameId={gameId}
+          emptyMessage="No arguments were made during the argumentation phase."
+        />
       </div>
 
       {/* Voting status */}

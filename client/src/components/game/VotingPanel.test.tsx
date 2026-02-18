@@ -172,14 +172,16 @@ describe('VotingPanel', () => {
       });
     });
 
-    it('shows empty state when there are no arguments', async () => {
+    it('shows voting-appropriate empty state when there are no arguments', async () => {
       setupMocks({ args: [] });
       render(<VotingPanel gameId="game-1" action={mockAction} />, {
         wrapper: createWrapper(),
       });
 
       await waitFor(() => {
-        expect(screen.getByText(/no arguments yet/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/no arguments were made during the argumentation phase/i)
+        ).toBeInTheDocument();
       });
     });
 

@@ -23,9 +23,15 @@ interface ArgumentListProps {
   actionId: string;
   gameId?: string;
   isHost?: boolean;
+  emptyMessage?: string;
 }
 
-export function ArgumentList({ actionId, gameId, isHost = false }: ArgumentListProps) {
+export function ArgumentList({
+  actionId,
+  gameId,
+  isHost = false,
+  emptyMessage = 'No arguments yet. Be the first to add one!',
+}: ArgumentListProps) {
   const queryClient = useQueryClient();
   const [editingArgument, setEditingArgument] = useState<Argument | null>(null);
 
@@ -57,11 +63,7 @@ export function ArgumentList({ actionId, gameId, isHost = false }: ArgumentListP
   }
 
   if (args.length === 0) {
-    return (
-      <div className="text-center py-4 text-muted-foreground">
-        No arguments yet. Be the first to add one!
-      </div>
-    );
+    return <div className="text-center py-4 text-muted-foreground">{emptyMessage}</div>;
   }
 
   const getArgumentStyles = (type: string) => {

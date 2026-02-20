@@ -136,6 +136,7 @@ describe('RichTextEditor', () => {
       expect(screen.getByTitle('Horizontal Rule')).toBeInTheDocument();
       expect(screen.getByTitle('Insert Table')).toBeInTheDocument();
       expect(screen.getByTitle('Insert Link')).toBeInTheDocument();
+      expect(screen.getByTitle('Insert Image')).toBeInTheDocument();
     });
 
     it('should apply bold formatting when toggled', async () => {
@@ -247,9 +248,12 @@ describe('RichTextEditor', () => {
       const italicButton = screen.getByTitle('Italic (Ctrl+I)');
       const linkButton = screen.getByTitle('Insert Link');
 
+      const imageButton = screen.getByTitle('Insert Image');
+
       expect(boldButton).toBeDisabled();
       expect(italicButton).toBeDisabled();
       expect(linkButton).toBeDisabled();
+      expect(imageButton).toBeDisabled();
     });
   });
 
@@ -346,6 +350,143 @@ describe('RichTextEditor', () => {
 
       expect(window.prompt).toHaveBeenCalledWith('Enter URL:');
       // No link should be set when prompt is cancelled
+    });
+
+    describe('Image button', () => {
+      it('should prompt for image URL when clicked', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt).mockReturnValue(null);
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        expect(window.prompt).toHaveBeenCalledWith('Enter image URL:');
+      });
+
+      it('should allow http:// URLs and prompt for alt text', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt)
+          .mockReturnValueOnce('http://example.com/image.png')
+          .mockReturnValueOnce('A photo');
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        expect(window.prompt).toHaveBeenNthCalledWith(1, 'Enter image URL:');
+        expect(window.prompt).toHaveBeenNthCalledWith(2, 'Alt text (optional):');
+      });
+
+      it('should allow https:// URLs and prompt for alt text', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt)
+          .mockReturnValueOnce('https://example.com/photo.jpg')
+          .mockReturnValueOnce('');
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        expect(window.prompt).toHaveBeenNthCalledWith(1, 'Enter image URL:');
+        expect(window.prompt).toHaveBeenNthCalledWith(2, 'Alt text (optional):');
+      });
+
+      it('should reject javascript: URLs and not prompt for alt text', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt).mockReturnValueOnce('javascript:alert("xss")');
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        expect(window.prompt).toHaveBeenCalledTimes(1);
+        expect(window.prompt).toHaveBeenCalledWith('Enter image URL:');
+      });
+
+      it('should reject data: URLs and not prompt for alt text', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt).mockReturnValueOnce(
+          'data:text/html,<script>alert("xss")</script>'
+        );
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        expect(window.prompt).toHaveBeenCalledTimes(1);
+        expect(window.prompt).toHaveBeenCalledWith('Enter image URL:');
+      });
+
+      it('should not prompt for alt text when URL is empty', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt).mockReturnValueOnce('');
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        expect(window.prompt).toHaveBeenCalledTimes(1);
+      });
+
+      it('should not prompt for alt text when URL prompt is cancelled', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt).mockReturnValueOnce(null);
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        expect(window.prompt).toHaveBeenCalledTimes(1);
+        expect(window.prompt).toHaveBeenCalledWith('Enter image URL:');
+      });
+
+      it('should insert image into editor with provided alt text', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt)
+          .mockReturnValueOnce('https://example.com/image.png')
+          .mockReturnValueOnce('Test image');
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        await waitFor(() => {
+          const editor = screen.getByRole('textbox');
+          const img = editor.querySelector('img');
+          expect(img).toBeInTheDocument();
+          expect(img).toHaveAttribute('src', 'https://example.com/image.png');
+          expect(img).toHaveAttribute('alt', 'Test image');
+        });
+      });
+
+      it('should insert image with empty alt text when alt prompt is cancelled', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt)
+          .mockReturnValueOnce('https://example.com/image.png')
+          .mockReturnValueOnce(null);
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        await waitFor(() => {
+          const editor = screen.getByRole('textbox');
+          const img = editor.querySelector('img');
+          expect(img).toBeInTheDocument();
+          expect(img).toHaveAttribute('src', 'https://example.com/image.png');
+          expect(img).toHaveAttribute('alt', '');
+        });
+      });
     });
   });
 

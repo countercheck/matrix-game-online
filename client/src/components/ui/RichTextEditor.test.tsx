@@ -468,6 +468,25 @@ describe('RichTextEditor', () => {
         });
       });
 
+      it('should serialize image as markdown ![alt](src) not as [image] placeholder', async () => {
+        const user = userEvent.setup();
+        vi.mocked(window.prompt)
+          .mockReturnValueOnce('https://example.com/image.png')
+          .mockReturnValueOnce('My photo');
+
+        render(<RichTextEditor value="" onChange={onChangeMock} />);
+
+        const imageButton = screen.getByTitle('Insert Image');
+        await user.click(imageButton);
+
+        await waitFor(() => {
+          const calls = onChangeMock.mock.calls;
+          const lastMarkdown = calls[calls.length - 1][0] as string;
+          expect(lastMarkdown).toContain('![My photo](https://example.com/image.png)');
+          expect(lastMarkdown).not.toContain('[image]');
+        });
+      });
+
       it('should insert image with empty alt text when alt prompt is cancelled', async () => {
         const user = userEvent.setup();
         vi.mocked(window.prompt)

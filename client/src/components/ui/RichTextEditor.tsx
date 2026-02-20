@@ -278,7 +278,31 @@ export function RichTextEditor({
       TaskItem.configure({
         nested: true,
       }),
-      Image.configure({
+      Image.extend({
+        // tiptap-markdown's getMarkdownSpec reads extension.storage.markdown on the
+        // instance. @tiptap/extension-image has no addStorage(), so without this the
+        // serializer falls back to HTMLNode which (with html:false) writes "[image]".
+        addStorage() {
+          return {
+            markdown: {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              serialize(state: any, node: any) {
+                state.write(
+                  '![' +
+                    state.esc(node.attrs.alt ?? '') +
+                    '](' +
+                    state.esc(node.attrs.src ?? '') +
+                    (node.attrs.title ? ' ' + state.quote(node.attrs.title) : '') +
+                    ')'
+                );
+              },
+              parse: {
+                // handled by markdown-it
+              },
+            },
+          };
+        },
+      }).configure({
         inline: false,
         HTMLAttributes: {
           class: 'max-w-full rounded',

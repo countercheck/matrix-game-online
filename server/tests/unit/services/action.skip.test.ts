@@ -18,6 +18,10 @@ vi.mock('../../../src/config/database.js', () => ({
     vote: {
       createMany: vi.fn(),
     },
+    tokenDraw: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
     round: {
       update: vi.fn(),
     },
@@ -31,7 +35,35 @@ vi.mock('../../../src/config/database.js', () => ({
 vi.mock('../../../src/services/notification.service.js', () => ({
   notifyVotingStarted: vi.fn().mockResolvedValue(undefined),
   notifyResolutionReady: vi.fn().mockResolvedValue(undefined),
+  notifyNarrationNeeded: vi.fn().mockResolvedValue(undefined),
   notifyRoundSummaryNeeded: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock resolution strategy so unit tests don't run real crypto
+vi.mock('../../../src/services/resolution/index.js', () => ({
+  getStrategy: () => ({
+    mapVoteToTokens: (voteType: string) => {
+      if (voteType === 'LIKELY_SUCCESS') return { successTokens: 2, failureTokens: 0 };
+      if (voteType === 'LIKELY_FAILURE') return { successTokens: 0, failureTokens: 2 };
+      return { successTokens: 1, failureTokens: 1 };
+    },
+    resolve: vi.fn().mockReturnValue({
+      resultType: 'SUCCESS_BUT',
+      resultValue: 1,
+      strategyData: {
+        seed: 'test-seed',
+        totalSuccessTokens: 3,
+        totalFailureTokens: 1,
+        drawnSuccess: 2,
+        drawnFailure: 1,
+        drawnTokens: [
+          { drawSequence: 1, tokenType: 'SUCCESS' },
+          { drawSequence: 2, tokenType: 'SUCCESS' },
+          { drawSequence: 3, tokenType: 'FAILURE' },
+        ],
+      },
+    }),
+  }),
 }));
 
 // Mock game service exports
@@ -192,7 +224,17 @@ describe('Action Service - Skip Functionality', () => {
         },
       };
 
-      vi.mocked(db.action.findUnique).mockResolvedValue(mockAction as any);
+      const resolvedMock = {
+        ...mockAction,
+        status: 'RESOLVED',
+        resolutionData: null,
+        votes: [],
+        game: { ...mockAction.game, settings: {} },
+        initiator: { userId: 'user-1', isNpc: false },
+      };
+      vi.mocked(db.action.findUnique)
+        .mockResolvedValueOnce(mockAction as any)
+        .mockResolvedValue(resolvedMock as any);
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue({
         id: 'player-1',
         userId: 'user-1',
@@ -205,10 +247,12 @@ describe('Action Service - Skip Functionality', () => {
         status: 'RESOLVED',
         votingWasSkipped: true,
       } as any);
+      vi.mocked(db.tokenDraw.findUnique).mockResolvedValue(null);
+      vi.mocked(db.tokenDraw.create).mockResolvedValue({ drawnTokens: [] } as any);
 
       const result = await actionService.skipVoting('action-1', 'user-1');
 
-      expect(result.message).toBe('Voting skipped, moved to resolution phase');
+      expect(result.message).toBe('Voting skipped, resolved automatically');
       expect(result.skippedVotes).toBe(2);
       expect(db.vote.createMany).toHaveBeenCalledWith({
         data: [
@@ -276,7 +320,17 @@ describe('Action Service - Skip Functionality', () => {
         },
       };
 
-      vi.mocked(db.action.findUnique).mockResolvedValue(mockAction as any);
+      const resolvedMock = {
+        ...mockAction,
+        status: 'RESOLVED',
+        resolutionData: null,
+        votes: [],
+        game: { ...mockAction.game, settings: {} },
+        initiator: { userId: 'user-1', isNpc: false },
+      };
+      vi.mocked(db.action.findUnique)
+        .mockResolvedValueOnce(mockAction as any)
+        .mockResolvedValue(resolvedMock as any);
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue({
         id: 'player-1',
         userId: 'user-1',
@@ -288,6 +342,8 @@ describe('Action Service - Skip Functionality', () => {
         status: 'RESOLVED',
         votingWasSkipped: true,
       } as any);
+      vi.mocked(db.tokenDraw.findUnique).mockResolvedValue(null);
+      vi.mocked(db.tokenDraw.create).mockResolvedValue({ drawnTokens: [] } as any);
 
       const result = await actionService.skipVoting('action-1', 'user-1');
 
@@ -337,7 +393,17 @@ describe('Action Service - Skip Functionality', () => {
         },
       };
 
-      vi.mocked(db.action.findUnique).mockResolvedValue(mockAction as any);
+      const resolvedMock = {
+        ...mockAction,
+        status: 'RESOLVED',
+        resolutionData: null,
+        votes: [],
+        game: { ...mockAction.game, settings: {} },
+        initiator: { userId: 'user-1', isNpc: false },
+      };
+      vi.mocked(db.action.findUnique)
+        .mockResolvedValueOnce(mockAction as any)
+        .mockResolvedValue(resolvedMock as any);
       vi.mocked(db.gamePlayer.findFirst).mockResolvedValue({
         id: 'player-1',
         userId: 'user-1',
@@ -350,6 +416,8 @@ describe('Action Service - Skip Functionality', () => {
         status: 'RESOLVED',
         votingWasSkipped: true,
       } as any);
+      vi.mocked(db.tokenDraw.findUnique).mockResolvedValue(null);
+      vi.mocked(db.tokenDraw.create).mockResolvedValue({ drawnTokens: [] } as any);
 
       const result = await actionService.skipVoting('action-1', 'user-1');
 

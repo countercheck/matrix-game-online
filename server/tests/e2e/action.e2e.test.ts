@@ -367,7 +367,7 @@ describe('Action Resolution E2E Tests', () => {
         .get(`/api/games/${gameId}`)
         .set('Authorization', `Bearer ${hostToken}`);
 
-      expect(gameResponse.body.data.currentPhase).toBe('RESOLUTION');
+      expect(gameResponse.body.data.currentPhase).toBe('NARRATION');
     });
   });
 
@@ -428,9 +428,11 @@ describe('Action Resolution E2E Tests', () => {
         .send({ voteType: 'LIKELY_SUCCESS' });
     });
 
-    it('should allow initiator to draw tokens', async () => {
+    it('should auto-draw tokens when the last vote is cast', async () => {
+      // The draw happens automatically in beforeEach when the last vote is submitted.
+      // Verify the result is accessible immediately via GET /draw.
       const response = await request(app)
-        .post(`/api/actions/${actionId}/draw`)
+        .get(`/api/actions/${actionId}/draw`)
         .set('Authorization', `Bearer ${hostToken}`);
 
       expect(response.status).toBe(200);
@@ -440,21 +442,8 @@ describe('Action Resolution E2E Tests', () => {
       expect(response.body.data.resultValue).toBeLessThanOrEqual(3);
     });
 
-    it('should prevent non-initiator from drawing', async () => {
-      const response = await request(app)
-        .post(`/api/actions/${actionId}/draw`)
-        .set('Authorization', `Bearer ${player1Token}`);
-
-      expect(response.status).toBe(403);
-    });
-
-    it('should prevent drawing twice', async () => {
-      // First draw
-      await request(app)
-        .post(`/api/actions/${actionId}/draw`)
-        .set('Authorization', `Bearer ${hostToken}`);
-
-      // Second draw attempt
+    it('should prevent manual draw after auto-draw', async () => {
+      // Tokens are already drawn automatically; any manual POST /draw returns 409.
       const response = await request(app)
         .post(`/api/actions/${actionId}/draw`)
         .set('Authorization', `Bearer ${hostToken}`);
@@ -462,9 +451,17 @@ describe('Action Resolution E2E Tests', () => {
       expect(response.status).toBe(409);
     });
 
+    it('should transition game to NARRATION phase after auto-draw', async () => {
+      const gameResponse = await request(app)
+        .get(`/api/games/${gameId}`)
+        .set('Authorization', `Bearer ${hostToken}`);
+
+      expect(gameResponse.body.data.currentPhase).toBe('NARRATION');
+    });
+
     it('should calculate correct token pool', async () => {
       const response = await request(app)
-        .post(`/api/actions/${actionId}/draw`)
+        .get(`/api/actions/${actionId}/draw`)
         .set('Authorization', `Bearer ${hostToken}`);
 
       // Base pool: 1S + 1F
@@ -528,9 +525,7 @@ describe('Action Resolution E2E Tests', () => {
         .set('Authorization', `Bearer ${player2Token}`)
         .send({ voteType: 'UNCERTAIN' });
 
-      await request(app)
-        .post(`/api/actions/${actionId}/draw`)
-        .set('Authorization', `Bearer ${hostToken}`);
+      // Draw is now automatic — the last vote triggers resolution and transitions to NARRATION.
 
       return actionId;
     }

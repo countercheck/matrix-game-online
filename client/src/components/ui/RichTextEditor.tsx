@@ -7,6 +7,7 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
+import { Image } from '@tiptap/extension-image';
 import { Link } from '@tiptap/extension-link';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { CharacterCount } from '@tiptap/extension-character-count';
@@ -212,6 +213,33 @@ function Toolbar({ editor, disabled }: ToolbarProps) {
       >
         &#x1F517;
       </button>
+
+      {/* Image */}
+      <button
+        type="button"
+        onClick={() => {
+          const url = window.prompt('Enter image URL:');
+          if (!url) return;
+
+          const trimmedUrl = url.trim();
+          if (!trimmedUrl) return;
+
+          try {
+            const parsed = new URL(trimmedUrl);
+            if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+              const alt = window.prompt('Alt text (optional):') ?? '';
+              editor.chain().focus().setImage({ src: trimmedUrl, alt }).run();
+            }
+          } catch {
+            // Invalid URL; do not insert image
+          }
+        }}
+        disabled={disabled}
+        className={buttonClass(false)}
+        title="Insert Image"
+      >
+        &#x1F5BC;
+      </button>
     </div>
   );
 }
@@ -249,6 +277,12 @@ export function RichTextEditor({
       TaskList,
       TaskItem.configure({
         nested: true,
+      }),
+      Image.configure({
+        inline: false,
+        HTMLAttributes: {
+          class: 'max-w-full rounded',
+        },
       }),
       Link.configure({
         openOnClick: false,

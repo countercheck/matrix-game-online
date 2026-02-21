@@ -107,9 +107,7 @@ export function ArbiterReviewPhase({
                 <li
                   key={arg.id}
                   className={`p-3 rounded-md border text-sm transition-colors ${
-                    arg.isStrong
-                      ? 'bg-green-50 border-green-400 dark:bg-green-950'
-                      : 'bg-muted/40'
+                    arg.isStrong ? 'bg-green-50 border-green-400 dark:bg-green-950' : 'bg-muted/40'
                   }`}
                 >
                   <RichTextDisplay content={arg.content} />
@@ -180,6 +178,12 @@ export function ArbiterReviewPhase({
           )}
         </div>
       </div>
+
+      {isArbiter && markStrongMutation.isError && (
+        <p className="text-xs text-destructive text-center">
+          Failed to update argument. Try again.
+        </p>
+      )}
 
       {isArbiter && (
         <div className="p-4 border rounded-lg text-center">

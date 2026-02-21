@@ -43,7 +43,7 @@ import { db } from '../../../src/config/database.js';
 import {
   markArgumentStrong,
   completeArbiterReview,
-} from '../../../src/services/action.service.js';
+} from '../../../src/services/arbiter.service.js';
 import {
   BadRequestError,
   ForbiddenError,
@@ -164,7 +164,9 @@ describe('completeArbiterReview', () => {
       ...baseAction,
       game: { ...baseAction.game, currentPhase: 'ARGUMENTATION' },
     });
-    await expect(completeArbiterReview('action-1', 'user-arbiter')).rejects.toThrow(BadRequestError);
+    await expect(completeArbiterReview('action-1', 'user-arbiter')).rejects.toThrow(
+      BadRequestError
+    );
   });
 
   it('throws ForbiddenError if caller is not arbiter', async () => {

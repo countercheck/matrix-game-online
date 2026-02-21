@@ -295,6 +295,7 @@ export function GameSidebar({ game, currentUserId, myPlayer, isTimeoutExpired }:
               downloadBlob(res.data, `${game.name}-export.yaml`, disposition);
             } catch (err) {
               console.error('Failed to export game:', err);
+              window.alert('Failed to export game. Please try again.');
             }
           }}
           className="w-full text-sm px-3 py-2 border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary transition-colors"

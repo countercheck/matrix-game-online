@@ -117,10 +117,11 @@ model GamePlayer {
   personaId     String?  @map("persona_id")
   playerName    String   @map("player_name") @db.VarChar(50)
   joinOrder     Int      @map("join_order")
-  isHost        Boolean  @default(false) @map("is_host")
-  isNpc         Boolean  @default(false) @map("is_npc")
-  isPersonaLead Boolean  @default(false) @map("is_persona_lead")
-  isActive   Boolean   @default(true) @map("is_active")
+  isHost        Boolean        @default(false) @map("is_host")
+  isNpc         Boolean        @default(false) @map("is_npc")
+  isPersonaLead Boolean        @default(false) @map("is_persona_lead")
+  gameRole      GamePlayerRole @default(PLAYER) @map("game_role")
+  isActive      Boolean        @default(true) @map("is_active")
   joinedAt   DateTime  @default(now()) @map("joined_at")
   lastSeenAt DateTime? @map("last_seen_at")
 
@@ -209,6 +210,7 @@ model Argument {
   argumentType ArgumentType @map("argument_type")
   content      String       @db.Text
   sequence     Int
+  isStrong     Boolean      @default(false) @map("is_strong")
   createdAt    DateTime     @default(now()) @map("created_at")
 
   // Relations
@@ -357,10 +359,16 @@ enum GamePhase {
   WAITING
   PROPOSAL
   ARGUMENTATION
+  ARBITER_REVIEW
   VOTING
   RESOLUTION
   NARRATION
   ROUND_SUMMARY
+}
+
+enum GamePlayerRole {
+  PLAYER
+  ARBITER
 }
 
 enum RoundStatus {

@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import { ResultType } from '@prisma/client';
 import type {
-  ResolutionStrategy,
+  VotingResolutionStrategy,
   ResolutionVotes,
   ResolutionResult,
   VoteTokenMapping,
@@ -41,21 +41,20 @@ function getResultType(successCount: number): ResultType {
   }
 }
 
-const tokenDrawStrategy: ResolutionStrategy = {
+const tokenDrawStrategy: VotingResolutionStrategy = {
   id: 'token_draw',
   displayName: 'Token Draw',
-  description:
-    'Draw 3 tokens from a pool. Votes shift the pool toward success or failure.',
+  description: 'Draw 3 tokens from a pool. Votes shift the pool toward success or failure.',
+  type: 'voting' as const,
+  phaseAfterArgumentation: 'VOTING' as const,
 
-  mapVoteToTokens(voteType): VoteTokenMapping {
+  mapVoteToTokens(voteType: 'LIKELY_SUCCESS' | 'LIKELY_FAILURE' | 'UNCERTAIN'): VoteTokenMapping {
     return VOTE_TOKEN_MAP[voteType]!;
   },
 
   resolve(votes: ResolutionVotes): ResolutionResult {
-    const totalSuccess =
-      1 + votes.votes.reduce((sum, v) => sum + v.successTokens, 0);
-    const totalFailure =
-      1 + votes.votes.reduce((sum, v) => sum + v.failureTokens, 0);
+    const totalSuccess = 1 + votes.votes.reduce((sum, v) => sum + v.successTokens, 0);
+    const totalFailure = 1 + votes.votes.reduce((sum, v) => sum + v.failureTokens, 0);
 
     const seed = randomBytes(32).toString('hex');
 

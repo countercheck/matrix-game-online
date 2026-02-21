@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { GameHistory, HostControls } from '../game';
 import { RichTextDisplay } from '../ui/RichTextDisplay';
 import { ChatPanel } from '../chat/ChatPanel';
@@ -56,6 +57,7 @@ interface GameSidebarProps {
       isHost: boolean;
       isNpc?: boolean;
       userId: string;
+      gameRole?: string;
       user: { id: string; displayName: string };
       persona?: Persona | null;
     }>;
@@ -67,12 +69,32 @@ interface GameSidebarProps {
     isHost: boolean;
     personaId: string | null;
     isPersonaLead: boolean;
+    gameRole?: string;
   };
   isTimeoutExpired: boolean;
 }
 
 export function GameSidebar({ game, currentUserId, myPlayer, isTimeoutExpired }: GameSidebarProps) {
   const [expandedPersona, setExpandedPersona] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const isArbiterGame = game.settings.resolutionMethod === 'arbiter';
+  const isHost = myPlayer?.isHost || false;
+
+  const setRoleMutation = useMutation({
+    mutationFn: ({ playerId, role }: { playerId: string; role: string }) =>
+      api.put(`/games/${game.id}/players/${playerId}/role`, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', game.id] });
+    },
+  });
+
+  const currentArbiter = game.players.find((p) => p.gameRole === 'ARBITER');
+
+  const handleSetArbiter = (playerId: string) => {
+    const isCurrentArbiter = currentArbiter?.id === playerId;
+    setRoleMutation.mutate({ playerId, role: isCurrentArbiter ? 'PLAYER' : 'ARBITER' });
+  };
 
   // Total unread for tab badge - computed via channels query
   const chatSettings = game.settings.chat || {};
@@ -166,16 +188,37 @@ export function GameSidebar({ game, currentUserId, myPlayer, isTimeoutExpired }:
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
                     {player.isNpc && (
                       <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">
                         NPC
+                      </span>
+                    )}
+                    {player.gameRole === 'ARBITER' && (
+                      <span className="text-xs bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded">
+                        Arbiter
                       </span>
                     )}
                     {player.isHost && (
                       <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                         Host
                       </span>
+                    )}
+                    {isHost && isArbiterGame && !player.isNpc && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSetArbiter(player.id);
+                        }}
+                        disabled={setRoleMutation.isPending}
+                        className={`text-xs px-2 py-0.5 rounded border transition-colors disabled:opacity-50 ${
+                          player.gameRole === 'ARBITER'
+                            ? 'border-violet-400 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950'
+                            : 'border-muted-foreground/40 text-muted-foreground hover:border-violet-400 hover:text-violet-600 dark:hover:text-violet-400'
+                        }`}
+                      >
+                        {player.gameRole === 'ARBITER' ? 'Unset' : 'Set Arbiter'}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -326,6 +369,11 @@ function PhaseGuide({ phase }: { phase: string }) {
       title: 'Make Arguments',
       description:
         'Add arguments for or against the proposed action. You can also add clarifications. When done, click "I\'m Done" to proceed.',
+    },
+    ARBITER_REVIEW: {
+      title: 'Arbiter Review',
+      description:
+        'The arbiter marks arguments as strong. Strong FOR arguments help; strong AGAINST arguments hurt. When ready, the arbiter rolls dice to resolve.',
     },
     VOTING: {
       title: 'Cast Your Vote',

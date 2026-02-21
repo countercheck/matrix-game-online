@@ -28,4 +28,16 @@ router.put('/:actionId/narration', authenticateToken, actionController.updateNar
 router.post('/:actionId/skip-argumentation', authenticateToken, actionController.skipArgumentation);
 router.post('/:actionId/skip-voting', authenticateToken, actionController.skipVoting);
 
+// Arbiter review controls
+router.post(
+  '/:actionId/arguments/:argumentId/mark-strong',
+  authenticateToken,
+  actionController.markArgumentStrong
+);
+router.post(
+  '/:actionId/arbiter/complete',
+  authenticateToken,
+  actionController.completeArbiterReview
+);
+
 export default router;

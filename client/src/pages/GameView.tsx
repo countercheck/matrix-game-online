@@ -14,6 +14,7 @@ import {
 } from '../components/game';
 import { GameSidebar } from '../components/game/GameSidebar';
 import { ResolutionPhase } from '../components/game/resolution';
+import { ArbiterReviewPhase } from '../components/game/ArbiterReviewPhase';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 import { decodeHtmlEntities } from '../utils/decodeEntities';
 
@@ -71,6 +72,7 @@ interface Game {
     isHost: boolean;
     isNpc?: boolean;
     userId: string;
+    gameRole?: string;
     user: { id: string; displayName: string };
     persona?: Persona | null;
   }>;
@@ -78,6 +80,7 @@ interface Game {
     id: string;
     playerName: string;
     isHost: boolean;
+    gameRole?: string;
     personaId: string | null;
     isPersonaLead: boolean;
     hasProposedThisRound: boolean;
@@ -198,6 +201,26 @@ export default function GameView() {
           />
         );
 
+      case 'ARBITER_REVIEW': {
+        if (!game.currentAction) {
+          return (
+            <div className="p-6 border rounded-lg text-center text-muted-foreground">
+              Waiting for action...
+            </div>
+          );
+        }
+        const isArbiter = myPlayer?.gameRole === 'ARBITER';
+        const arbiterPlayer = game.players.find((p) => p.gameRole === 'ARBITER');
+        return (
+          <ArbiterReviewPhase
+            gameId={game.id}
+            action={game.currentAction}
+            isArbiter={isArbiter}
+            arbiterName={arbiterPlayer?.playerName}
+          />
+        );
+      }
+
       case 'VOTING':
         if (!game.currentAction) {
           return (
@@ -301,16 +324,18 @@ export default function GameView() {
                     ? 'bg-blue-500 text-white'
                     : game.currentPhase === 'ARGUMENTATION'
                       ? 'bg-purple-500 text-white'
-                      : game.currentPhase === 'VOTING'
-                        ? 'bg-orange-500 text-white'
-                        : game.currentPhase === 'RESOLUTION'
-                          ? 'bg-green-500 text-white'
-                          : game.currentPhase === 'NARRATION'
-                            ? 'bg-indigo-500 text-white'
-                            : 'bg-gray-500 text-white'
+                      : game.currentPhase === 'ARBITER_REVIEW'
+                        ? 'bg-amber-500 text-white'
+                        : game.currentPhase === 'VOTING'
+                          ? 'bg-orange-500 text-white'
+                          : game.currentPhase === 'RESOLUTION'
+                            ? 'bg-green-500 text-white'
+                            : game.currentPhase === 'NARRATION'
+                              ? 'bg-indigo-500 text-white'
+                              : 'bg-gray-500 text-white'
                 }`}
               >
-                {game.currentPhase}
+                {game.currentPhase.replace('_', ' ')}
               </span>
             </div>
           </div>
@@ -349,13 +374,15 @@ export default function GameView() {
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                     : game.currentPhase === 'ARGUMENTATION'
                       ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-                      : game.currentPhase === 'VOTING'
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                        : game.currentPhase === 'RESOLUTION'
-                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-                          : game.currentPhase === 'NARRATION'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                      : game.currentPhase === 'ARBITER_REVIEW'
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+                        : game.currentPhase === 'VOTING'
+                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                          : game.currentPhase === 'RESOLUTION'
+                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                            : game.currentPhase === 'NARRATION'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
                 }`}
               >
                 {game.currentPhase.replace('_', ' ')}

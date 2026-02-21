@@ -23,20 +23,46 @@ export interface VoteTokenMapping {
   readonly failureTokens: number;
 }
 
+/** Input for arbiter-style resolution */
+export interface ArbiterResolutionContext {
+  readonly strongProCount: number;
+  readonly strongAntiCount: number;
+  readonly diceRoll: [number, number];
+}
+
 /**
- * Core strategy interface for action resolution.
- * Strategies are stateless — resolve() is a pure function with no side effects.
+ * Base fields shared by all resolution strategies.
+ * phaseAfterArgumentation drives the state machine branch after argumentation.
+ * maxArgumentsPerSide, when set, enforces a per-side argument cap.
  */
-export interface ResolutionStrategy {
+interface BaseResolutionStrategy {
   readonly id: string;
   readonly displayName: string;
   readonly description: string;
+  readonly type: 'voting' | 'arbiter';
+  readonly phaseAfterArgumentation: 'VOTING' | 'ARBITER_REVIEW';
+  readonly maxArgumentsPerSide?: number;
+}
 
-  /** Map a vote type to token contributions for this strategy */
-  mapVoteToTokens(
-    voteType: 'LIKELY_SUCCESS' | 'LIKELY_FAILURE' | 'UNCERTAIN'
-  ): VoteTokenMapping;
-
-  /** Execute the resolution given the collected votes */
+/**
+ * Voting-based strategy: players cast votes and tokens are drawn to resolve.
+ */
+export interface VotingResolutionStrategy extends BaseResolutionStrategy {
+  readonly type: 'voting';
+  readonly phaseAfterArgumentation: 'VOTING';
+  mapVoteToTokens(voteType: 'LIKELY_SUCCESS' | 'LIKELY_FAILURE' | 'UNCERTAIN'): VoteTokenMapping;
   resolve(votes: ResolutionVotes): ResolutionResult;
 }
+
+/**
+ * Arbiter-based strategy: a designated arbiter marks strong arguments,
+ * a 2d6 roll is modified by strong argument counts to determine the result.
+ */
+export interface ArbiterResolutionStrategy extends BaseResolutionStrategy {
+  readonly type: 'arbiter';
+  readonly phaseAfterArgumentation: 'ARBITER_REVIEW';
+  resolve(context: ArbiterResolutionContext): ResolutionResult;
+}
+
+/** Discriminated union of all supported resolution strategies */
+export type ResolutionStrategy = VotingResolutionStrategy | ArbiterResolutionStrategy;

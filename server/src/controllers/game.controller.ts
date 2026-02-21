@@ -335,3 +335,25 @@ export async function importGame(req: Request, res: Response, next: NextFunction
     next(error);
   }
 }
+
+export async function setPlayerRole(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const gameId = req.params.gameId as string;
+    const targetPlayerId = req.params.playerId as string;
+    const userId = req.user!.id;
+    const { role } = req.body as { role: 'PLAYER' | 'ARBITER' };
+
+    if (role !== 'PLAYER' && role !== 'ARBITER') {
+      throw new BadRequestError('role must be PLAYER or ARBITER');
+    }
+
+    const player = await gameService.setPlayerRole(gameId, targetPlayerId, role, userId);
+    res.json({ success: true, data: player });
+  } catch (error) {
+    next(error);
+  }
+}

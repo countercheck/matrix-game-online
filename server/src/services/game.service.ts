@@ -263,6 +263,7 @@ export async function getGame(gameId: string, userId: string) {
       id: myPlayer.id,
       playerName: myPlayer.playerName,
       isHost: myPlayer.isHost,
+      gameRole: myPlayer.gameRole,
       personaId: myPlayer.personaId,
       isPersonaLead: myPlayer.isPersonaLead,
       hasProposedThisRound,
@@ -943,7 +944,8 @@ export async function transitionPhase(gameId: string, newPhase: GamePhase) {
   const validTransitions: Record<GamePhase, GamePhase[]> = {
     WAITING: [GamePhase.PROPOSAL],
     PROPOSAL: [GamePhase.ARGUMENTATION],
-    ARGUMENTATION: [GamePhase.VOTING],
+    ARGUMENTATION: [GamePhase.VOTING, GamePhase.ARBITER_REVIEW],
+    ARBITER_REVIEW: [GamePhase.RESOLUTION],
     VOTING: [GamePhase.RESOLUTION],
     RESOLUTION: [GamePhase.NARRATION],
     NARRATION: [GamePhase.PROPOSAL, GamePhase.ROUND_SUMMARY],
@@ -1081,3 +1083,55 @@ async function logGameEvent(
 }
 
 export { requireMember, logGameEvent };
+
+/**
+ * Host assigns a game role (PLAYER or ARBITER) to a player.
+ * At most one player per game may hold the ARBITER role.
+ */
+export async function setPlayerRole(
+  gameId: string,
+  targetPlayerId: string,
+  role: 'PLAYER' | 'ARBITER',
+  requestingUserId: string
+) {
+  const requestingPlayer = await db.gamePlayer.findFirst({
+    where: { gameId, userId: requestingUserId, isActive: true, isHost: true },
+  });
+
+  if (!requestingPlayer) {
+    throw new ForbiddenError('Only the game host can assign roles');
+  }
+
+  const targetPlayer = await db.gamePlayer.findFirst({
+    where: { id: targetPlayerId, gameId, isActive: true },
+  });
+
+  if (!targetPlayer) {
+    throw new NotFoundError('Player not found in this game');
+  }
+
+  if (role === 'ARBITER') {
+    // Ensure no other player already holds the ARBITER role
+    const existingArbiter = await db.gamePlayer.findFirst({
+      where: { gameId, gameRole: 'ARBITER', isActive: true, id: { not: targetPlayerId } },
+    });
+    if (existingArbiter) {
+      throw new ConflictError('Another player is already assigned as Arbiter');
+    }
+  }
+
+  const updated = await db.gamePlayer.update({
+    where: { id: targetPlayerId },
+    data: { gameRole: role },
+    include: {
+      user: { select: { displayName: true } },
+    },
+  });
+
+  await logGameEvent(gameId, requestingUserId, 'PLAYER_ROLE_ASSIGNED', {
+    targetPlayerId,
+    role,
+  });
+
+  return updated;
+}

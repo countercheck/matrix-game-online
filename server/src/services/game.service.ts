@@ -1111,6 +1111,9 @@ export async function setPlayerRole(
     throw new NotFoundError('Player not found in this game');
   }
 
+  if (role === 'ARBITER' && (targetPlayer as { isNpc?: boolean }).isNpc) {
+    throw new BadRequestError('NPC players cannot be assigned as Arbiter');
+  }
   const BLOCKED_PHASES: GamePhase[] = [
     GamePhase.ARGUMENTATION,
     GamePhase.ARBITER_REVIEW,

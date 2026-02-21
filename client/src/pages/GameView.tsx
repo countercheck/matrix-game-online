@@ -18,6 +18,35 @@ import { ArbiterReviewPhase } from '../components/game/ArbiterReviewPhase';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 import { decodeHtmlEntities } from '../utils/decodeEntities';
 
+const IMAGE_HEADER_PHASE_COLOR_CLASSES: Record<string, string> = {
+  PROPOSAL: 'bg-blue-500 text-white',
+  ARGUMENTATION: 'bg-purple-500 text-white',
+  ARBITER_REVIEW: 'bg-amber-500 text-white',
+  VOTING: 'bg-orange-500 text-white',
+  RESOLUTION: 'bg-green-500 text-white',
+  NARRATION: 'bg-indigo-500 text-white',
+};
+
+function getImageHeaderPhaseColorClass(phase: string): string {
+  return IMAGE_HEADER_PHASE_COLOR_CLASSES[phase] ?? 'bg-gray-500 text-white';
+}
+
+const TEXT_HEADER_PHASE_COLOR_CLASSES: Record<string, string> = {
+  PROPOSAL: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  ARGUMENTATION: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+  ARBITER_REVIEW: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+  VOTING: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  RESOLUTION: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+  NARRATION: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+};
+
+function getTextHeaderPhaseColorClass(phase: string): string {
+  return (
+    TEXT_HEADER_PHASE_COLOR_CLASSES[phase] ??
+    'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+  );
+}
+
 interface Persona {
   id: string;
   name: string;
@@ -320,21 +349,7 @@ export default function GameView() {
                 currentPhase={game.currentPhase}
               />
               <span
-                className={`text-xs px-3 py-1 rounded-full font-medium ${
-                  game.currentPhase === 'PROPOSAL'
-                    ? 'bg-blue-500 text-white'
-                    : game.currentPhase === 'ARGUMENTATION'
-                      ? 'bg-purple-500 text-white'
-                      : game.currentPhase === 'ARBITER_REVIEW'
-                        ? 'bg-amber-500 text-white'
-                        : game.currentPhase === 'VOTING'
-                          ? 'bg-orange-500 text-white'
-                          : game.currentPhase === 'RESOLUTION'
-                            ? 'bg-green-500 text-white'
-                            : game.currentPhase === 'NARRATION'
-                              ? 'bg-indigo-500 text-white'
-                              : 'bg-gray-500 text-white'
-                }`}
+                className={`text-xs px-3 py-1 rounded-full font-medium ${getImageHeaderPhaseColorClass(game.currentPhase)}`}
               >
                 {game.currentPhase.replace('_', ' ')}
               </span>
@@ -370,21 +385,7 @@ export default function GameView() {
                 currentPhase={game.currentPhase}
               />
               <span
-                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                  game.currentPhase === 'PROPOSAL'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                    : game.currentPhase === 'ARGUMENTATION'
-                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-                      : game.currentPhase === 'ARBITER_REVIEW'
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
-                        : game.currentPhase === 'VOTING'
-                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                          : game.currentPhase === 'RESOLUTION'
-                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-                            : game.currentPhase === 'NARRATION'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                }`}
+                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getTextHeaderPhaseColorClass(game.currentPhase)}`}
               >
                 {game.currentPhase.replace('_', ' ')}
               </span>

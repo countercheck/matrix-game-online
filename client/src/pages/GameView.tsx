@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
@@ -133,14 +133,18 @@ export default function GameView() {
 
   const game = data?.data;
 
-  const phaseTimeoutMap: Record<string, number | undefined> = game
-    ? {
-        PROPOSAL: game.settings.proposalTimeoutHours,
-        ARGUMENTATION: game.settings.argumentationTimeoutHours,
-        VOTING: game.settings.votingTimeoutHours,
-        NARRATION: game.settings.narrationTimeoutHours,
-      }
-    : {};
+  const phaseTimeoutMap = useMemo<Record<string, number | undefined>>(
+    () =>
+      game
+        ? {
+            PROPOSAL: game.settings.proposalTimeoutHours,
+            ARGUMENTATION: game.settings.argumentationTimeoutHours,
+            VOTING: game.settings.votingTimeoutHours,
+            NARRATION: game.settings.narrationTimeoutHours,
+          }
+        : {},
+    [game]
+  );
   const currentTimeoutHours = game ? phaseTimeoutMap[game.currentPhase] : undefined;
 
   useEffect(() => {

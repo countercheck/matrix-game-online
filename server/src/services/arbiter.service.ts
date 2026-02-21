@@ -1,10 +1,7 @@
 import { db } from '../config/database.js';
 import { GamePhase, Prisma } from '@prisma/client';
-import {
-  BadRequestError,
-  NotFoundError,
-  ForbiddenError,
-} from '../middleware/errorHandler.js';
+import { logger } from '../utils/logger.js';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
 import { logGameEvent, transitionPhase } from './game.service.js';
 import { notifyResolutionReady } from './notification.service.js';
 import { getStrategy } from './resolution/index.js';
@@ -141,7 +138,13 @@ export async function completeArbiterReview(actionId: string, userId: string) {
     action.game.name,
     action.initiator.userId,
     action.actionDescription
-  ).catch(() => {});
+  ).catch((error) => {
+    logger.warn('Failed to send resolution ready notification', {
+      gameId: action.gameId,
+      initiatorId: action.initiator.userId,
+      error,
+    });
+  });
 
   return {
     resultType: resolutionResult.resultType,

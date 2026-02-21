@@ -61,6 +61,7 @@ export function ArbiterReviewPhase({
     },
   });
 
+  const arbiterDisplayName = arbiterName ?? 'the arbiter';
   const args = data?.data ?? [];
   const proArgs = args.filter(
     (a) => a.argumentType === 'FOR' || a.argumentType === 'INITIATOR_FOR'
@@ -82,7 +83,7 @@ export function ArbiterReviewPhase({
         <p className="text-sm text-muted-foreground mb-4">
           {isArbiter
             ? 'Mark arguments as strong, then complete the review to roll dice and resolve.'
-            : `Waiting for ${arbiterName ?? 'the arbiter'} to review the arguments.`}
+            : `Waiting for ${arbiterDisplayName} to review the arguments.`}
         </p>
 
         <div className="p-4 bg-muted rounded-md">
@@ -185,7 +186,9 @@ export function ArbiterReviewPhase({
 
       {isArbiter && markStrongMutation.isError && (
         <p className="text-xs text-destructive text-center">
-          Failed to update argument. Try again.
+          Failed to update argument
+          {markStrongMutation.error instanceof Error ? `: ${markStrongMutation.error.message}` : ''}
+          . Try again.
         </p>
       )}
 

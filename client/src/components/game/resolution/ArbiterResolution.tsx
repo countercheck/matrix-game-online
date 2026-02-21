@@ -7,7 +7,7 @@ interface ArbiterStrategyData {
   strongProCount: number;
   strongAntiCount: number;
   modified: number;
-  resultType: string;
+  resultType: 'SUCCESS_BUT' | 'FAILURE_BUT';
   resultValue: number;
 }
 

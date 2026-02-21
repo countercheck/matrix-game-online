@@ -534,6 +534,15 @@ export async function completeArgumentation(actionId: string, userId: string) {
   const completionStrategy = getStrategy(completionStrategyId);
 
   if (completionStrategy.phaseAfterArgumentation === 'ARBITER_REVIEW') {
+    const arbiterExists = await db.gamePlayer.findFirst({
+      where: { gameId: action.gameId, gameRole: 'ARBITER', isActive: true },
+      select: { id: true },
+    });
+    if (!arbiterExists) {
+      throw new BadRequestError(
+        'Cannot begin arbiter review: no arbiter has been assigned. Ask the host to assign one.'
+      );
+    }
     await db.action.update({
       where: { id: actionId },
       data: { status: 'ARGUING' }, // stays in ARGUING until arbiter completes review
@@ -1077,7 +1086,33 @@ export async function skipArgumentation(actionId: string, userId: string) {
 
   await requireHost(action.gameId, userId);
 
-  // Transition to voting
+  const settings = (action.game.settings as GameSettings) || {};
+  const strategyId = settings.resolutionMethod || 'token_draw';
+  const strategy = getStrategy(strategyId);
+
+  if (strategy.type === 'arbiter') {
+    const arbiterExists = await db.gamePlayer.findFirst({
+      where: { gameId: action.gameId, gameRole: 'ARBITER', isActive: true },
+      select: { id: true },
+    });
+    if (!arbiterExists) {
+      throw new BadRequestError(
+        'Cannot skip to arbiter review: no arbiter has been assigned. Ask the host to assign one first.'
+      );
+    }
+    await db.action.update({
+      where: { id: actionId },
+      data: { status: 'ARGUING', argumentationWasSkipped: true },
+    });
+    await transitionPhase(action.gameId, GamePhase.ARBITER_REVIEW);
+    await logGameEvent(action.gameId, userId, 'ARGUMENTATION_SKIPPED', {
+      actionId,
+      skippedByHost: true,
+    });
+    return { message: 'Argumentation skipped, moved to arbiter review phase' };
+  }
+
+  // Default path: token_draw and other voting strategies transition to VOTING
   await db.action.update({
     where: { id: actionId },
     data: {

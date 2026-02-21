@@ -1,3 +1,5 @@
+// randomBytes is used to generate the `seed` audit field recorded in strategyData,
+// providing a cryptographic proof of the randomness source for each resolution.
 import { randomBytes } from 'crypto';
 import { ResultType } from '@prisma/client';
 import type {

@@ -5,6 +5,9 @@ import { randomBytes } from 'crypto';
  * Uses rejection sampling to avoid modulo bias.
  */
 export function getSecureRandomInt(min: number, max: number): number {
+  if (!Number.isInteger(min) || !Number.isInteger(max) || min > max) {
+    throw new RangeError(`getSecureRandomInt: invalid range [${min}, ${max}]`);
+  }
   const range = max - min + 1;
   const bytesNeeded = Math.ceil(Math.log2(range) / 8) || 1;
   const maxValid = Math.floor(256 ** bytesNeeded / range) * range - 1;

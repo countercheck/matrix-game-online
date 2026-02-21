@@ -7,6 +7,7 @@ import {
   ConflictError,
 } from '../middleware/errorHandler.js';
 import { requireMember, logGameEvent, transitionPhase } from './game.service.js';
+import type { GameSettings } from './game.service.js';
 import type {
   ActionProposalInput,
   ArgumentInput,
@@ -151,7 +152,7 @@ export async function proposeAction(gameId: string, userId: string, data: Action
     throw new BadRequestError('Game is not in proposal phase');
   }
 
-  const settings = (game.settings as Record<string, unknown>) || {};
+  const settings = (game.settings as GameSettings) || {};
 
   // Shared persona checks
   if (settings.allowSharedPersonas && player.personaId) {
@@ -318,7 +319,7 @@ export async function addArgument(actionId: string, userId: string, data: Argume
   // Check if initiator is trying to add clarification
   // When shared personas are enabled, any member of the initiator's persona
   // counts as "the initiator" for clarification purposes
-  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const settings = (action.game.settings as GameSettings) || {};
   const isDirectInitiator = action.initiatorId === player.id;
   const isPersonaInitiator =
     settings.allowSharedPersonas &&
@@ -334,7 +335,7 @@ export async function addArgument(actionId: string, userId: string, data: Argume
   }
 
   // Check per-side argument limits enforced by strategy (e.g. arbiter games)
-  const addArgStrategyId = (settings.resolutionMethod as string) || 'token_draw';
+  const addArgStrategyId = settings.resolutionMethod || 'token_draw';
   const addArgStrategy = getStrategy(addArgStrategyId);
   if (addArgStrategy.maxArgumentsPerSide !== undefined && data.argumentType !== 'CLARIFICATION') {
     const isForSide = data.argumentType === 'FOR';
@@ -354,7 +355,7 @@ export async function addArgument(actionId: string, userId: string, data: Argume
   }
 
   // Check per-player argument limits
-  const argumentLimit = (settings.argumentLimit as number) || 3;
+  const argumentLimit = settings.argumentLimit || 3;
 
   if (
     settings.allowSharedPersonas &&
@@ -484,7 +485,7 @@ export async function completeArgumentation(actionId: string, userId: string) {
     update: {},
   });
 
-  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const settings = (action.game.settings as GameSettings) || {};
   const humanPlayers = action.game.players.filter((p) => !p.isNpc);
 
   // Determine the threshold for completion
@@ -529,8 +530,7 @@ export async function completeArgumentation(actionId: string, userId: string) {
   }
 
   // All players have argued and marked as done — branch based on strategy
-  const completionSettings = (action.game.settings as Record<string, unknown>) || {};
-  const completionStrategyId = (completionSettings.resolutionMethod as string) || 'token_draw';
+  const completionStrategyId = settings.resolutionMethod || 'token_draw';
   const completionStrategy = getStrategy(completionStrategyId);
 
   if (completionStrategy.phaseAfterArgumentation === 'ARBITER_REVIEW') {
@@ -602,7 +602,7 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
   });
 
   // one_per_persona: block if another member of the persona already voted
-  const gameSettings = (game?.settings as Record<string, unknown>) || {};
+  const gameSettings = (game?.settings as GameSettings) || {};
   if (
     gameSettings.allowSharedPersonas &&
     gameSettings.sharedPersonaVoting === 'one_per_persona' &&
@@ -619,8 +619,8 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
   }
 
   // Map vote type to tokens using the game's resolution strategy
-  const settings = (game?.settings as Record<string, unknown>) || {};
-  const strategy = getStrategy((settings.resolutionMethod as string) || 'token_draw');
+  const settings = (game?.settings as GameSettings) || {};
+  const strategy = getStrategy(settings.resolutionMethod || 'token_draw');
 
   if (strategy.type === 'arbiter') {
     throw new BadRequestError('Voting is not used in arbiter games');
@@ -754,8 +754,8 @@ export async function drawTokens(actionId: string, userId: string) {
   }
 
   // Resolve using the game's strategy (voting-only path — arbiter resolves in completeArbiterReview)
-  const settings = (action.game.settings as Record<string, unknown>) || {};
-  const strategyId = (settings.resolutionMethod as string) || 'token_draw';
+  const settings = (action.game.settings as GameSettings) || {};
+  const strategyId = settings.resolutionMethod || 'token_draw';
   const strategy = getStrategy(strategyId);
 
   if (strategy.type === 'arbiter') {
@@ -922,7 +922,7 @@ export async function submitNarration(actionId: string, userId: string, data: Na
   }
 
   // Check narration permissions based on game settings
-  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const settings = (action.game.settings as GameSettings) || {};
   const narrationMode = settings.narrationMode || 'initiator_only';
 
   // NPC actions can be narrated by any player
@@ -1131,7 +1131,7 @@ export async function skipVoting(actionId: string, userId: string) {
   await requireHost(action.gameId, userId);
 
   // Determine which voters are missing based on settings
-  const skipSettings = (action.game.settings as Record<string, unknown>) || {};
+  const skipSettings = (action.game.settings as GameSettings) || {};
   const humanPlayers = action.game.players.filter((p) => !p.isNpc);
   const votedPlayerIds = new Set(action.votes.map((v) => v.playerId));
 
@@ -1156,8 +1156,8 @@ export async function skipVoting(actionId: string, userId: string) {
   }
 
   // Auto-fill missing votes as UNCERTAIN with wasSkipped=true
-  const settings = (action.game.settings as Record<string, unknown>) || {};
-  const skipStrategy = getStrategy((settings.resolutionMethod as string) || 'token_draw');
+  const settings = (action.game.settings as GameSettings) || {};
+  const skipStrategy = getStrategy(settings.resolutionMethod || 'token_draw');
   if (skipStrategy.type === 'arbiter') {
     throw new BadRequestError('Skip voting is not applicable in arbiter games');
   }

@@ -116,18 +116,20 @@ export function ArbiterReviewPhase({
                     <button
                       onClick={() => markStrongMutation.mutate(arg.id)}
                       disabled={markStrongMutation.isPending}
+                      aria-pressed={arg.isStrong}
+                      aria-label={arg.isStrong ? 'Unmark as strong' : 'Mark as strong'}
                       className={`mt-2 text-xs px-2 py-1 rounded border transition-colors ${
                         arg.isStrong
                           ? 'bg-green-500 text-white border-green-500 hover:bg-green-600'
                           : 'border-muted-foreground text-muted-foreground hover:border-green-500 hover:text-green-600'
                       }`}
                     >
-                      {arg.isStrong ? '★ Strong' : '☆ Mark Strong'}
+                      {arg.isStrong ? 'Strong' : 'Mark Strong'}
                     </button>
                   )}
                   {!isArbiter && arg.isStrong && (
                     <span className="mt-2 inline-block text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded dark:bg-green-900 dark:text-green-300">
-                      ★ Strong
+                      Strong
                     </span>
                   )}
                 </li>
@@ -158,18 +160,20 @@ export function ArbiterReviewPhase({
                     <button
                       onClick={() => markStrongMutation.mutate(arg.id)}
                       disabled={markStrongMutation.isPending}
+                      aria-pressed={arg.isStrong}
+                      aria-label={arg.isStrong ? 'Unmark as strong' : 'Mark as strong'}
                       className={`mt-2 text-xs px-2 py-1 rounded border transition-colors ${
                         arg.isStrong
                           ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
                           : 'border-muted-foreground text-muted-foreground hover:border-red-500 hover:text-red-600'
                       }`}
                     >
-                      {arg.isStrong ? '★ Strong' : '☆ Mark Strong'}
+                      {arg.isStrong ? 'Strong' : 'Mark Strong'}
                     </button>
                   )}
                   {!isArbiter && arg.isStrong && (
                     <span className="mt-2 inline-block text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded dark:bg-red-900 dark:text-red-300">
-                      ★ Strong
+                      Strong
                     </span>
                   )}
                 </li>

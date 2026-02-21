@@ -17,10 +17,11 @@ import { getUploadsDir } from '../config/uploads.js';
 
 const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
 
-interface GameSettings {
+export interface GameSettings {
   argumentLimit?: number;
   personasRequired?: boolean;
   resolutionMethod?: string;
+  narrationMode?: 'initiator_only' | 'any_player';
   proposalTimeoutHours?: number;
   argumentationTimeoutHours?: number;
   votingTimeoutHours?: number;

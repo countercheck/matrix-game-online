@@ -1,3 +1,15 @@
+/**
+ * Arbiter resolution strategy.
+ *
+ * This strategy intentionally produces only two result types:
+ *   - SUCCESS_BUT (+1): the roll (after modifiers) is greater than 7
+ *   - FAILURE_BUT (-1): the roll (after modifiers) is 7 or less
+ *
+ * The binary outcome (no TRIUMPH/DISASTER extremes) is by design.
+ * An arbiter human player reviews arguments, marks some as "strong", and
+ * then rolls 2d6. Each strong FOR argument adds +1 and each strong AGAINST
+ * argument subtracts -1 from the base roll before comparing to the threshold.
+ */
 import { ResultType } from '@prisma/client';
 import type {
   ArbiterResolutionStrategy,

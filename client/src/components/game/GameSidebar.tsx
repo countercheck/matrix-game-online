@@ -81,8 +81,10 @@ export function GameSidebar({ game, currentUserId, myPlayer, isTimeoutExpired }:
   const isArbiterGame = game.settings.resolutionMethod === 'arbiter';
   const isHost = myPlayer?.isHost || false;
 
+  type GamePlayerRole = 'PLAYER' | 'ARBITER';
+
   const setRoleMutation = useMutation({
-    mutationFn: ({ playerId, role }: { playerId: string; role: string }) =>
+    mutationFn: ({ playerId, role }: { playerId: string; role: GamePlayerRole }) =>
       api.put(`/games/${game.id}/players/${playerId}/role`, { role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', game.id] });

@@ -65,7 +65,7 @@ export function ArbiterResolution({ action, currentUserId }: ResolutionProps) {
           Arbiter Roll Breakdown
         </p>
         <p>
-          🎲 {diceRoll[0]} + {diceRoll[1]} = <strong>{base}</strong> (base)
+          Roll: {diceRoll[0]} + {diceRoll[1]} = <strong>{base}</strong> (base)
         </p>
         {strongProCount > 0 && (
           <p className="text-green-600 dark:text-green-400">

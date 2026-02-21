@@ -351,7 +351,7 @@ export default function GameView() {
               <span
                 className={`text-xs px-3 py-1 rounded-full font-medium ${getImageHeaderPhaseColorClass(game.currentPhase)}`}
               >
-                {game.currentPhase.replace('_', ' ')}
+                {game.currentPhase.replaceAll('_', ' ')}
               </span>
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function GameView() {
               <span
                 className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getTextHeaderPhaseColorClass(game.currentPhase)}`}
               >
-                {game.currentPhase.replace('_', ' ')}
+                {game.currentPhase.replaceAll('_', ' ')}
               </span>
             </div>
             {myPlayer && (

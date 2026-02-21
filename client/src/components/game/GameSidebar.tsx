@@ -291,8 +291,8 @@ export function GameSidebar({ game, currentUserId, myPlayer, isTimeoutExpired }:
               const res = await api.get(`/games/${game.id}/export`, { responseType: 'blob' });
               const disposition = res.headers['content-disposition'] || '';
               downloadBlob(res.data, `${game.name}-export.yaml`, disposition);
-            } catch {
-              // silent fail
+            } catch (err) {
+              console.error('Failed to export game:', err);
             }
           }}
           className="w-full text-sm px-3 py-2 border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary transition-colors"

@@ -24,6 +24,14 @@ export const rendererRegistry: Record<string, ComponentType<ResolutionProps>> = 
   arbiter: ArbiterResolution,
 };
 
+/**
+ * Returns the renderer component for a given resolution method ID.
+ * Falls back to TokenDrawResolution when the method is unknown.
+ */
+export function getRenderer(method: string): ComponentType<ResolutionProps> {
+  return rendererRegistry[method] ?? TokenDrawResolution;
+}
+
 export { ResolutionPhase } from './ResolutionPhase';
 export { TokenDrawResolution } from './TokenDrawResolution';
 export { ArbiterResolution } from './ArbiterResolution';

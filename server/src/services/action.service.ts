@@ -1432,8 +1432,7 @@ export async function completeArbiterReview(actionId: string, userId: string) {
     where: { id: actionId },
     include: {
       game: {
-        include: { players: { where: { isActive: true } } },
-        select: { id: true, name: true, currentPhase: true, settings: true, players: true },
+        select: { id: true, name: true, currentPhase: true, settings: true },
       },
       arguments: { select: { argumentType: true, isStrong: true } },
       initiator: { include: { user: { select: { id: true } } } },

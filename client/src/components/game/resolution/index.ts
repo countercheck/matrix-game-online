@@ -13,6 +13,7 @@ export interface ResolutionProps {
       playerName: string;
       userId: string;
     };
+    resolutionData?: Record<string, unknown>;
   };
   currentUserId: string;
 }

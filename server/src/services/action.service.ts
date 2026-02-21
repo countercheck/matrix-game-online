@@ -1495,7 +1495,7 @@ export async function completeArbiterReview(actionId: string, userId: string) {
     strategy: strategyId,
     result: resolutionResult.resultType,
     value: resolutionResult.resultValue,
-    diceRoll: resolutionResult.strategyData['diceRoll'],
+    diceRoll: resolutionResult.strategyData['diceRoll'] as Prisma.InputJsonValue,
     strongProCount,
     strongAntiCount,
   });

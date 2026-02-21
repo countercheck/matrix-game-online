@@ -146,6 +146,10 @@ See `server/.env.example` for all available configuration options.
 
 ## Documentation
 
+- [Project Structure & How It Functions](./docs/PROJECT_STRUCTURE.md) — Detailed breakdown of repo layout, frontend/backend flow, and data model
+- [Refactoring Suggestions](./docs/REFACTORING_SUGGESTIONS.md) — Ideas to improve structure, reduce duplication, and maintainability
+- [Project Reference](./PROJECT_REFERENCE.md) — Short navigation guide for the codebase
+- [API Reference](./docs/API.md)
 - [Product Requirements (PRD)](./PRD_Mosaic_Matrix_Game.md)
 - [Technical Specification](./Technical_Spec_Mosaic_Matrix_Game.md)
 - [Entity Relationship Diagram](./ERD_Mosaic_Matrix_Game.md)

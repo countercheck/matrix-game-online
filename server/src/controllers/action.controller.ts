@@ -203,3 +203,34 @@ export async function updateNarration(
     next(error);
   }
 }
+
+export async function markArgumentStrong(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const actionId = req.params.actionId as string;
+    const argumentId = req.params.argumentId as string;
+    const userId = req.user!.id;
+    const argument = await actionService.markArgumentStrong(actionId, argumentId, userId);
+    res.json({ success: true, data: argument });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function completeArbiterReview(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const actionId = req.params.actionId as string;
+    const userId = req.user!.id;
+    const result = await actionService.completeArbiterReview(actionId, userId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}

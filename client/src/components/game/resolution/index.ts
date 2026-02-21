@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import { TokenDrawResolution } from './TokenDrawResolution';
+import { ArbiterResolution } from './ArbiterResolution';
 
 export interface ResolutionProps {
   gameId: string;
@@ -19,7 +20,9 @@ export interface ResolutionProps {
 /** Maps strategy IDs to their React renderer components */
 export const rendererRegistry: Record<string, ComponentType<ResolutionProps>> = {
   token_draw: TokenDrawResolution,
+  arbiter: ArbiterResolution,
 };
 
 export { ResolutionPhase } from './ResolutionPhase';
 export { TokenDrawResolution } from './TokenDrawResolution';
+export { ArbiterResolution } from './ArbiterResolution';

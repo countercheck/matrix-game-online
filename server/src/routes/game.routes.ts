@@ -51,4 +51,7 @@ router.post('/:gameId/extend-timeout', authenticateToken, gameController.extendT
 // Host skip controls
 router.post('/:gameId/skip-proposals', authenticateToken, gameController.skipProposals);
 
+// Player role assignment (host only)
+router.put('/:gameId/players/:playerId/role', authenticateToken, gameController.setPlayerRole);
+
 export default router;

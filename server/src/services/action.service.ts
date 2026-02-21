@@ -1,5 +1,5 @@
 import { db } from '../config/database.js';
-import { GamePhase, Prisma } from '@prisma/client';
+import { ArgumentType, GamePhase, Prisma } from '@prisma/client';
 import {
   BadRequestError,
   NotFoundError,
@@ -24,6 +24,7 @@ import {
   notifyRoundSummaryNeeded,
 } from './notification.service.js';
 import { getStrategy } from './resolution/index.js';
+import type { VotingResolutionStrategy } from './resolution/index.js';
 import { countActingUnits, getPersonaMemberIds } from './shared/persona-helpers.js';
 
 /**
@@ -332,7 +333,27 @@ export async function addArgument(actionId: string, userId: string, data: Argume
     throw new BadRequestError('Only initiator can add clarification');
   }
 
-  // Check argument limits
+  // Check per-side argument limits enforced by strategy (e.g. arbiter games)
+  const addArgStrategyId = (settings.resolutionMethod as string) || 'token_draw';
+  const addArgStrategy = getStrategy(addArgStrategyId);
+  if (addArgStrategy.maxArgumentsPerSide !== undefined && data.argumentType !== 'CLARIFICATION') {
+    const isForSide = data.argumentType === 'FOR';
+    // Count both FOR and INITIATOR_FOR as the "for" side
+    const sideTypes: ArgumentType[] = isForSide
+      ? [ArgumentType.FOR, ArgumentType.INITIATOR_FOR]
+      : [ArgumentType.AGAINST];
+    const sideCount = await db.argument.count({
+      where: { actionId, argumentType: { in: sideTypes } },
+    });
+    if (sideCount >= addArgStrategy.maxArgumentsPerSide) {
+      const side = isForSide ? 'FOR' : 'AGAINST';
+      throw new BadRequestError(
+        `Maximum ${addArgStrategy.maxArgumentsPerSide} ${side} arguments allowed`
+      );
+    }
+  }
+
+  // Check per-player argument limits
   const argumentLimit = (settings.argumentLimit as number) || 3;
 
   if (
@@ -507,7 +528,20 @@ export async function completeArgumentation(actionId: string, userId: string) {
     };
   }
 
-  // All players have argued and marked as done - transition to voting
+  // All players have argued and marked as done — branch based on strategy
+  const completionSettings = (action.game.settings as Record<string, unknown>) || {};
+  const completionStrategyId = (completionSettings.resolutionMethod as string) || 'token_draw';
+  const completionStrategy = getStrategy(completionStrategyId);
+
+  if (completionStrategy.phaseAfterArgumentation === 'ARBITER_REVIEW') {
+    await db.action.update({
+      where: { id: actionId },
+      data: { status: 'ARGUING' }, // stays in ARGUING until arbiter completes review
+    });
+    await transitionPhase(action.gameId, GamePhase.ARBITER_REVIEW);
+    return { message: 'Moved to arbiter review phase' };
+  }
+
   await db.action.update({
     where: { id: actionId },
     data: {
@@ -587,7 +621,12 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
   // Map vote type to tokens using the game's resolution strategy
   const settings = (game?.settings as Record<string, unknown>) || {};
   const strategy = getStrategy((settings.resolutionMethod as string) || 'token_draw');
-  const tokens = strategy.mapVoteToTokens(data.voteType);
+
+  if (strategy.type === 'arbiter') {
+    throw new BadRequestError('Voting is not used in arbiter games');
+  }
+
+  const tokens = (strategy as VotingResolutionStrategy).mapVoteToTokens(data.voteType);
 
   const vote = await db.vote.create({
     data: {
@@ -714,12 +753,17 @@ export async function drawTokens(actionId: string, userId: string) {
     throw new ConflictError('Tokens have already been drawn');
   }
 
-  // Resolve using the game's strategy
+  // Resolve using the game's strategy (voting-only path — arbiter resolves in completeArbiterReview)
   const settings = (action.game.settings as Record<string, unknown>) || {};
   const strategyId = (settings.resolutionMethod as string) || 'token_draw';
   const strategy = getStrategy(strategyId);
 
-  const resolutionResult = strategy.resolve({
+  if (strategy.type === 'arbiter') {
+    throw new BadRequestError('Token draw is not used in arbiter games');
+  }
+
+  const votingStrategy = strategy as VotingResolutionStrategy;
+  const resolutionResult = votingStrategy.resolve({
     votes: action.votes.map((v) => ({
       playerId: v.playerId,
       voteType: v.voteType as 'LIKELY_SUCCESS' | 'LIKELY_FAILURE' | 'UNCERTAIN',
@@ -1113,8 +1157,11 @@ export async function skipVoting(actionId: string, userId: string) {
 
   // Auto-fill missing votes as UNCERTAIN with wasSkipped=true
   const settings = (action.game.settings as Record<string, unknown>) || {};
-  const strategy = getStrategy((settings.resolutionMethod as string) || 'token_draw');
-  const uncertainTokens = strategy.mapVoteToTokens('UNCERTAIN');
+  const skipStrategy = getStrategy((settings.resolutionMethod as string) || 'token_draw');
+  if (skipStrategy.type === 'arbiter') {
+    throw new BadRequestError('Skip voting is not applicable in arbiter games');
+  }
+  const uncertainTokens = (skipStrategy as VotingResolutionStrategy).mapVoteToTokens('UNCERTAIN');
 
   if (missingVoters.length > 0) {
     await db.vote.createMany({
@@ -1325,4 +1372,149 @@ export async function updateNarration(
   });
 
   return updatedNarration;
+}
+
+/**
+ * Arbiter toggles the isStrong flag on an argument during ARBITER_REVIEW.
+ */
+export async function markArgumentStrong(actionId: string, argumentId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: { game: { select: { id: true, currentPhase: true } } },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (action.game.currentPhase !== 'ARBITER_REVIEW') {
+    throw new BadRequestError('Can only mark arguments during arbiter review phase');
+  }
+
+  const player = await db.gamePlayer.findFirst({
+    where: { gameId: action.gameId, userId, isActive: true, gameRole: 'ARBITER' },
+  });
+
+  if (!player) {
+    throw new ForbiddenError('Only the arbiter can mark arguments as strong');
+  }
+
+  const argument = await db.argument.findUnique({
+    where: { id: argumentId },
+  });
+
+  if (!argument || argument.actionId !== actionId) {
+    throw new NotFoundError('Argument not found');
+  }
+
+  const updated = await db.argument.update({
+    where: { id: argumentId },
+    data: { isStrong: !argument.isStrong },
+    include: {
+      player: { include: { user: { select: { displayName: true } } } },
+    },
+  });
+
+  await logGameEvent(action.gameId, userId, 'ARGUMENT_STRENGTH_TOGGLED', {
+    actionId,
+    argumentId,
+    isStrong: updated.isStrong,
+  });
+
+  return updated;
+}
+
+/**
+ * Arbiter completes the review: rolls 2d6, resolves, transitions to RESOLUTION.
+ */
+export async function completeArbiterReview(actionId: string, userId: string) {
+  const action = await db.action.findUnique({
+    where: { id: actionId },
+    include: {
+      game: {
+        include: { players: { where: { isActive: true } } },
+        select: { id: true, name: true, currentPhase: true, settings: true, players: true },
+      },
+      arguments: { select: { argumentType: true, isStrong: true } },
+      initiator: { include: { user: { select: { id: true } } } },
+    },
+  });
+
+  if (!action) {
+    throw new NotFoundError('Action not found');
+  }
+
+  if (action.game.currentPhase !== 'ARBITER_REVIEW') {
+    throw new BadRequestError('Game is not in arbiter review phase');
+  }
+
+  const arbiter = await db.gamePlayer.findFirst({
+    where: { gameId: action.gameId, userId, isActive: true, gameRole: 'ARBITER' },
+  });
+
+  if (!arbiter) {
+    throw new ForbiddenError('Only the arbiter can complete the review');
+  }
+
+  const settings = (action.game.settings as Record<string, unknown>) || {};
+  const strategyId = (settings.resolutionMethod as string) || 'arbiter';
+  const strategy = getStrategy(strategyId);
+
+  if (strategy.type !== 'arbiter') {
+    throw new BadRequestError('Current strategy does not support arbiter review');
+  }
+
+  // Count strong arguments by side
+  const proTypes = ['FOR', 'INITIATOR_FOR'];
+  const strongProCount = action.arguments.filter(
+    (a) => a.isStrong && proTypes.includes(a.argumentType)
+  ).length;
+  const strongAntiCount = action.arguments.filter(
+    (a) => a.isStrong && a.argumentType === 'AGAINST'
+  ).length;
+
+  // Roll 2d6 (1-6 each)
+  const diceRoll: [number, number] = [Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)];
+
+  const resolutionResult = strategy.resolve({ strongProCount, strongAntiCount, diceRoll });
+
+  await db.action.update({
+    where: { id: actionId },
+    data: {
+      status: 'RESOLVED',
+      resolvedAt: new Date(),
+      resolutionMethod: strategyId,
+      resolutionData: {
+        ...resolutionResult.strategyData,
+        resultType: resolutionResult.resultType,
+        resultValue: resolutionResult.resultValue,
+      } as unknown as Prisma.InputJsonValue,
+    },
+  });
+
+  await transitionPhase(action.gameId, GamePhase.RESOLUTION);
+
+  await logGameEvent(action.gameId, userId, 'ARBITER_REVIEW_COMPLETED', {
+    actionId,
+    strategy: strategyId,
+    result: resolutionResult.resultType,
+    value: resolutionResult.resultValue,
+    diceRoll,
+    strongProCount,
+    strongAntiCount,
+  });
+
+  // Notify initiator that resolution is ready
+  notifyResolutionReady(
+    action.gameId,
+    action.game.name,
+    action.initiator.userId,
+    action.actionDescription
+  ).catch(() => {});
+
+  return {
+    resultType: resolutionResult.resultType,
+    resultValue: resolutionResult.resultValue,
+    ...resolutionResult.strategyData,
+  };
 }

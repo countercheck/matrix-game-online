@@ -546,7 +546,7 @@ export async function completeArgumentation(actionId: string, userId: string) {
     await db.action.update({
       where: { id: actionId },
       data: {
-        // Move out of ARGURING so that no further arguments can be added during arbiter review
+        // Move out of ARGUMENTATION so that no further arguments can be added during arbiter review
         status: 'VOTING',
       },
     });

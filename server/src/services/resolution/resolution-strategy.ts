@@ -27,7 +27,6 @@ export interface VoteTokenMapping {
 export interface ArbiterResolutionContext {
   readonly strongProCount: number;
   readonly strongAntiCount: number;
-  readonly diceRoll: [number, number];
 }
 
 /**

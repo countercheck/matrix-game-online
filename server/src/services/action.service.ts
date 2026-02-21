@@ -1473,10 +1473,7 @@ export async function completeArbiterReview(actionId: string, userId: string) {
     (a) => a.isStrong && a.argumentType === 'AGAINST'
   ).length;
 
-  // Roll 2d6 (1-6 each)
-  const diceRoll: [number, number] = [Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)];
-
-  const resolutionResult = strategy.resolve({ strongProCount, strongAntiCount, diceRoll });
+  const resolutionResult = strategy.resolve({ strongProCount, strongAntiCount });
 
   await db.action.update({
     where: { id: actionId },
@@ -1499,7 +1496,7 @@ export async function completeArbiterReview(actionId: string, userId: string) {
     strategy: strategyId,
     result: resolutionResult.resultType,
     value: resolutionResult.resultValue,
-    diceRoll,
+    diceRoll: resolutionResult.strategyData['diceRoll'],
     strongProCount,
     strongAntiCount,
   });

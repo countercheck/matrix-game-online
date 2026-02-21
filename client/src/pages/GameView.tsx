@@ -58,6 +58,7 @@ interface Game {
     actionDescription: string;
     desiredOutcome: string;
     status: string;
+    resolutionData?: Record<string, unknown>;
     initiator: {
       id: string;
       playerName: string;

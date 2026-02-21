@@ -27,11 +27,9 @@ const resultLabels: Record<string, { label: string; description: string; color: 
 export function ArbiterResolution({ action, currentUserId }: ResolutionProps) {
   const isInitiator = action.initiator.userId === currentUserId;
 
-  // resolutionData is passed via the action object when available.
+  // resolutionData is present once the arbiter has resolved the action.
   // The parent ResolutionPhase polls until resolutionData is present.
-  const resolutionData = (action as unknown as Record<string, unknown>).resolutionData as
-    | ArbiterStrategyData
-    | undefined;
+  const resolutionData = action.resolutionData as ArbiterStrategyData | undefined;
 
   if (!resolutionData) {
     return (

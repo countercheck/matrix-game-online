@@ -1110,6 +1110,23 @@ export async function setPlayerRole(
     throw new NotFoundError('Player not found in this game');
   }
 
+  const BLOCKED_PHASES: GamePhase[] = [
+    GamePhase.ARGUMENTATION,
+    GamePhase.ARBITER_REVIEW,
+    GamePhase.VOTING,
+    GamePhase.RESOLUTION,
+    GamePhase.NARRATION,
+  ];
+
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    select: { currentPhase: true },
+  });
+
+  if (game && BLOCKED_PHASES.includes(game.currentPhase)) {
+    throw new ConflictError('Cannot reassign roles while the action is in progress');
+  }
+
   if (role === 'ARBITER') {
     // Ensure no other player already holds the ARBITER role
     const existingArbiter = await db.gamePlayer.findFirst({

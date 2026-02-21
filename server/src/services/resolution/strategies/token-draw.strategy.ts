@@ -7,26 +7,13 @@ import type {
   VoteTokenMapping,
 } from '../resolution-strategy.js';
 import { registerStrategy } from '../registry.js';
+import { getSecureRandomInt } from '../../../utils/random.js';
 
 const VOTE_TOKEN_MAP: Record<string, VoteTokenMapping> = {
   LIKELY_SUCCESS: { successTokens: 2, failureTokens: 0 },
   LIKELY_FAILURE: { successTokens: 0, failureTokens: 2 },
   UNCERTAIN: { successTokens: 1, failureTokens: 1 },
 };
-
-function getSecureRandomInt(min: number, max: number): number {
-  const range = max - min + 1;
-  const bytesNeeded = Math.ceil(Math.log2(range) / 8) || 1;
-  const maxValid = Math.floor(256 ** bytesNeeded / range) * range - 1;
-
-  let randomInt;
-  do {
-    const bytes = randomBytes(bytesNeeded);
-    randomInt = bytes.readUIntBE(0, bytesNeeded);
-  } while (randomInt > maxValid);
-
-  return min + (randomInt % range);
-}
 
 function getResultType(successCount: number): ResultType {
   switch (successCount) {

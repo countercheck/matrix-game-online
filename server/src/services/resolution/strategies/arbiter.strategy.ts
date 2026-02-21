@@ -5,6 +5,7 @@ import type {
   ResolutionResult,
 } from '../resolution-strategy.js';
 import { registerStrategy } from '../registry.js';
+import { rollDie } from '../../../utils/random.js';
 
 const arbiterStrategy: ArbiterResolutionStrategy = {
   id: 'arbiter',
@@ -15,7 +16,8 @@ const arbiterStrategy: ArbiterResolutionStrategy = {
   phaseAfterArgumentation: 'ARBITER_REVIEW' as const,
   maxArgumentsPerSide: 3,
 
-  resolve({ strongProCount, strongAntiCount, diceRoll }: ArbiterResolutionContext): ResolutionResult {
+  resolve({ strongProCount, strongAntiCount }: ArbiterResolutionContext): ResolutionResult {
+    const diceRoll: [number, number] = [rollDie(), rollDie()];
     const base = diceRoll[0] + diceRoll[1];
     const modified = base + strongProCount - strongAntiCount;
     const resultType = modified > 7 ? ResultType.SUCCESS_BUT : ResultType.FAILURE_BUT;

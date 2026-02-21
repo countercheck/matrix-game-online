@@ -52,6 +52,17 @@ router.post('/:gameId/extend-timeout', authenticateToken, gameController.extendT
 router.post('/:gameId/skip-proposals', authenticateToken, gameController.skipProposals);
 
 // Player role assignment (host only)
+// PUT /games/:gameId/players/:playerId/role
+// Auth: JWT required; only the game host may change player roles.
+// Request body (JSON):
+//   {
+//     "role": string // New role identifier for the player; unsupported values are rejected.
+//   }
+// Possible error responses:
+//   400 Bad Request  - Missing/invalid body or role value.
+//   401 Unauthorized - Missing or invalid authentication token.
+//   403 Forbidden    - Authenticated user is not the host for this game.
+//   404 Not Found    - Game or player does not exist or is not visible to the caller.
 router.put('/:gameId/players/:playerId/role', authenticateToken, gameController.setPlayerRole);
 
 export default router;

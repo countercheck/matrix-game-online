@@ -89,6 +89,14 @@ export function GameSidebar({ game, currentUserId, myPlayer, isTimeoutExpired }:
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', game.id] });
     },
+    onError: (error) => {
+      let message = 'Failed to update player role. Please try again.';
+      if (error instanceof Error && error.message) {
+        message = `Failed to update player role: ${error.message}`;
+      }
+      // Basic user-facing error display without assuming additional UI components
+      window.alert(message);
+    },
   });
 
   const currentArbiter = game.players.find((p) => p.gameRole === 'ARBITER');

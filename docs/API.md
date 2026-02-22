@@ -536,6 +536,38 @@ Start the game (host only, minimum 2 players).
 
 Get list of players in the game.
 
+### PUT /games/:gameId/players/:playerId/role
+
+Assign or revoke the Arbiter role for a player. Host only. Blocked while the game is in ARGUMENTATION, ARBITER_REVIEW, VOTING, RESOLUTION, or NARRATION phase — role changes are only allowed during WAITING and PROPOSAL.
+
+**Request Body:**
+
+```json
+{
+  "role": "ARBITER"
+}
+```
+
+`role` must be `"PLAYER"` or `"ARBITER"`. Only one player may hold the `ARBITER` role at a time; assigning it to a new player automatically clears the previous arbiter.
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Player role updated successfully"
+  }
+}
+```
+
+**Errors:**
+
+- `400 Bad Request` - Invalid role value
+- `403 Forbidden` - Caller is not the game host
+- `404 Not Found` - Game or player not found
+- `409 Conflict` - Role change not allowed during an active phase, or assigning ARBITER when one is already assigned
+
 ### GET /games/:gameId/history
 
 Get complete action history for the game.
@@ -671,6 +703,67 @@ Update a round summary's content (host only).
 **Response:** `200 OK`
 
 **Errors:** `403 Forbidden` (not host), `404 Not Found`
+
+---
+
+## Arbiter Review Endpoints
+
+These endpoints are used during the `ARBITER_REVIEW` phase when the game is configured with `resolutionMethod: "arbiter"`. Only the player assigned the `ARBITER` role may call them.
+
+### POST /actions/:actionId/arguments/:argumentId/mark-strong
+
+Toggle whether an argument is marked as "strong" by the arbiter. Calling this endpoint on a strong argument unmarks it; calling it on a non-strong argument marks it. Idempotent in the sense that the resulting state is always the inverse of the current state.
+
+**No request body required.**
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "argument-uuid",
+    "isStrong": true
+  }
+}
+```
+
+**Errors:**
+
+- `400 Bad Request` - Game is not in ARBITER_REVIEW phase
+- `403 Forbidden` - Caller is not the assigned arbiter
+- `404 Not Found` - Action or argument not found
+
+---
+
+### POST /actions/:actionId/arbiter/complete
+
+Complete the arbiter review. Counts strong FOR and AGAINST arguments, rolls 2d6 with a modifier (`modified = base + strongProCount − strongAntiCount`), and resolves the action. A roll > 7 produces `SUCCESS_BUT` (+1); a roll ≤ 7 produces `FAILURE_BUT` (−1). Transitions the game to RESOLUTION.
+
+**No request body required.**
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "resultType": "SUCCESS_BUT",
+    "resultValue": 1,
+    "diceRoll": [4, 5],
+    "base": 9,
+    "modified": 10,
+    "strongProCount": 1,
+    "strongAntiCount": 0
+  }
+}
+```
+
+**Errors:**
+
+- `400 Bad Request` - Game is not in ARBITER_REVIEW phase
+- `403 Forbidden` - Caller is not the assigned arbiter
+- `404 Not Found` - Action not found
 
 ---
 

@@ -108,13 +108,11 @@ fi
 
 # --- RUN TESTS ---
 if [[ ${#TEST_FILES[@]} -gt 0 ]]; then
-  TEST_ARGS=""
   for tf in "${TEST_FILES[@]}"; do
     echo "Running test: ${tf#"$PROJECT_DIR"/}"
-    TEST_ARGS="$TEST_ARGS $tf"
   done
 
-  if ! (cd "$WORKSPACE_DIR" && npx vitest run --reporter=verbose $TEST_ARGS 2>&1); then
+  if ! (cd "$WORKSPACE_DIR" && npx vitest run --reporter=verbose "${TEST_FILES[@]}" 2>&1); then
     ERRORS="${ERRORS}Tests failed for related files\n"
   fi
 else

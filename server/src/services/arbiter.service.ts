@@ -39,6 +39,9 @@ export async function markArgumentStrong(actionId: string, argumentId: string, u
     throw new NotFoundError('Argument not found');
   }
 
+  if (argument.argumentType === 'CLARIFICATION') {
+    throw new BadRequestError('Cannot mark clarification arguments as strong');
+  }
   const updated = await db.argument.update({
     where: { id: argumentId },
     data: { isStrong: !argument.isStrong },

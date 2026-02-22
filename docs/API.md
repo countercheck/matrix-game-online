@@ -564,6 +564,7 @@ Assign or revoke the Arbiter role for a player. Host only. Blocked while the gam
 **Errors:**
 
 - `400 Bad Request` - Invalid role value
+- `400 Bad Request` - NPC players cannot be assigned as Arbiter
 - `403 Forbidden` - Caller is not the game host
 - `404 Not Found` - Game or player not found
 - `409 Conflict` - Role change not allowed during an active phase, or assigning ARBITER when one is already assigned

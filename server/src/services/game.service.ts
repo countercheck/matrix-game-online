@@ -17,6 +17,14 @@ import { getUploadsDir } from '../config/uploads.js';
 
 const NPC_USER_EMAIL = process.env.NPC_USER_EMAIL || 'npc@system.local';
 
+const BLOCKED_PHASES_FOR_ROLE_CHANGE: GamePhase[] = [
+  GamePhase.ARGUMENTATION,
+  GamePhase.ARBITER_REVIEW,
+  GamePhase.VOTING,
+  GamePhase.RESOLUTION,
+  GamePhase.NARRATION,
+];
+
 export interface GameSettings {
   argumentLimit?: number;
   personasRequired?: boolean;
@@ -1114,20 +1122,13 @@ export async function setPlayerRole(
   if (role === 'ARBITER' && targetPlayer.isNpc) {
     throw new BadRequestError('NPC players cannot be assigned as Arbiter');
   }
-  const BLOCKED_PHASES: GamePhase[] = [
-    GamePhase.ARGUMENTATION,
-    GamePhase.ARBITER_REVIEW,
-    GamePhase.VOTING,
-    GamePhase.RESOLUTION,
-    GamePhase.NARRATION,
-  ];
 
   const game = await db.game.findUnique({
     where: { id: gameId },
     select: { currentPhase: true },
   });
 
-  if (game && BLOCKED_PHASES.includes(game.currentPhase)) {
+  if (game && BLOCKED_PHASES_FOR_ROLE_CHANGE.includes(game.currentPhase)) {
     throw new ConflictError('Cannot reassign roles while the action is in progress');
   }
 

@@ -32,6 +32,10 @@ const { mockDb, mockRequireMember, mockLogGameEvent, mockTransitionPhase } = vi.
       create: vi.fn(),
       count: vi.fn(),
     },
+    tokenDraw: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
     narration: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -75,6 +79,22 @@ vi.mock('../../../src/services/resolution/index.js', () => ({
       if (voteType === 'LIKELY_FAILURE') return { successTokens: 0, failureTokens: 2 };
       return { successTokens: 1, failureTokens: 1 };
     },
+    resolve: vi.fn().mockReturnValue({
+      resultType: 'SUCCESS_BUT',
+      resultValue: 1,
+      strategyData: {
+        seed: 'test-seed',
+        totalSuccessTokens: 3,
+        totalFailureTokens: 1,
+        drawnSuccess: 2,
+        drawnFailure: 1,
+        drawnTokens: [
+          { drawSequence: 1, tokenType: 'SUCCESS' },
+          { drawSequence: 2, tokenType: 'SUCCESS' },
+          { drawSequence: 3, tokenType: 'FAILURE' },
+        ],
+      },
+    }),
   }),
 }));
 
@@ -662,7 +682,19 @@ describe('Action Service - Shared Personas', () => {
         actionDescription: 'Test',
         initiator: { userId: 'u1', user: { id: 'u1' } },
       });
+      // Third call: drawTokens' own findUnique — must return RESOLVED action
+      mockDb.action.findUnique.mockResolvedValueOnce({
+        id: 'action-1',
+        status: 'RESOLVED',
+        gameId: 'game-1',
+        resolutionData: null,
+        votes: [],
+        game: { name: 'Test', settings: {} },
+        initiator: { userId: 'u1', isNpc: false },
+      });
       mockDb.action.update.mockResolvedValue({});
+      mockDb.tokenDraw.findUnique.mockResolvedValue(null);
+      mockDb.tokenDraw.create.mockResolvedValue({ drawnTokens: [] });
 
       await submitVote('action-1', 'u3', { voteType: 'LIKELY_FAILURE' });
 

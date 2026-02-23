@@ -20,7 +20,6 @@ import type {
 import {
   notifyActionProposed,
   notifyVotingStarted,
-  notifyResolutionReady,
   notifyNarrationNeeded,
   notifyRoundSummaryNeeded,
 } from './notification.service.js';
@@ -667,7 +666,7 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
   }
 
   if (game && !game.deletedAt && voteCount >= voteThreshold) {
-    // Get full action details for notification
+    // Get full action details for auto-draw
     const fullAction = await db.action.findUnique({
       where: { id: actionId },
       include: {
@@ -683,14 +682,10 @@ export async function submitVote(actionId: string, userId: string, data: VoteInp
     });
     await transitionPhase(action.gameId, GamePhase.RESOLUTION);
 
-    // Notify initiator that resolution is ready
+    // Auto-execute the draw immediately — no manual initiator click required.
+    // drawTokens() stores the result, transitions to NARRATION, and notifies the initiator.
     if (fullAction) {
-      notifyResolutionReady(
-        action.gameId,
-        game.name,
-        fullAction.initiator.userId,
-        fullAction.actionDescription
-      ).catch(() => {});
+      await drawTokens(actionId, fullAction.initiator.userId);
     }
   }
 
@@ -1231,16 +1226,11 @@ export async function skipVoting(actionId: string, userId: string) {
     missingVoterNames: missingVoters.map((p) => p.playerName),
   });
 
-  // Notify initiator that resolution is ready
-  notifyResolutionReady(
-    action.gameId,
-    action.game.name,
-    action.initiator.userId,
-    action.actionDescription
-  ).catch(() => {});
+  // Auto-execute the draw immediately — no manual initiator click required.
+  await drawTokens(actionId, action.initiator.userId);
 
   return {
-    message: 'Voting skipped, moved to resolution phase',
+    message: 'Voting skipped, resolved automatically',
     skippedVotes: missingVoters.length,
   };
 }

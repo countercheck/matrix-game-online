@@ -161,7 +161,9 @@ export function RoundSummary({ gameId, roundId }: RoundSummaryProps) {
       </div>
 
       {/* Round Statistics */}
-      <div className={`grid gap-4 ${npcPlayer ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+      <div
+        className={`grid gap-3 sm:gap-4 ${npcPlayer ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}
+      >
         <div className="p-4 border rounded-lg text-center">
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">{triumphs}</div>
           <div className="text-sm text-muted-foreground">Triumphs</div>

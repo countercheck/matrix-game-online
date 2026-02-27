@@ -141,7 +141,7 @@ export function ArgumentList({
           const styles = getArgumentStyles(arg.argumentType);
           return (
             <div key={arg.id} className={`p-3 rounded-md border-l-4 ${styles.container}`}>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">
                     {decodeHtmlEntities(arg.player.playerName)}

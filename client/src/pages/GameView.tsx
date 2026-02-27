@@ -124,6 +124,8 @@ export default function GameView() {
   const { user } = useAuth();
   const [showRoundHistory, setShowRoundHistory] = useState(false);
   const [isTimeoutExpired, setIsTimeoutExpired] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mobileSidebarTab, setMobileSidebarTab] = useState<'info' | 'chat'>('info');
 
   const { data, isLoading, error, refetch } = useQuery<{ data: Game }>({
     queryKey: ['game', gameId],
@@ -319,10 +321,10 @@ export default function GameView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-16 lg:pb-0">
       {/* Header with optional image */}
       {game.imageUrl ? (
-        <div className="relative w-full h-32 sm:h-40 rounded-lg overflow-hidden">
+        <div className="relative w-full h-28 sm:h-36 lg:h-40 rounded-lg overflow-hidden">
           <img src={game.imageUrl} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end justify-between p-4">
             <div className="flex items-center gap-3">
@@ -419,8 +421,8 @@ export default function GameView() {
           {renderPhaseContent()}
         </div>
 
-        {/* Sidebar with tabs */}
-        <div>
+        {/* Sidebar with tabs — hidden on mobile, shown in bottom drawer instead */}
+        <div className="hidden lg:block">
           <GameSidebar
             game={game}
             currentUserId={currentUserId}
@@ -430,6 +432,84 @@ export default function GameView() {
         </div>
       </div>
 
+      {/* Mobile bottom bar */}
+      <div className="fixed bottom-0 inset-x-0 z-40 lg:hidden border-t bg-background flex">
+        <button
+          onClick={() => {
+            setMobileSidebarTab('info');
+            setMobileDrawerOpen(true);
+          }}
+          className="flex-1 py-3 text-sm font-medium flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>Info</span>
+        </button>
+        <button
+          onClick={() => {
+            setMobileSidebarTab('chat');
+            setMobileDrawerOpen(true);
+          }}
+          className="flex-1 py-3 text-sm font-medium flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
+          <span>Chat</span>
+        </button>
+      </div>
+
+      {/* Mobile sidebar drawer */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          <div className="absolute bottom-0 inset-x-0 bg-background rounded-t-xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+              <h2 className="font-semibold">
+                {mobileSidebarTab === 'info' ? 'Game Info' : 'Chat'}
+              </h2>
+              <button
+                onClick={() => setMobileDrawerOpen(false)}
+                className="p-1 hover:bg-muted rounded-md"
+                aria-label="Close drawer"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4">
+              <GameSidebar
+                game={game}
+                currentUserId={currentUserId}
+                myPlayer={myPlayer}
+                isTimeoutExpired={isTimeoutExpired}
+                defaultTab={mobileSidebarTab}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Round History Modal */}
       {showRoundHistory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -437,7 +517,7 @@ export default function GameView() {
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowRoundHistory(false)}
           />
-          <div className="relative bg-background border rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+          <div className="relative bg-background border rounded-lg shadow-xl w-full max-w-lg lg:max-w-3xl mx-4 sm:mx-auto max-h-[80vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-lg font-semibold">Round History</h2>
               <button

@@ -178,9 +178,9 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                       {round.actionsCompleted} actions
                     </span>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     {/* Quick Stats */}
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                       {triumphs > 0 && (
                         <span className="text-green-600 dark:text-green-400">✨ {triumphs}</span>
                       )}
@@ -277,7 +277,7 @@ export function RoundHistory({ gameId, currentRoundNumber, isHost = false }: Rou
                       {round.actions.map((action, index) => (
                         <div
                           key={action.id}
-                          className="flex items-start justify-between gap-4 p-3 bg-muted/20 rounded-lg"
+                          className="flex items-start justify-between gap-2 sm:gap-4 p-3 bg-muted/20 rounded-lg"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">

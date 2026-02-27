@@ -237,7 +237,7 @@ export function GameHistory({ gameId, compact = false, isHost = false }: GameHis
           >
             {/* Compact View */}
             {compact && expandedAction !== action.id && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-lg" title={getResultLabel(action.tokenDraw?.resultType)}>
                   {getResultIcon(action.tokenDraw?.resultType)}
                 </span>

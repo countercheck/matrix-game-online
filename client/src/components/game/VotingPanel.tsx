@@ -245,7 +245,7 @@ export function VotingPanel({ gameId, action }: VotingPanelProps) {
                   className={`w-full p-4 rounded-lg border-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${voteStyle.className}`}
                   aria-label={`${option.label}: ${option.description}`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span
                         className={

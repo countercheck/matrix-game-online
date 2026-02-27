@@ -91,7 +91,7 @@ export function NewChannelModal({
     <Dialog.Root open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-background border rounded-lg shadow-xl p-6 space-y-4">
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md mx-4 sm:mx-auto bg-background border rounded-lg shadow-xl p-5 sm:p-6 space-y-4">
           <Dialog.Title className="text-lg font-semibold">New Chat</Dialog.Title>
 
           {/* Scope tabs */}
@@ -133,9 +133,7 @@ export function NewChannelModal({
           {/* Selection list */}
           {scope === 'PERSONA' && personaChatEnabled && (
             <div className="space-y-1 max-h-48 overflow-y-auto">
-              <p className="text-xs text-muted-foreground mb-2">
-                Select personas to chat with:
-              </p>
+              <p className="text-xs text-muted-foreground mb-2">Select personas to chat with:</p>
               {personas.map((p) => (
                 <label
                   key={p.id}
@@ -155,9 +153,7 @@ export function NewChannelModal({
 
           {scope === 'DIRECT' && directChatEnabled && (
             <div className="space-y-1 max-h-48 overflow-y-auto">
-              <p className="text-xs text-muted-foreground mb-2">
-                Select players to message:
-              </p>
+              <p className="text-xs text-muted-foreground mb-2">Select players to message:</p>
               {players.map((p) => (
                 <label
                   key={p.id}
@@ -169,23 +165,17 @@ export function NewChannelModal({
                     onChange={() => togglePlayer(p.id)}
                     className="rounded"
                   />
-                  <span>
-                    {p.personaName ? `${p.personaName} (${p.playerName})` : p.playerName}
-                  </span>
+                  <span>{p.personaName ? `${p.personaName} (${p.playerName})` : p.playerName}</span>
                 </label>
               ))}
             </div>
           )}
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <div className="flex justify-end gap-2">
             <Dialog.Close asChild>
-              <button className="px-4 py-2 text-sm border rounded-md hover:bg-muted">
-                Cancel
-              </button>
+              <button className="px-4 py-2 text-sm border rounded-md hover:bg-muted">Cancel</button>
             </Dialog.Close>
             <button
               onClick={handleCreate}

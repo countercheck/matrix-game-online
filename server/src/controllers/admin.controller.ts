@@ -6,7 +6,9 @@ import {
   banUserSchema,
   listGamesQuerySchema,
   listAuditLogsQuerySchema,
+  sendTestEmailSchema,
 } from '../utils/admin.validators.js';
+import { sendEmail } from '../services/email.service.js';
 
 // Helper to get client IP
 function getClientIp(req: Request): string | undefined {
@@ -196,6 +198,34 @@ export async function listAuditLogs(
     const query = listAuditLogsQuerySchema.parse(req.query);
     const result = await adminService.listAuditLogs(query);
     res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// ============================================================================
+// Email Testing
+// ============================================================================
+
+export async function sendTestEmail(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { to } = sendTestEmailSchema.parse(req.body);
+    const success = await sendEmail({
+      to,
+      subject: 'Test Email from Mosaic Matrix Game',
+      text: 'This is a test email sent from the admin panel.',
+      html: '<p>This is a test email sent from the admin panel.</p>',
+    });
+
+    if (success) {
+      res.json({ success: true, message: `Test email sent to ${to}` });
+    } else {
+      res.status(500).json({ success: false, message: 'Failed to send email — check server logs' });
+    }
   } catch (error) {
     next(error);
   }

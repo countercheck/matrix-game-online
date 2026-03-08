@@ -13,6 +13,8 @@ import GameView from './pages/GameView';
 import CreateGame from './pages/CreateGame';
 import JoinGame from './pages/JoinGame';
 import Help from './pages/Help';
+import Admin from './pages/Admin';
+import AdminRoute from './components/auth/AdminRoute';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -95,6 +97,14 @@ function App() {
         <Route path="game/:gameId/lobby" element={<GameLobby />} />
         <Route path="game/:gameId/play" element={<GameView />} />
         <Route path="help" element={<Help />} />
+        <Route
+          path="admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
       </Route>
     </Routes>
   );

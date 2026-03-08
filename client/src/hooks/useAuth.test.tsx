@@ -69,7 +69,12 @@ describe('useAuth Hook', () => {
   });
 
   it('should load user from localStorage on mount', () => {
-    const storedUser = { id: 'user-1', email: 'test@example.com', displayName: 'Test' };
+    const storedUser = {
+      id: 'user-1',
+      email: 'test@example.com',
+      displayName: 'Test',
+      role: 'USER' as const,
+    };
     mockLocalStorage['auth_token'] = 'stored-token';
     mockLocalStorage['auth_user'] = JSON.stringify(storedUser);
 
@@ -83,7 +88,12 @@ describe('useAuth Hook', () => {
   });
 
   it('should login and store credentials', async () => {
-    const userData = { id: 'user-1', email: 'test@example.com', displayName: 'Test' };
+    const userData = {
+      id: 'user-1',
+      email: 'test@example.com',
+      displayName: 'Test',
+      role: 'USER' as const,
+    };
     mockPost.mockResolvedValue({
       data: {
         data: {
@@ -111,7 +121,12 @@ describe('useAuth Hook', () => {
   });
 
   it('should register and store credentials', async () => {
-    const userData = { id: 'user-1', email: 'new@example.com', displayName: 'New User' };
+    const userData = {
+      id: 'user-1',
+      email: 'new@example.com',
+      displayName: 'New User',
+      role: 'USER' as const,
+    };
     mockPost.mockResolvedValue({
       data: {
         data: {
@@ -139,7 +154,12 @@ describe('useAuth Hook', () => {
 
   it('should logout and clear credentials', async () => {
     // Start logged in
-    const storedUser = { id: 'user-1', email: 'test@example.com', displayName: 'Test' };
+    const storedUser = {
+      id: 'user-1',
+      email: 'test@example.com',
+      displayName: 'Test',
+      role: 'USER' as const,
+    };
     mockLocalStorage['auth_token'] = 'stored-token';
     mockLocalStorage['auth_user'] = JSON.stringify(storedUser);
 

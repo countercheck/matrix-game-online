@@ -130,7 +130,7 @@ describe('POST /api/admin/email/test', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.message).toContain('recipient@example.com');
+    expect(response.body.data.message).toContain('recipient@example.com');
   });
 
   it('should return 400 when the to field is not a valid email', async () => {

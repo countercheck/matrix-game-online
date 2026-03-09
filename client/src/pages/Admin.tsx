@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
 
 export default function Admin() {
   const [email, setEmail] = useState('');
@@ -12,15 +13,15 @@ export default function Admin() {
     setMessage('');
 
     try {
-      const res = await api.post<{ success: boolean; message: string }>(
+      const res = await api.post<{ success: boolean; data: { message: string } }>(
         '/admin/email/test',
         { to: email }
       );
       setStatus('success');
-      setMessage(res.data.message);
-    } catch {
+      setMessage(res.data.data.message);
+    } catch (err) {
       setStatus('error');
-      setMessage('Failed to send test email. Check server logs.');
+      setMessage(getApiErrorMessage(err, 'Failed to send test email. Check server logs.'));
     }
   };
 

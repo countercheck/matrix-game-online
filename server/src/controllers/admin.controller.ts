@@ -222,9 +222,9 @@ export async function sendTestEmail(
     });
 
     if (success) {
-      res.json({ success: true, message: `Test email sent to ${to}` });
+      res.json({ success: true, data: { message: `Test email sent to ${to}` } });
     } else {
-      res.status(500).json({ success: false, message: 'Failed to send email — check server logs' });
+      res.status(500).json({ success: false, error: { code: 'EMAIL_SEND_FAILED', message: 'Failed to send email — check server logs' } });
     }
   } catch (error) {
     next(error);

@@ -2,14 +2,19 @@ import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { logger } from '../utils/logger.js';
 
-// Email configuration from environment
-const EMAIL_HOST = process.env.EMAIL_HOST || 'smtp.ethereal.email';
-const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || '587', 10);
-const EMAIL_USER = process.env.EMAIL_USER || '';
-const EMAIL_PASS = process.env.EMAIL_PASS || '';
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@mosaicgame.com';
-const EMAIL_ENABLED = process.env.EMAIL_ENABLED !== 'false';
-const APP_URL = process.env.APP_URL || 'http://localhost:5173';
+// Read email configuration at runtime so that dotenv has already populated
+// process.env before any of these values are consumed.
+function getEmailConfig() {
+  return {
+    host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
+    port: parseInt(process.env.EMAIL_PORT || '587', 10),
+    user: process.env.EMAIL_USER || '',
+    pass: process.env.EMAIL_PASS || '',
+    from: process.env.EMAIL_FROM || 'noreply@mosaicgame.com',
+    enabled: process.env.EMAIL_ENABLED !== 'false',
+    appUrl: process.env.APP_URL || 'http://localhost:5173',
+  };
+}
 
 let transporter: Transporter | null = null;
 
@@ -18,21 +23,23 @@ let transporter: Transporter | null = null;
  * In development, uses Ethereal for testing if no SMTP configured.
  */
 export async function initializeEmailService(): Promise<void> {
-  if (!EMAIL_ENABLED) {
+  const config = getEmailConfig();
+
+  if (!config.enabled) {
     logger.info('Email service disabled');
     return;
   }
 
   try {
-    if (EMAIL_USER && EMAIL_PASS) {
+    if (config.user && config.pass) {
       // Use configured SMTP
       transporter = nodemailer.createTransport({
-        host: EMAIL_HOST,
-        port: EMAIL_PORT,
-        secure: EMAIL_PORT === 465,
+        host: config.host,
+        port: config.port,
+        secure: config.port === 465,
         auth: {
-          user: EMAIL_USER,
-          pass: EMAIL_PASS,
+          user: config.user,
+          pass: config.pass,
         },
       });
     } else if (process.env.NODE_ENV !== 'production') {
@@ -75,7 +82,9 @@ export interface EmailOptions {
  * Returns true if sent successfully, false otherwise.
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  if (!EMAIL_ENABLED) {
+  const config = getEmailConfig();
+
+  if (!config.enabled) {
     logger.debug(`Email disabled, skipping: ${options.subject} to ${options.to}`);
     return false;
   }
@@ -87,7 +96,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
   try {
     const info = await transporter.sendMail({
-      from: EMAIL_FROM,
+      from: config.from,
       to: options.to,
       subject: options.subject,
       text: options.text,
@@ -151,7 +160,8 @@ export async function sendGameInviteEmail(
   inviterName: string,
   gameId: string
 ): Promise<boolean> {
-  const joinUrl = `${APP_URL}/games/${gameId}/join`;
+  const { appUrl } = getEmailConfig();
+  const joinUrl = `${appUrl}/games/${gameId}/join`;
   const subject = `You're invited to join "${gameName}"`;
   const text = `${inviterName} has invited you to join a game of Mosaic Matrix Game called "${gameName}". Join here: ${joinUrl}`;
   const html = wrapInTemplate(
@@ -173,7 +183,8 @@ export async function sendGameStartedEmail(
   gameName: string,
   gameId: string
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const subject = `Game "${gameName}" has started!`;
   const text = `The game "${gameName}" has started. It's time to propose your first action! View the game: ${gameUrl}`;
   const html = wrapInTemplate(
@@ -196,7 +207,8 @@ export async function sendActionProposedEmail(
   initiatorName: string,
   actionDescription: string
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const subject = `New action proposed in "${gameName}"`;
   const text = `${initiatorName} has proposed a new action in "${gameName}": "${actionDescription}". View and add your arguments: ${gameUrl}`;
   const html = wrapInTemplate(
@@ -221,7 +233,8 @@ export async function sendVotingStartedEmail(
   gameId: string,
   actionDescription: string
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const subject = `Voting has started in "${gameName}"`;
   const text = `Voting has started for the action "${actionDescription}" in "${gameName}". Cast your vote: ${gameUrl}`;
   const html = wrapInTemplate(
@@ -247,7 +260,8 @@ export async function sendResolutionReadyEmail(
   gameId: string,
   actionDescription: string
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const subject = `Ready to draw tokens in "${gameName}"`;
   const text = `All votes are in for "${actionDescription}" in "${gameName}". As the initiator, you can now draw tokens to determine the outcome: ${gameUrl}`;
   const html = wrapInTemplate(
@@ -273,7 +287,8 @@ export async function sendNarrationNeededEmail(
   resultType: string,
   resultValue: number
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const resultText = resultValue > 0 ? `+${resultValue}` : resultValue.toString();
   const subject = `Narrate the outcome in "${gameName}" (${resultType})`;
   const text = `The tokens have been drawn in "${gameName}". Result: ${resultType} (${resultText}). Narrate what happens: ${gameUrl}`;
@@ -300,7 +315,8 @@ export async function sendRoundSummaryNeededEmail(
   roundNumber: number,
   actionsCompleted: number
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const subject = `Round ${roundNumber} complete in "${gameName}" - Summary needed`;
   const text = `Round ${roundNumber} is complete in "${gameName}" with ${actionsCompleted} actions. Write a round summary: ${gameUrl}`;
   const html = wrapInTemplate(
@@ -322,7 +338,8 @@ export async function sendNewRoundEmail(
   gameId: string,
   roundNumber: number
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const subject = `Round ${roundNumber} has started in "${gameName}"`;
   const text = `Round ${roundNumber} has begun in "${gameName}". Time to propose your action for this round: ${gameUrl}`;
   const html = wrapInTemplate(
@@ -345,7 +362,8 @@ export async function sendTimeoutWarningEmail(
   phase: string,
   hoursRemaining: number
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const subject = `Action needed in "${gameName}" - ${hoursRemaining}h remaining`;
   const text = `The ${phase} phase in "${gameName}" will timeout in ${hoursRemaining} hours. Take action: ${gameUrl}`;
   const html = wrapInTemplate(
@@ -368,7 +386,8 @@ export async function sendTimeoutOccurredEmail(
   phase: string,
   wasAutoVoted: boolean
 ): Promise<boolean> {
-  const gameUrl = `${APP_URL}/games/${gameId}`;
+  const { appUrl } = getEmailConfig();
+  const gameUrl = `${appUrl}/games/${gameId}`;
   const subject = `Phase timeout in "${gameName}"`;
   const autoVoteText = wasAutoVoted
     ? ' An UNCERTAIN vote was automatically cast on your behalf.'

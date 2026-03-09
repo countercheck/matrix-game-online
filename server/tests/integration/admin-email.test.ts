@@ -130,7 +130,22 @@ describe('POST /api/admin/email/test', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.message).toContain('recipient@example.com');
+    expect(response.body.data.message).toContain('recipient@example.com');
+  });
+
+  it('should return 500 with standard error shape when email sending fails', async () => {
+    const { sendEmail } = await import('../../src/services/email.service.js');
+    vi.mocked(sendEmail).mockResolvedValueOnce(false);
+
+    const app = createTestApp(adminUser);
+
+    const response = await request(app)
+      .post('/api/admin/email/test')
+      .send({ to: 'recipient@example.com' });
+
+    expect(response.status).toBe(500);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error.code).toBe('EMAIL_SEND_FAILED');
   });
 
   it('should return 400 when the to field is not a valid email', async () => {

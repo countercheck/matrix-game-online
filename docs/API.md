@@ -1210,3 +1210,62 @@ socket.on('typing', (event) => {
 - Socket.io automatically handles reconnection and message queuing
 
 ---
+
+## Admin Endpoints
+
+All admin endpoints require a valid JWT (`Authorization: Bearer <token>`) and an appropriate role. Role requirements are noted per endpoint.
+
+### POST /api/admin/email/test
+
+Send a test email to verify the email service is correctly configured. Requires **Admin** role.
+
+**Request Body:**
+
+```json
+{
+  "to": "recipient@example.com"
+}
+```
+
+| Field | Type   | Required | Description                        |
+| ----- | ------ | -------- | ---------------------------------- |
+| `to`  | string | Yes      | A valid email address to send to   |
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Test email sent to recipient@example.com"
+}
+```
+
+**Error Responses:**
+
+- `400 Bad Request` — `to` is missing or not a valid email address
+
+  ```json
+  {
+    "success": false,
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Validation failed",
+      "details": [{ "field": "to", "message": "Must be a valid email address" }]
+    }
+  }
+  ```
+
+- `401 Unauthorized` — Missing or invalid JWT
+
+- `403 Forbidden` — Authenticated user does not have Admin role
+
+- `500 Internal Server Error` — Email service failed to send the message
+
+  ```json
+  {
+    "success": false,
+    "message": "Failed to send email — check server logs"
+  }
+  ```
+
+---

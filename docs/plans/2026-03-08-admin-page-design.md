@@ -20,7 +20,7 @@ Add a minimal admin page at `/admin` with a test email sender. Admin-only access
 
 **New files:**
 - `client/src/pages/Admin.tsx` — admin page with email input + send button + feedback
-- `client/src/components/auth/AdminRoute.tsx` — route guard, redirects non-admins to `/dashboard`
+- `client/src/components/auth/AdminRoute.tsx` — route guard, redirects non-admins to `/` (the dashboard)
 
 **Changes to existing files:**
 - `client/src/App.tsx` — add `/admin` route wrapped in `AdminRoute`
@@ -30,7 +30,7 @@ Add a minimal admin page at `/admin` with a test email sender. Admin-only access
 
 - Frontend checks `user.role === 'ADMIN'` from auth context
 - Backend validates with existing `requireAdmin` middleware
-- Non-admins hitting `/admin` are redirected to `/dashboard`
+- Non-admins hitting `/admin` are redirected to `/` (the dashboard)
 
 ## Scope
 

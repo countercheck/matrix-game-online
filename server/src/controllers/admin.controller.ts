@@ -9,6 +9,7 @@ import {
   sendTestEmailSchema,
 } from '../utils/admin.validators.js';
 import { sendEmail } from '../services/email.service.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 // Helper to get client IP
 function getClientIp(req: Request): string | undefined {
@@ -222,9 +223,9 @@ export async function sendTestEmail(
     });
 
     if (success) {
-      res.json({ success: true, message: `Test email sent to ${to}` });
+      res.json({ success: true, data: { message: `Test email sent to ${to}` } });
     } else {
-      res.status(500).json({ success: false, message: 'Failed to send email — check server logs' });
+      throw new AppError(500, 'EMAIL_SEND_FAILED', 'Failed to send email — check server logs');
     }
   } catch (error) {
     next(error);

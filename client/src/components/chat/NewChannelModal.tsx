@@ -91,7 +91,7 @@ export function NewChannelModal({
     <Dialog.Root open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md mx-4 sm:mx-auto bg-background border rounded-lg shadow-xl p-5 sm:p-6 space-y-4">
+        <Dialog.Content className="fixed top-1/2 -translate-y-1/2 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-50 max-w-md bg-background border rounded-lg shadow-xl p-5 sm:p-6 space-y-4">
           <Dialog.Title className="text-lg font-semibold">New Chat</Dialog.Title>
 
           {/* Scope tabs */}

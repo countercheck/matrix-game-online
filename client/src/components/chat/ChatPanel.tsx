@@ -74,7 +74,7 @@ export function ChatPanel({
   }
 
   return (
-    <div className="flex flex-col h-[500px] border rounded-lg overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-16rem)] max-h-[500px] border rounded-lg overflow-hidden">
       {/* Connection indicator */}
       {!isConnected && (
         <div className="px-3 py-1 text-xs text-center bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
@@ -92,10 +92,8 @@ export function ChatPanel({
               onSelectChannel={(id) => {
                 setActiveChannelId(id);
                 setReplyTarget(null);
-                // On small screens, collapse channel list after selection
-                if (typeof window !== 'undefined' && window.innerWidth < 640) {
-                  setShowChannelList(false);
-                }
+                // Collapse channel list after selection (always, since on desktop the toggle button re-opens it)
+                setShowChannelList(false);
               }}
               onNewChannel={() => setShowNewChannel(true)}
             />
@@ -112,7 +110,12 @@ export function ChatPanel({
               title={showChannelList ? 'Hide channels' : 'Show channels'}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
             <span className="text-sm font-medium truncate">

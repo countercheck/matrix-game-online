@@ -19,6 +19,7 @@ import adminRoutes from './routes/admin.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import { startTimeoutWorker } from './workers/timeout.worker.js';
 import { initializeSocket } from './socket/index.js';
+import { initializeEmailService } from './services/email.service.js';
 
 dotenv.config();
 
@@ -93,6 +94,11 @@ app.use((req, res) => {
 
 httpServer.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
+
+  // Initialize email service
+  initializeEmailService().catch((err) => {
+    logger.error('Failed to initialize email service', { err });
+  });
 
   // Start timeout worker if enabled
   if (process.env.ENABLE_TIMEOUT_WORKER !== 'false') {

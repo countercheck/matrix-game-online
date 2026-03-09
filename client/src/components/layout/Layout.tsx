@@ -92,6 +92,14 @@ export default function Layout() {
             >
               Help
             </Link>
+            {user?.role === 'ADMIN' && (
+              <Link
+                to="/admin"
+                className="text-sm hover:underline px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                Admin
+              </Link>
+            )}
             <span
               className="text-sm text-muted-foreground"
               aria-label={`Logged in as ${user?.displayName}`}
@@ -138,6 +146,15 @@ export default function Layout() {
             >
               Help
             </Link>
+            {user?.role === 'ADMIN' && (
+              <Link
+                to="/admin"
+                className="block text-sm hover:underline py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Admin
+              </Link>
+            )}
             <div className="text-sm text-muted-foreground py-2">
               {user?.displayName ? decodeHtmlEntities(user.displayName) : ''}
             </div>

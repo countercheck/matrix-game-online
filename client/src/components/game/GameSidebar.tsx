@@ -72,9 +72,16 @@ interface GameSidebarProps {
     gameRole?: string;
   };
   isTimeoutExpired: boolean;
+  defaultTab?: 'info' | 'chat';
 }
 
-export function GameSidebar({ game, currentUserId, myPlayer, isTimeoutExpired }: GameSidebarProps) {
+export function GameSidebar({
+  game,
+  currentUserId,
+  myPlayer,
+  isTimeoutExpired,
+  defaultTab,
+}: GameSidebarProps) {
   const [expandedPersona, setExpandedPersona] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -122,7 +129,7 @@ export function GameSidebar({ game, currentUserId, myPlayer, isTimeoutExpired }:
     }));
 
   return (
-    <Tabs.Root defaultValue="info" className="flex flex-col">
+    <Tabs.Root defaultValue={defaultTab ?? 'info'} className="flex flex-col">
       <Tabs.List className="flex border-b">
         <Tabs.Trigger
           value="info"

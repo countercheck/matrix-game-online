@@ -55,4 +55,9 @@ router.post(
 // ============================================================================
 router.get('/audit-logs', requireAdmin, adminController.listAuditLogs);
 
+// ============================================================================
+// Email Testing - Admin only
+// ============================================================================
+router.post('/email/test', requireAdmin, adminController.sendTestEmail);
+
 export default router;

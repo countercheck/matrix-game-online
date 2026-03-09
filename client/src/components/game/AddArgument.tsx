@@ -82,13 +82,13 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
         </div>
       )}
 
-      <div className="flex gap-2" role="radiogroup" aria-label="Argument type">
+      <div className="flex gap-1.5 sm:gap-2" role="radiogroup" aria-label="Argument type">
         <button
           type="button"
           role="radio"
           aria-checked={argumentType === 'FOR'}
           onClick={() => setArgumentType('FOR')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-for inline-flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-for inline-flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
             argumentType === 'FOR'
               ? 'bg-arg-for text-white'
               : 'bg-arg-for-bg text-arg-for-text hover:bg-arg-for-badge-bg border border-arg-for-border'
@@ -108,7 +108,7 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
           role="radio"
           aria-checked={argumentType === 'AGAINST'}
           onClick={() => setArgumentType('AGAINST')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-against inline-flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-against inline-flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
             argumentType === 'AGAINST'
               ? 'bg-arg-against text-white'
               : 'bg-arg-against-bg text-arg-against-text hover:bg-arg-against-badge-bg border border-arg-against-border'
@@ -128,7 +128,7 @@ export function AddArgument({ actionId, gameId, remainingArguments, onAdded }: A
           role="radio"
           aria-checked={argumentType === 'CLARIFICATION'}
           onClick={() => setArgumentType('CLARIFICATION')}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-clarify inline-flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-arg-clarify inline-flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
             argumentType === 'CLARIFICATION'
               ? 'bg-arg-clarify text-white'
               : 'bg-arg-clarify-bg text-arg-clarify-text hover:bg-arg-clarify-badge-bg border border-arg-clarify-border'

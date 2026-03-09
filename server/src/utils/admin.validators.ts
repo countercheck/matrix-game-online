@@ -49,6 +49,13 @@ export const listAuditLogsQuerySchema = z.object({
   endDate: z.coerce.date().optional(),
 });
 
+// Email Test Schema
+export const sendTestEmailSchema = z.object({
+  to: z.string().email('Must be a valid email address'),
+});
+
+export type SendTestEmailInput = z.infer<typeof sendTestEmailSchema>;
+
 // Type exports
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;
